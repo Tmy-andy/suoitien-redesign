@@ -1,4 +1,4 @@
-> Cập nhật: 2026-07-30
+> Cập nhật: 2026-08-01 (v6 — thêm route.css/places.css + route.js/places.js · D-43)
 
 # 01 — Architecture & Structure
 
@@ -17,26 +17,59 @@ suoitien-vr360redes/
 │   ├── viewer.css             # #st-viewer (mock panorama) + hint kéo xem
 │   ├── controls.css           # #st-dock, #st-rail, #st-scene-label, #st-cta-ticket
 │   ├── welcome.css            # #st-welcome + bản đồ SVG + hotspot + preview card
-│   ├── overlays.css           # #st-directions, #st-places, #st-share, #st-help, #st-toast
-│   └── responsive.css         # tất cả @media, mobile last (ghi đè)
+│   ├── overlays.css           # khung .st-modal + .st-fs (toàn màn hình) + share/help/toast
+│   ├── route.css              # ⭐ M2 #st-route — overlay chỉ đường (clone · D-43)
+│   ├── places.css             # ⭐ M3 #st-places — overlay danh sách điểm đến (clone · D-43)
+│   ├── ticket.css             # ⭐ #st-ticket — thẻ vé combo (mask răng cưa, nudge 8s · D-41)
+│   ├── responsive.css         # tất cả @media, mobile last (ghi đè)
+│   └── scope.css              # ⭐ NẠP CUỐI — thu phạm vi về header + cụm C + welcome (D-39),
+│                              #   ràng buộc vùng cấm cho cụm C (D-40), ghost ?zones=1
 │
 ├── js/
-│   ├── data.js                # MOCK: DESTINATIONS, HOTSPOTS, NAV_MENU, COPY (text)
+│   ├── data.js                # DESTINATIONS, HOTSPOTS, MAP_META, WAYFIND, NAV_MENU (84 mục), DOCK_BUTTONS, TICKET
+│   ├── i18n.js                # COPY.vi + COPY.en · ST.i18n.set/apply/t · quét [data-i18n]  (Q4)
 │   ├── store.js               # State tập trung + pub/sub (không framework)
 │   ├── viewer.js              # Mock 360 viewer: gradient/ảnh + drag để pan + API goTo()
-│   ├── navbar.js              # Render navbar, dropdown, drawer mobile, auto-dim
-│   ├── welcome.js             # Modal welcome: render hotspot, preview, chọn điểm
-│   ├── controls.js            # Dock button, toggle state (nhạc, auto-rotate, fullscreen)
-│   ├── overlays.js            # Directions / Places / Share / Help — 1 engine mở-đóng chung
-│   ├── a11y.js               # focus trap, Esc, scroll lock, aria-hidden — dùng cho mọi modal
-│   └── app.js                 # Bootstrap: đọc query param → init theo thứ tự → mở welcome
+│   ├── navbar.js              # Topbar, navbar, dropdown, #st-nav-peek, drawer mobile, switch VI/EN
+│   ├── welcome.js             # Modal welcome: render hotspot, mini-card, morph FLIP ↔ nút
+│   ├── controls.js            # Cụm C 2 nút + thẻ vé; popover ⋯ / CTA / label / hint tắt (D-39)
+│   ├── overlays.js            # 1 engine mở-đóng chung cho MỌI modal (kể cả .st-fs-panel)
+│   ├── route.js               # ⭐ M2: select, quãng đường + chỉ dẫn (MOCK ổn định), pin, zoom
+│   ├── places.js              # ⭐ M3: tìm kiếm bỏ dấu, chip lọc làm-mờ, lưới thẻ
+│   ├── a11y.js                # focus trap, Esc, scroll lock, aria-hidden — dùng cho mọi modal
+│   └── app.js                 # Bootstrap: query param → set SCOPE → init theo thứ tự → mở welcome
 │
-└── assets/
-    ├── logo.svg               # Placeholder logo (chờ file thật — Q21)
-    ├── map/
-    │   └── park-map.svg       # Bản đồ 2D stylized (inline vào welcome.js để hotspot dùng chung toạ độ)
-    └── icons.svg              # SVG sprite <symbol> — 1 file cho toàn bộ icon
+├── assets/                    # (tuỳ chọn — chưa có file nào)
+│   └── map/park-map-real.jpg  # Biến thể ?map=real. Chưa có → tự quay về bản đồ SVG + toast.
+│
+└── tools/                       # CÔNG CỤ DEV — không thuộc bản demo
+    ├── check-icon-center.js     # Tâm khối của từng symbol (cô lập)
+    ├── check-icon-rendered.js   # Pixel THẬT đã render trên trang — bắt lỗi do CSS
+    └── fa-extract.js            # Trích outline 8 icon `i-fa-*` từ font gốc (D-36)
 ```
+
+> `check-icon-*.js` cần `playwright` (`npm i -D playwright`); `fa-extract.js` chỉ dùng
+> Node thuần. Đây là **công cụ dev**, bản demo vẫn là HTML/CSS/JS thuần không npm —
+> RULE #3 không bị vi phạm.
+> Chạy `node tools/check-icon-center.js` sau mỗi lần thêm/sửa path icon; exit `1` nếu lệch.
+> `node tools/fa-extract.js` in ra 8 dòng `<g id="i-fa-…">` để dán đè vào sprite
+> `#st-icons` — **đừng sửa tay** path của bộ `i-fa-*`, sửa xong sẽ lệch khỏi gốc.
+
+### Vì sao KHÔNG có `assets/icons.svg` và `assets/map/park-map.svg` riêng
+
+Cả **SVG sprite icon** và **bản đồ 2D** đều nằm **inline trong `index.html`**:
+
+- `fetch()` / `<img src="*.svg">` + `<use href="file.svg#id">` đều **bị CORS chặn khi mở
+  `file://`** → khách double-click `index.html` sẽ thấy trang không có icon và không có bản đồ.
+  Inline là cách duy nhất chạy được cả `file://` lẫn `http://`.
+- Hotspot định vị bằng `%` của `#st-welcome-map`, nên bản đồ phải nằm **cùng cây DOM**
+  với hotspot để dùng chung hệ toạ độ.
+
+Logo lấy trực tiếp từ `suoitien.vn` (Q2 cho phép), có `onerror` → wordmark SVG.
+
+> `overlays.js` **không** chứa overlay "Chỉ đường"/"Danh sách điểm đến" — 2 cái đó đã
+> hoàn thiện trên site thật và nằm ngoài phạm vi prototype (D-09v2). Ở đây chỉ có
+> panel giữ chỗ + toast giải thích.
 
 ## 1.2 Nguyên tắc kiến trúc
 
@@ -52,15 +85,20 @@ suoitien-vr360redes/
 
 ## 1.3 Thứ tự load trong `index.html`
 
-Thứ tự **quan trọng** — `tokens.css` phải trước mọi CSS khác, `data.js` phải
-trước mọi JS khác, `app.js` phải cuối cùng.
+Thứ tự **quan trọng** — `tokens.css` phải trước mọi CSS khác, `scope.css` phải **sau
+cùng**, `data.js` phải trước mọi JS khác, `app.js` phải cuối cùng.
+
+> Vì sao `scope.css` phải nạp cuối: nó ghi đè các rule bố cục của `responsive.css`
+> (vốn giả định dock nằm giữa và kéo ngang được). Cùng specificity thì thắng nhờ thứ
+> tự; đổi chỗ là cụm C quay lại dàn ngang và đè lên cụm ⓓ của trip360 — xem D-40.
 
 ```html
 <head>
   <!-- 1. Font: @font-face local, không gọi Google Fonts -->
   <!-- 2. CSS theo đúng thứ tự cascade -->
   tokens.css → base.css → navbar.css → viewer.css → controls.css
-            → welcome.css → overlays.css → responsive.css
+            → welcome.css → overlays.css → route.css → places.css
+            → ticket.css → responsive.css → scope.css
 </head>
 <body>
   <!-- 3. SVG sprite inline (ẩn) — phải có trước khi component render icon -->
@@ -68,18 +106,22 @@ trước mọi JS khác, `app.js` phải cuối cùng.
 
   <!-- 4. Markup shell: các container rỗng, JS sẽ render vào -->
   #st-viewer · #st-topbar · #st-navbar · #st-scene-label
-  #st-dock · #st-welcome · #st-directions · #st-places · #st-share · #st-help · #st-toast
+  #st-dock · #st-ticket-wrap · #st-welcome · #st-route · #st-places
+  · #st-share · #st-help · #st-existing · #st-drawer · #st-toast
 
   <!-- 5. JS theo thứ tự phụ thuộc -->
-  data.js → store.js → a11y.js → viewer.js → navbar.js
-         → controls.js → overlays.js → welcome.js → app.js
+  data.js → i18n.js → store.js → a11y.js → viewer.js → navbar.js
+         → controls.js → overlays.js → route.js → places.js → welcome.js → app.js
 </body>
 ```
 
 Tất cả `<script>` là **classic script** (không `type="module"`) → biến global,
 không cần server, mở `file://` chạy được. Mỗi file bọc trong IIFE, chỉ expose 1
 namespace: `ST.data`, `ST.store`, `ST.a11y`, `ST.viewer`, `ST.navbar`,
-`ST.controls`, `ST.overlays`, `ST.welcome`.
+`ST.controls`, `ST.overlays`, `ST.route`, `ST.places`, `ST.welcome`.
+
+> `route.js` / `places.js` phải nạp **sau** `overlays.js`: chúng đăng ký listener
+> `modal:open` / `lang:change` chứ không tự quản vòng đời.
 
 ## 1.4 Mock VR360 viewer — `js/viewer.js`
 
@@ -132,27 +174,56 @@ graph TD
     app --> navbar
     app --> controls
     app --> overlays
+    app --> route
+    app --> places
     app --> welcome
 
-    data[data.js<br/>MOCK data + copy] --> store
+    data[data.js<br/>DESTINATIONS / HOTSPOTS / MAP_META<br/>NAV_MENU / DOCK_BUTTONS / TICKET<br/>SCOPE / RESERVED_ZONES / WAYFIND] --> store
     data --> welcome
     data --> navbar
-    data --> overlays
+    data --> controls
+    data --> route
+    data --> places
+
+    i18n[i18n.js<br/>COPY.vi + COPY.en<br/>BI = chuỗi song ngữ cố định] --> navbar
+    i18n --> welcome
+    i18n --> controls
+    i18n --> overlays
+    i18n --> route
+    i18n --> places
+    i18n --> app
 
     store[store.js<br/>state + pub/sub] --> viewer
     store --> navbar
     store --> controls
     store --> overlays
     store --> welcome
+    store --> route
+    store --> places
+    store --> i18n
 
     a11y[a11y.js<br/>focus trap / Esc / lock] --> welcome
     a11y --> overlays
 
     welcome -->|goTo| viewer
-    overlays -->|goTo| viewer
+    welcome -->|morph tới<br/>#st-welcome-reopen| controls
+    controls -->|mở lại welcome| welcome
     controls -->|setAutoRotate<br/>setDimmed| viewer
-    controls -->|open| overlays
+    controls -->|open share/help<br/>chỉ khi ?full=1| overlays
+    controls -->|open:st-route<br/>open:st-places| overlays
+    overlays -->|modal:open| route
+    overlays -->|modal:open| places
+    route[route.js<br/>M2 chỉ đường] -->|goTo| viewer
+    places[places.js<br/>M3 danh sách] -->|goTo| viewer
+    route -->|nút ☰ toolbar| places
+    app -->|SCOPE minimal<br/>class st-scope-min| scope[scope.css<br/>tắt phần ngoài phạm vi]
+    navbar -->|hide/show header| store
+    viewer -->|drag:start/end| store
 ```
+
+> ⚠️ `welcome ↔ controls` là **cặp 2 chiều duy nhất** được phép — do animation morph
+> (§4.3.8 của [`04-modals.md`](04-modals.md)) cần cả 2 biết rect của nhau. Cài đặt qua
+> event trên `store`, không gọi hàm trực tiếp, để không tạo phụ thuộc cứng.
 
 Quy tắc phụ thuộc: **mũi tên không được tạo vòng.** `viewer.js` không bao giờ
 gọi lên `welcome.js`/`overlays.js`; nó chỉ phát event qua `store`.

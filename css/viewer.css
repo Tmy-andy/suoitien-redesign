@@ -1,0 +1,154 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   viewer.css — panorama MOCK + hint + scene label
+   Bản thật: #viewer do 3DVista quản lý, toàn bộ file này bỏ đi.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#st-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--st-z-viewer);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background: #14202e;
+  transition: filter var(--st-dur-slow) var(--st-ease);
+}
+#st-viewer.st-grabbing { cursor: grabbing; }
+
+/* Khi modal mở: làm mờ panorama để scrim blur có "chất liệu" phía sau */
+#st-viewer.st-dimmed { filter: blur(3px) saturate(.85) brightness(.9); }
+
+.st-pano { position: absolute; inset: 0; }
+
+/* 3 lớp parallax — background lặp ngang, dịch theo yaw × data-depth.
+   MOCK: cảnh vẽ bằng SVG data-URI sinh trong js/viewer.js. */
+.st-pano-layer {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-x;
+  background-position: 0 bottom;
+  background-size: auto 100%;
+  will-change: background-position;
+}
+.st-pano-layer:nth-child(1) { background-size: auto 100%; }
+
+.st-pano-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 45%, transparent 45%, rgba(6,12,20,.34) 100%),
+    linear-gradient(to bottom, rgba(6,12,20,.28) 0%, transparent 22%, transparent 74%, rgba(6,12,20,.34) 100%);
+}
+
+/* Lớp fade trắng khi chuyển scene */
+.st-pano-fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #fff;
+  opacity: 0;
+  transition: opacity 250ms var(--st-ease);
+}
+.st-pano-fade.st-on { opacity: .85; }
+
+/* Nhãn "đây là bản mô phỏng" — trung thực với khách khi demo */
+.st-mock-note {
+  position: absolute;
+  right: calc(var(--st-s-3) + var(--st-sar));
+  bottom: calc(var(--st-s-2) + var(--st-sab));
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: var(--st-r-pill);
+  background: rgba(6,12,20,.34);
+  color: rgba(255,255,255,.72);
+  font: var(--st-t-xs);
+  letter-spacing: .02em;
+  pointer-events: none;
+}
+
+/* ── Hint "kéo để xem 360°" ───────────────────────────────────────────── */
+#st-hint {
+  position: fixed;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%,-50%);
+  z-index: var(--st-z-hint);
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-2);
+  padding: 11px 18px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-surface-blur);
+  -webkit-backdrop-filter: var(--st-blur);
+  backdrop-filter: var(--st-blur);
+  border: 1px solid var(--st-surface-border);
+  box-shadow: var(--st-sh-lg);
+  font: var(--st-t-btn);
+  color: var(--st-n-800);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--st-dur-base) var(--st-ease);
+}
+#st-hint.st-on { opacity: 1; }
+.st-hint-hand {
+  width: 22px; height: 22px;
+  color: var(--st-green-600);
+  animation: st-hand 1.5s var(--st-ease) 2;
+}
+@keyframes st-hand {
+  0%,100% { transform: translateX(-7px); }
+  50%     { transform: translateX(7px); }
+}
+
+/* ── Scene label — trang VR thật không có, thêm mới (D-15) ────────────── */
+#st-scene-label {
+  position: fixed;
+  left: calc(var(--st-s-4) + var(--st-sal));
+  bottom: calc(var(--st-s-5) + var(--st-sab));
+  z-index: var(--st-z-scene-label);
+  display: none;
+  align-items: center;
+  gap: var(--st-s-2);
+  max-width: min(46vw, 420px);
+  padding: 8px 15px 8px 9px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-surface-blur);
+  -webkit-backdrop-filter: var(--st-blur);
+  backdrop-filter: var(--st-blur);
+  border: 1px solid var(--st-surface-border);
+  box-shadow: var(--st-sh-lg);
+}
+#st-scene-label.st-on { display: flex; }
+#st-scene-label .st-sl-icon {
+  width: 30px; height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-green-50);
+  color: var(--st-green-700);
+}
+#st-scene-label .st-sl-icon svg { width: 17px; height: 17px; }
+#st-scene-label .st-sl-text { min-width: 0; }
+#st-scene-label .st-sl-name {
+  display: block;
+  font: var(--st-t-btn);
+  color: var(--st-n-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#st-scene-label .st-sl-meta {
+  display: block;
+  font: var(--st-t-xs);
+  font-weight: 500;
+  letter-spacing: .02em;
+  color: var(--st-n-500);
+  text-transform: uppercase;
+}
+#st-scene-label .st-sl-text { animation: st-sl-in var(--st-dur-base) var(--st-ease-out); }
+@keyframes st-sl-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}

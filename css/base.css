@@ -1,0 +1,162 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   base.css — reset, typography gốc, tiện ích dùng chung
+   ═══════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;                 /* trang VR không cuộn */
+  background: var(--st-n-900);
+}
+
+body {
+  font: var(--st-t-body);
+  color: var(--st-n-800);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+}
+
+h1, h2, h3, p, ul, ol, figure { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+img { max-width: 100%; display: block; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+
+svg { display: block; }
+/* Toàn bộ icon 1 hệ: stroke 1.75, không fill (D-16).
+   CHỈ nhắm <use> — không nhắm `svg > g`, nếu không sẽ ghi đè fill của
+   bản đồ SVG (CSS thắng presentation attribute). */
+svg use {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Focus ────────────────────────────────────────────────────────────── */
+:focus { outline: none; }
+:focus-visible {
+  outline: none;
+  box-shadow: var(--st-sh-focus);
+  border-radius: var(--st-r-sm);
+}
+/* Heading nhận focus bằng script (tabindex="-1") để screen reader đọc tiêu đề
+   — không phải thao tác của người dùng nên KHÔNG vẽ ring. */
+h1[tabindex="-1"]:focus-visible,
+h2[tabindex="-1"]:focus-visible { box-shadow: none; }
+/* Trên nền tối (navbar xanh, topbar vàng) ring xanh chìm → dùng ring trắng */
+#st-navbar :focus-visible,
+#st-topbar :focus-visible,
+.st-nav-dd :focus-visible {
+  box-shadow: 0 0 0 3px rgba(255,255,255,.72);
+}
+
+/* ── Tiện ích ─────────────────────────────────────────────────────────── */
+.st-sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+html.st-locked, html.st-locked body { overflow: hidden; }
+
+[hidden] { display: none !important; }
+
+/* ── Nút dùng chung ───────────────────────────────────────────────────── */
+.st-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--st-s-2);
+  min-height: 44px;
+  padding: 11px 18px;
+  border-radius: var(--st-r-pill);
+  font: var(--st-t-btn);
+  white-space: nowrap;
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color      var(--st-dur-fast) var(--st-ease),
+              transform  var(--st-dur-fast) var(--st-ease),
+              filter     var(--st-dur-fast) var(--st-ease);
+}
+.st-btn svg { width: 18px; height: 18px; flex: none; }
+.st-btn:hover { transform: translateY(-1px); }
+.st-btn:active { transform: translateY(0); }
+
+.st-btn-primary   { background: var(--st-green-600); color: #fff; }
+.st-btn-primary:hover  { background: var(--st-green-500); }
+.st-btn-primary:active { background: var(--st-green-700); }
+
+.st-btn-secondary {
+  background: var(--st-surface);
+  color: var(--st-green-600);
+  box-shadow: inset 0 0 0 1.5px var(--st-green-600);
+}
+.st-btn-secondary:hover { background: var(--st-green-50); }
+
+.st-linkbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  font: var(--st-t-sm);
+  color: var(--st-n-500);
+  transition: color var(--st-dur-fast) var(--st-ease), gap var(--st-dur-fast) var(--st-ease);
+}
+.st-linkbtn svg { width: 16px; height: 16px; }
+.st-linkbtn:hover { color: var(--st-green-600); gap: 10px; }
+
+/* ── Dải 3 màu nhận diện trên đỉnh panel ──────────────────────────────── */
+.st-brandline {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: var(--st-r-xl) var(--st-r-xl) 0 0;
+  background: linear-gradient(90deg,
+    var(--st-green-600) 0%, var(--st-green-600) 34%,
+    var(--st-gold-500) 34%, var(--st-gold-500) 67%,
+    var(--st-red-500) 67%, var(--st-red-500) 100%);
+}
+
+.st-note { font: var(--st-t-sm); color: var(--st-n-500); }
+
+/* ── Chip ─────────────────────────────────────────────────────────────── */
+.st-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-green-50);
+  color: var(--st-green-800);
+  font: var(--st-t-xs);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+/* ── Tôn trọng prefers-reduced-motion (bắt buộc) ──────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

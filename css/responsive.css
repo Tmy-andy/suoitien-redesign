@@ -1,0 +1,215 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   responsive.css — LOAD CUỐI CÙNG. Tất cả @media gom về đây.
+   Breakpoint: ≤599 mobile · 600-1023 tablet · 1024-1439 desktop · ≥1440 wide
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ══ ≥1440px — wide ═════════════════════════════════════════════════════ */
+@media (min-width: 1440px) {
+  #st-welcome .st-modal-panel { width: min(92vw, 1180px); }
+}
+
+/* ══ Nav có 9 mục thay vì 8 (thêm tab VR360) nên hết slack sớm hơn gốc ═══
+   ≥1600px: giữ ĐÚNG 14px + padding 6.46% như gốc, vẫn còn thừa chỗ.
+   Dưới đó thu dần font/gap/padding để tỉ lệ khoảng trống quanh logo vẫn
+   giống gốc, thay vì để chữ dính vào logo. */
+/* Nav KHÔNG có bậc font/padding — gốc giữ 14px và để flex co giãn mượt.
+   Chỉ thu padding của 2 nhóm khi hẹp để chữ không chạm logo. */
+@media (max-width: 1439px) { .st-nav-left, .st-nav-right { padding: 0 24px; } }
+@media (max-width: 1319px) { .st-nav-left, .st-nav-right { padding: 0; }
+                             .st-nav-list { gap: 6px; } }
+
+/* ══ ≤1199px — dock bỏ bớt khoảng trắng ═════════════════════════════════ */
+@media (max-width: 1199px) {
+  .st-dbtn.st-v-primary   { padding: 0 15px; }
+  .st-dbtn.st-v-secondary { padding: 0 14px; }
+}
+
+/* ══ ≤1199px — navbar → hamburger (9 mục không còn chỗ) ════════════════ */
+@media (max-width: 1199px) {
+  #st-navbar { width: calc(100% - var(--st-s-6)); padding: 0 var(--st-s-3); justify-content: space-between; }
+  #st-btn-search { display: none; }
+  .st-nav-list { display: none; }
+  #st-btn-menu { display: grid; }
+  .st-logo { width: auto; margin: 0 auto; }
+  .st-logo img { height: 96px; }
+}
+
+/* ══ ≤1200px — TOPBAR: bám đúng gốc ═════════════════════════════════════
+   THẬT: `@media (max-width:1200px){ .list-top-nav li span{font-size:11px} }`
+   — gốc **giữ nguyên đủ 3 mục** (địa chỉ + hotline + email) và **giữ container
+   85%**, chỉ thu chữ xuống 11px.
+   Bản trước tôi làm khác hẳn: ẩn địa chỉ + `.st-topbar-in{width:100%}` → cả
+   hàng dàn hết bề ngang, khoảng cách giữa các mục lệch xa gốc. Đây là chỗ
+   khách chỉ ra "khoảng cách vẫn khác bản gốc". */
+@media (max-width: 1200px) {
+  .st-tb-contact > li > a,
+  .st-tb-contact > li > span {
+    font-size: 11px;
+    /* Gốc KHÔNG đặt white-space → dưới ~1100px chữ tự xuống dòng (địa chỉ và
+       hotline thành 2 dòng). Ta giữ `nowrap` thì thay vì xuống dòng nó CHỒNG
+       lên mục kế. Bỏ nowrap để hành vi giống gốc.
+       ⚠️ Đây là khuyết điểm của chính site gốc (2 dòng tràn khỏi row 40px), ta
+       clone theo yêu cầu "giống hệt". Muốn gọn hơn: nâng ngưỡng bỏ địa chỉ ở
+       khối `≤999px` bên dưới lên `≤1199px` — sửa đúng 1 con số. */
+    white-space: normal;
+  }
+}
+
+/* ══ ≤999px — điểm mình PHẢI tự quyết ═══════════════════════════════════
+   Từ ≤900px site gốc bỏ hẳn header desktop, đổi sang header mobile riêng
+   (`.navbar-wrapper{display:none}` + `.show-mb`) — cấu trúc đó ngoài phạm vi
+   prototype. Nên từ đây trở xuống là thiết kế của mình: bỏ địa chỉ (mục dài
+   nhất) để hotline + email + cờ + social còn đủ chỗ. */
+@media (max-width: 999px) {
+  #st-topbar { padding: 0 var(--st-s-4); }
+  .st-topbar-in { width: 100%; }
+  .st-tb-contact li:first-child { display: none; }   /* bỏ địa chỉ */
+}
+
+/* ══ ≤899px — dock rút gọn: nhóm "xem" chuyển vào popover ═══════════════ */
+@media (max-width: 899px) {
+  #st-dock .st-dock-group-view { display: none; }
+  #st-dock .st-dock-sep.st-sep-view { display: none; }
+  #st-cta-tickets { bottom: auto; top: calc(var(--st-sat) + var(--st-header-h) + 60px); }
+  html.st-nav-hidden #st-cta-tickets { top: calc(var(--st-sat) + 56px); }
+}
+
+/* ══ ≤599px — mobile ════════════════════════════════════════════════════ */
+@media (max-width: 599px) {
+  :root { --st-topbar-h: 66px; --st-navbar-h: 50px; --st-navbar-top: 40px; }
+
+  /* topbar chỉ còn hotline + cờ */
+  .st-tb-contact li:not(.st-tb-phone) { display: none; }
+  .st-tb-social { display: none; }
+  #st-topbar { padding: 0 var(--st-s-3); }
+  .st-topbar-in { padding-top: 8px; }
+  .st-tb-contact, .st-tb-right { height: 34px; }
+  .st-tb-ic { width: 26px; height: 26px; }
+  .st-tb-ic svg { width: 13px; height: 13px; }       /* co theo tròn 26px (30→26) */
+  /* giữ tỉ lệ hộp cờ 26:20 của gốc */
+  .st-flag { width: 23.4px; height: 18px; }
+  #st-lang { padding: 0 8px; }
+
+  #st-navbar { width: calc(100% - var(--st-s-4)); padding: 0 var(--st-s-3); }
+  .st-logo img { height: 78px; }
+  #st-btn-search { display: none; }
+
+  /* dock full-width cuộn ngang + fade 2 đầu */
+  #st-dock {
+    left: var(--st-s-3);
+    right: var(--st-s-3);
+    transform: none;
+    max-width: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    justify-content: flex-start;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  }
+  #st-dock::-webkit-scrollbar { display: none; }
+  .st-dbtn[data-tip]::after { display: none; }   /* tooltip vô nghĩa trên touch */
+
+  /* scene label dời lên trên dock */
+  #st-scene-label {
+    left: var(--st-s-3);
+    right: var(--st-s-3);
+    max-width: none;
+    bottom: calc(var(--st-s-5) + var(--st-sab) + 68px);
+  }
+  .st-mock-note { display: none; }
+
+  /* CTA vé → 1 nút nổi góc phải */
+  #st-cta-tickets { top: auto; bottom: calc(var(--st-s-5) + var(--st-sab) + 128px); gap: 4px; }
+  html.st-nav-hidden #st-cta-tickets { top: auto; }
+  .st-cta { padding: 11px 12px; font-size: 11.5px; }
+  .st-cta span { display: none; }
+  .st-cta svg { width: 20px; height: 20px; }
+
+  /* modal welcome fullscreen */
+  #st-welcome .st-modal-panel {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    border: 0;
+    padding: calc(var(--st-s-6) + var(--st-sat)) var(--st-s-4) calc(var(--st-s-4) + var(--st-sab));
+  }
+  .st-brandline { border-radius: 0; }
+  .st-welcome-head { margin-bottom: var(--st-s-4); }
+  #st-welcome-sub { font-size: 14px; }
+  /* Bản đồ là landscape nên trên máy dọc nó bị nhỏ → dồn nội dung lại,
+     bỏ khoảng trống chết, ẩn nhãn khu (cỡ chữ đó không đọc được).
+     TODO: vẽ bản đồ dọc riêng cho mobile (toạ độ xm/ym đã có sẵn trong data.js). */
+  .st-welcome-mapwrap { flex: 0 0 auto; }
+  .st-map-svg text { display: none; }
+  #st-welcome-list {
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-top: var(--st-s-3);
+    padding-top: var(--st-s-2);
+    border-top: 1px solid var(--st-n-200);
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+    mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+  }
+  .st-hotspot { width: 32px; height: 32px; }
+  .st-hotspot svg { width: 17px; height: 17px; }
+  .st-welcome-foot { flex-direction: column-reverse; align-items: stretch; gap: var(--st-s-2); margin-top: auto; }
+  #st-welcome-skip {
+    justify-content: center;
+    min-height: 46px;
+    border-radius: var(--st-r-pill);
+    background: var(--st-n-100);
+    color: var(--st-n-700);
+    font: var(--st-t-btn);
+  }
+  .st-legend { justify-content: center; }
+
+  /* share → bottom sheet */
+  #st-share { place-items: end stretch; }
+  #st-share .st-modal-panel {
+    width: 100%;
+    max-height: 88dvh;
+    border-radius: var(--st-r-xl) var(--st-r-xl) 0 0;
+    padding-bottom: calc(var(--st-s-6) + var(--st-sab));
+    transform: translateY(100%);
+  }
+  #st-share.st-open .st-modal-panel { transform: none; }
+  .st-brandline { border-radius: var(--st-r-xl) var(--st-r-xl) 0 0; }
+
+  #st-toast { top: calc(var(--st-sat) + var(--st-header-h) + 12px); }
+  #st-debug { width: calc(100vw - var(--st-s-6)); }
+  #st-hint { font-size: 13.5px; padding: 9px 14px; }
+}
+
+/* ══ ≤380px — máy nhỏ: dock bỏ label ════════════════════════════════════ */
+@media (max-width: 380px) {
+  .st-dbtn.st-v-primary, .st-dbtn.st-v-secondary { padding: 0; width: 44px; }
+  .st-dbtn.st-v-primary span, .st-dbtn.st-v-secondary span { display: none; }
+}
+
+/* ══ Landscape thấp (điện thoại xoay ngang) ═════════════════════════════ */
+@media (max-height: 460px) and (orientation: landscape) {
+  #st-dock { bottom: calc(var(--st-s-2) + var(--st-sab)); padding: 6px; }
+  .st-dbtn.st-v-primary, .st-dbtn.st-v-secondary { min-height: 38px; }
+  .st-dbtn.st-v-tonal { width: 38px; height: 38px; }
+  .st-dbtn.st-v-circle { width: 34px; height: 34px; }
+  #st-scene-label { bottom: calc(var(--st-s-2) + var(--st-sab) + 56px); }
+  #st-welcome .st-modal-panel { padding-top: var(--st-s-4); }
+  .st-welcome-head { margin-bottom: var(--st-s-3); }
+  #st-welcome-sub { display: none; }
+}
+
+/* ══ Con trỏ thô (touch) — bỏ mini-card, dùng tooltip ══════════════════ */
+@media (hover: none) {
+  .st-hotspot-card { display: none; }
+}
+
+/* ══ Màn hình rất thấp — thu header cho đỡ chiếm chỗ ════════════════════ */
+@media (max-height: 520px) {
+  :root { --st-topbar-h: 60px; --st-navbar-h: 48px; --st-navbar-top: 36px; }
+  .st-logo img { height: 68px; }
+}

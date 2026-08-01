@@ -1,4 +1,4 @@
-> Cập nhật: 2026-07-30
+> Cập nhật: 2026-08-01 (v3 — viết lại §5.3 + §5.4 theo M2/M3 đã dựng thật · D-43)
 
 # 05 — Flows & Logic
 
@@ -140,64 +140,89 @@ stateDiagram-v2
     end note
 ```
 
-## 5.3 Luồng "Chỉ đường" (M2)
+## 5.3 Luồng "Chỉ đường" (M2 · `#st-route`)
+
+> Viết lại 2026-08-01 (D-43). Bản trước là **kế hoạch** cho một overlay chưa dựng
+> (`#st-directions`, split-view kéo được, path hardcode từng cặp). Cái đã dựng thật
+> đơn giản hơn và bám sát bản gốc — dưới đây là luồng THẬT trong `js/route.js`.
 
 ```mermaid
 flowchart TD
-    A[Click #st-btn-route] --> B[overlays.open st-directions]
-    B --> C[Render bản đồ SVG + hotspot]
-    C --> D{Điểm bắt đầu?}
-    D -->|Mặc định| E["từ = scene hiện tại"]
-    D -->|Click 'Vị trí của tôi'| F["MOCK: toast 1s → ghim marker 'me'<br/>ở toạ độ hardcode gần cổng"]
-    E --> G[Chọn điểm đến]
+    A[Click #st-btn-route] --> B["overlays.open('st-route')"]
+    B --> C["store phát 'modal:open'"]
+    C --> D{"đã có from/to chưa?"}
+    D -->|chưa| E["from = scene đang xem<br/>to = điểm đầu tiên khác from"]
+    D -->|rồi| F[giữ nguyên lựa chọn cũ]
+    E --> G[render]
     F --> G
-    G --> H{Có path hardcode<br/>cho cặp này?}
-    H -->|Có| I[Vẽ path đã định nghĩa]
-    H -->|Không| J["Vẽ đường thẳng bo góc<br/>qua 1 waypoint giữa"]
-    I --> K["Tính độ dài: path.getTotalLength × SCALE<br/>→ mét → chia 1.25 m/s → phút"]
-    J --> K
-    K --> L[Hiện summary + animate dash]
-    L --> M{User làm gì?}
-    M -->|Chia đôi màn hình| N["MOCK split-view:<br/>viewer nửa trên + map nửa dưới<br/>divider kéo được"]
-    M -->|Bắt đầu dẫn đường| O["MOCK: highlight từng chặng<br/>1.2s/chặng + toast hướng đi"]
-    M -->|Đóng| P[overlays.close]
-    M -->|Click hotspot khác| G
-    N --> M
-    O --> M
+    G --> H["distance(a,b) — Euclid × 1.15, tròn 5 m"]
+    H --> I{"a.key === b.key?"}
+    I -->|có| J["ô vàng 'Điểm đi và điểm đến đang trùng nhau'<br/>KHÔNG vẽ đường, KHÔNG sinh chỉ dẫn"]
+    I -->|không| K["buildSteps(a,b,m) từ hash(a>b)<br/>pathD(a,b) cùng số điểm gãy"]
+    K --> L["vẽ đường + chạy lại animation dash<br/>rải pin, gắn mốc A/B"]
+    J --> M{User làm gì?}
+    L --> M
+    M -->|đổi select| G
+    M -->|Đổi chiều| N["hoán vị from/to"] --> G
+    M -->|click pin số| O["to = key của pin"] --> G
+    M -->|click mốc A/B| P["overlays.close + viewer.goTo"]
+    M -->|nút ☰ toolbar| Q["overlays.open('st-places') → M3"]
+    M -->|+ / −| R["--st-rt-z ±0.25, kẹp 1…2.5"] --> M
+    M -->|Vị trí của tôi| S["MOCK: toast 'đang phát triển'"] --> M
+    M -->|nút cam ‹| T["class .st-rt-off → thu bảng trái"] --> M
+    M -->|× hoặc Esc| U[overlays.close]
 ```
 
-`SCALE`: hardcode sao cho `park-map.svg` full width ≈ 900 m (kích thước thực tế
-ước lượng của công viên). `// MOCK:` — bản thật lấy từ `map_geo.json`.
+**Vì sao mặc định `from` = scene đang xem:** đó là thông tin duy nhất ta thật sự
+biết về người dùng. Bản gốc mặc định "1-Cổng Thiên Tiên Môn" vì nó là bản đồ giấy
+độc lập, còn ở đây overlay mở ra từ trong tour.
 
-## 5.4 Luồng "Điểm đến" (M3)
+**`from`/`to` được nhớ giữa các lần mở** (biến module, không phải localStorage): mở
+lại để xem tiếp tuyến vừa rồi là hành vi tự nhiên, và nó cũng cho thấy kết quả ổn
+định — xem §4.4.3 của [`04-modals.md`](04-modals.md).
+
+---
+
+## 5.4 Luồng "Điểm đến" (M3 · `#st-places`)
+
+> Cũng viết lại 2026-08-01. Bản trước mô tả gộp tên trùng + lazy-load 24 thẻ cho
+> 158 điểm; prototype chỉ có 20 điểm nên **không cần cả hai**. Logic gộp tên trùng
+> vẫn còn giá trị khi port — giữ ở §5.4.1 dưới đây.
 
 ```mermaid
 flowchart TD
-    A[Click #st-btn-places] --> B[overlays.open st-places]
-    B --> C["Gộp trùng tên → 132 nhóm từ 158 entry"]
-    C --> D[Render section NỔI BẬT: 20 điểm có type]
-    D --> E["Render 24 card đầu của TẤT CẢ<br/>+ IntersectionObserver sentinel"]
-    E --> F{User làm gì?}
-    F -->|Gõ search| G["debounce 180ms<br/>→ normalize NFD bỏ dấu<br/>→ filter theo name"]
-    F -->|Click chip type| H["filter.type = type<br/>ẩn section NỔI BẬT nếu type ≠ all"]
-    F -->|Cuộn tới đáy| I[Render thêm 24 card]
-    F -->|Click card| J
-    G --> K{Có kết quả?}
-    H --> K
-    K -->|Có| L[Render lại grid]
-    K -->|Không| M["Empty state:<br/>'Không tìm thấy điểm nào khớp «xxx»'"]
-    L --> F
-    M --> F
-    I --> F
-    J["viewer.goTo(key)<br/>+ overlays.close"] --> N[scene:change]
+    A[Click #st-btn-places] --> B["overlays.open('st-places')"]
+    B --> C["lưới 20 thẻ đã render sẵn từ lúc init<br/>(không dựng lại mỗi lần mở)"]
+    C --> D{User làm gì?}
+    D -->|gõ ô tìm kiếm| E["deaccent(q) so với<br/>tên VI + tên EN + số hiệu"]
+    E --> F["thẻ không khớp → hidden (ẩn HẲN)"]
+    F --> G{còn thẻ nào?}
+    G -->|không| H["hiện #st-pl-empty"]
+    G -->|có| I["cập nhật '#/158 điểm'"]
+    D -->|bấm chip lọc| J["thẻ khác nhóm → .st-dim (chỉ LÀM MỜ)<br/>lưới đứng yên"]
+    D -->|bấm ×| K["xoá ô tìm kiếm, focus lại input"]
+    D -->|bấm 1 thẻ| L["overlays.close + viewer.goTo(key)"]
+    D -->|Esc| M[overlays.close]
+    H --> D
+    I --> D
+    J --> D
+    K --> D
 ```
 
-### Logic gộp tên trùng
+**Tìm kiếm ẩn hẳn, lọc chỉ làm mờ** — hai cơ chế khác nhau có chủ đích, lý do ở
+§4.4b.1 của [`04-modals.md`](04-modals.md).
+
+**Không debounce.** Bản kế hoạch cũ đặt 180 ms vì tính cho 158 entry; với 20 thẻ
+thì mỗi lần gõ chỉ duyệt 20 vòng lặp trên DOM có sẵn — thêm debounce chỉ làm ô
+tìm kiếm có cảm giác trễ. Khi port lên 158 điểm thì cân nhắc lại.
+
+### 5.4.1 Logic gộp tên trùng — CHƯA dùng, để dành khi port
+
+`catalog.json` có `caubachtuong`, `caubachtuong2`, `caubachtuong3`, `caubachtuong4`
+→ cả 4 cùng `name = "Cầu Bạch Tượng"`. Khi nạp đủ 158 điểm phải gộp lại, nếu không
+danh sách sẽ có 4 thẻ trùng tên không phân biệt được:
 
 ```js
-// catalog.json có 'caubachtuong', 'caubachtuong2', 'caubachtuong3', 'caubachtuong4'
-// → tất cả name = "Cầu Bạch Tượng"
-// Gộp thành 1 group:
 {
   key: 'caubachtuong',           // key của entry đầu tiên
   name: 'Cầu Bạch Tượng',
@@ -206,8 +231,9 @@ flowchart TD
 }
 ```
 
-Click card → mở `views[0]`. Trong panorama, nút "Góc nhìn khác →" chuyển vòng
-qua `views` (v2).
+Click thẻ → mở `views[0]`. Trong panorama, nút "Góc nhìn khác →" chuyển vòng qua
+`views` (v2). Xem D-19 ở [`08-decisions.md`](08-decisions.md).
+
 
 ## 5.5 Luồng navbar auto-dim
 
@@ -272,26 +298,50 @@ return ngay. Bắt buộc, không thì user click nhanh 2 hotspot → 2 fade ch�
 ## 5.7 Luồng bootstrap `app.js` — thứ tự đầy đủ
 
 ```
-1.  Parse query: welcome, pano, nav, debug
+1.  Parse query: welcome, pano, nav, debug, full, zones, lang, title, map
 2.  store.set('phase', 'loading')
-3.  ST.a11y.init()          — bind Esc global, chuẩn bị scroll lock
-4.  ST.viewer.init('#st-viewer')
-5.  ST.navbar.init()        — render topbar + navbar + drawer từ NAV_MENU
-6.  ST.controls.init()      — render dock từ DOCK_BUTTONS + popover
-7.  ST.overlays.init()      — bind [data-st-close], đăng ký M2–M6, P1
-8.  ST.welcome.init()       — chỉ render markup, CHƯA mở
-9.  Nếu ?nav=off  → document.documentElement.classList.add('st-no-nav')
-10. Nếu ?debug=1  → ST.debug.init()
-11. Đợi event 'viewer:ready'
-12. store.set('phase', 'ready')
-13. Quyết định mở welcome:
+3.  ⭐ Phạm vi (D-39):
+      ?full=1 → ST.data.SCOPE = 'full'
+      minimal = (SCOPE === 'minimal')
+      <html>.classList.toggle('st-scope-min', minimal)   ← scope.css ăn theo class này
+4.  ST.i18n.init(lang)
+5.  ST.a11y.init()          — bind Esc global, chuẩn bị scroll lock
+6.  ST.viewer.init('#st-viewer')
+7.  ST.overlays.init()      — bind [data-st-close], engine chung cho MỌI modal
+8.  ST.navbar.init()        — render topbar + navbar + drawer từ NAV_MENU
+9.  ST.controls.init()      — render cụm C từ DOCK_BUTTONS (hoặc _FULL nếu ?full=1)
+10. ST.route.init()         — ⭐ M2: toolbar + bind, lưới select điền lúc MỞ
+11. ST.places.init()        — ⭐ M3: chip + lưới 20 thẻ render sẵn luôn
+12. ST.welcome.init()       — chỉ render markup, CHƯA mở
+13. ST.i18n.apply()
+14. Nếu ?nav=off   → <html>.classList.add('st-no-nav')
+15. Nếu ?zones=1   → initZones()   ← ghost 4 vùng cấm, mặc định TẮT
+16. Nếu ?debug=1   → initDebug()
+17. Nếu đã xem welcome trước đó → ST.controls.showReopen(false)
+18. Đợi event 'viewer:ready'
+19. store.set('phase', 'ready')
+20. Quyết định mở welcome:
       ?pano=<key>   → viewer.goTo(key); KHÔNG mở welcome
       ?welcome=0    → KHÔNG mở
       ?welcome=1    → setTimeout(800) → welcome.open()
       shouldShow()  → setTimeout(800) → welcome.open()
       else          → không mở
-14. Nếu welcome KHÔNG mở → setTimeout(600) → hint.show()
+21. Nếu welcome KHÔNG mở → setTimeout(600) → controls.showHint()
+      ⚠️ showHint() tự return ngay khi SCOPE='minimal' — hint ngoài phạm vi (D-39)
 ```
+
+**Bước 3 phải chạy TRƯỚC mọi `init`.** `controls.init()` đọc `SCOPE` để chọn giữa
+`DOCK_BUTTONS` và `DOCK_BUTTONS_FULL`; đặt cờ sau đó thì cụm C render nhầm bản.
+
+**`navbar.init()` chạy ở MỌI phạm vi.** Header không bị tắt — dải trên cùng của
+trip360 trống nên navbar không đè lên control có sẵn nào (D-39).
+
+**M2/M3 nằm TRONG phạm vi `minimal`** — chúng là nội dung của chính 2 nút được giao
+redesign, không phải UI thêm vào màn hình VR (D-43). `route.init()` / `places.init()`
+vì thế chạy vô điều kiện, giống `navbar.init()`.
+
+**`route.js` chỉ điền select lúc MỞ, không lúc init:** điểm bắt đầu mặc định là scene
+đang xem, mà lúc bootstrap thì `viewer` chưa chắc sẵn sàng.
 
 **Vì sao init trước rồi mới mở:** nếu welcome mở trước khi `overlays.init()` chạy
 thì `[data-st-close]` chưa bind → nút × không hoạt động. Đây là lỗi rất dễ mắc.

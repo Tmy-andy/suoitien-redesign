@@ -1,0 +1,485 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   navbar.css — clone header suoitien.vn (D-24)
+   Mọi giá trị đánh dấu THẬT là copy nguyên từ style.css của site chính.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#st-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  /* Phải cao TỚI ĐÁY navbar, không chỉ hết dải vàng — navbar là position:absolute
+     nên không cộng vào chiều cao. Nếu thiếu, translateY(-100%) chỉ đẩy đi 90px và
+     navbar còn lòi ra khi ẩn. */
+  height: calc(var(--st-sat) + var(--st-header-h));
+  z-index: var(--st-z-navbar);
+  padding-top: var(--st-sat);
+  pointer-events: none;                /* dải trong suốt dưới navbar không chặn kéo panorama */
+  transform: translateY(0);
+  transition: transform var(--st-dur-slow) var(--st-ease),
+              opacity   var(--st-dur-slow) var(--st-ease);
+}
+#st-topbar, #st-navbar { pointer-events: auto; }
+/* Ẩn = THU LÊN TRÊN (Q20 c+d) — không phải fade */
+html.st-nav-hidden #st-header {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+html.st-no-nav #st-header,
+html.st-no-nav #st-nav-peek { display: none; }
+
+/* ══ TOPBAR — số đo THẬT tại viewport 1440 (đo bằng browser trên site gốc) ══
+   dải vàng 0→90 · .navbar-wrapper padding 0 30px · .container-cus width 85%
+   → nội dung x 134→1307 · ul y 15→55 (h 40) · li y 20→50 (h 30) · icon 30×30 */
+#st-topbar {
+  height: var(--st-topbar-h);
+  padding: 0 30px;                   /* THẬT: .navbar-wrapper{padding:0 30px} */
+  background: var(--st-gold-500);
+  color: #fff;                       /* THẬT: .list-top-nav{color:rgb(255,255,255)} */
+}
+.st-topbar-in {
+  width: 85%;                        /* THẬT: .container-cus{width:85%} */
+  margin: 0 auto;
+  padding-top: 15px;                 /* THẬT: ul bắt đầu ở y=15 */
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--st-s-4);
+}
+.st-tb-contact, .st-tb-right {
+  height: 40px;                      /* THẬT: .list-top-nav h=40 → li 30px căn giữa */
+  display: flex;
+  align-items: center;
+  gap: 10px;                         /* THẬT: .list-top-nav{gap:10px} */
+}
+.st-tb-contact { min-width: 0; }
+.st-tb-contact li { min-width: 0; display: flex; align-items: center; }
+/* ⚠️ PHẢI giới hạn ở con TRỰC TIẾP của <li>.
+   Viết `.st-tb-contact span` sẽ trúng luôn `.st-tb-ic` (nó cũng là <span> nằm
+   trong .st-tb-contact) — mà `.st-tb-contact span` có specificity (0,1,1) cao hơn
+   `.st-tb-ic` (0,1,0) nên nó ĐÈ `display:grid` thành `inline-flex`, làm mất
+   `place-items:center` → icon dán vào mép TRÁI, lệch đúng 7.5px. */
+.st-tb-contact > li > a,
+.st-tb-contact > li > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;                          /* THẬT: .list-top-nav li{gap:5px} */
+  /* THẬT: Arima Madurai 14px w700 — KHÔNG phải Be Vietnam Pro */
+  font: 700 14px/1.5 var(--st-font-display);
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #fff;
+}
+
+/* Icon: tròn 30px nền #FED12B, glyph TRẮNG 15px — THẬT */
+.st-tb-ic {
+  flex: none;
+  width: 30px; height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-gold-icon);
+  color: #fff;
+  transition: all var(--st-dur-nav) var(--st-ease);
+}
+/* 15px = ĐÚNG `font-size:15px` của `.list-top-nav i` trên site gốc. Symbol
+   i-fa-* nay là outline FontAwesome 4.6.3 thật, dựng theo tỉ lệ em (1792 unit
+   → 24 viewBox) nên svg 15px cho glyph to đúng bằng bản gốc. Không phóng 1.5×
+   như trước (hồi đó icon tự vẽ nhỏ hơn ô 24 nên phải bù). */
+.st-tb-ic svg { width: 15px; height: 15px; }
+/* THẬT: .list-top-nav li:hover i{transform:scale(1.2);background:rgb(231,49,59);
+   box-shadow:rgb(255,255,255) 0 0 4px} */
+.st-tb-contact li:hover .st-tb-ic,
+.st-tb-social a:hover .st-tb-ic {
+  transform: scale(1.2);
+  background: var(--st-red-line);
+  box-shadow: 0 0 4px #fff;
+}
+
+/* Cờ — đo trên site gốc: vi.png/en.png là ảnh 24×18, `.flag-language li img`
+   có `height:20px` + `border:1px` + box-sizing border-box → hộp đúng 26×20,
+   phần ảnh 24×18 KHÔNG bị phóng. Vì vậy viewBox phải là 24×18 (trước dùng
+   26×20 nên tỉ lệ sai và ngôi sao VN vẽ quá to bị viền cắt mất cánh dưới).
+   `padding: 0 10px` = THẬT: `.list-top-nav ul{padding:10px}` áp lên
+   ul.flag-language → cộng với gap 10px của hàng, khoảng hở từ cờ EN sang
+   vòng tròn social là 20px chứ không phải 10px. */
+#st-lang { display: flex; align-items: center; gap: 5px; padding: 0 10px; }
+.st-lang-btn { display: block; line-height: 0; }
+.st-flag {
+  width: 26px; height: 20px;
+  border: 1px solid #fff;
+  opacity: .4;
+  transition: opacity var(--st-dur-nav) var(--st-ease);
+}
+.st-lang-btn:hover .st-flag { opacity: .8; }
+.st-lang-btn[aria-pressed="true"] .st-flag { opacity: 1; }
+
+/* Social — cùng tròn vàng 30px, gap 10px (THẬT) */
+.st-tb-social { display: flex; align-items: center; gap: 10px; }
+.st-tb-social a { display: block; }
+
+/* ══ NAVBAR — xanh #128125, pill 50px, width 90% (THẬT) ═══════════════ */
+#st-navbar {
+  position: absolute;                          /* đè lên dải vàng — THẬT */
+  top: calc(var(--st-sat) + var(--st-navbar-top));
+  left: 0; right: 0;
+  width: 90%;                                  /* THẬT */
+  max-width: 1560px;
+  margin: 0 auto;
+  height: var(--st-navbar-h);
+  /* KHÔNG đặt padding cố định. Gốc để flex tự chia chỗ thừa nên khoảng thụt
+     co giãn MƯỢT theo bề rộng (đo được: 11.0% → 8.8% → 7.2% → 5.3% → 4.7%
+     ở 1920/1600/1440/1280/1100). Đặt padding cứng + @media = giật từng nấc. */
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-2);
+  background: var(--st-green-600);             /* THẬT */
+  border-radius: var(--st-r-pill);             /* THẬT: 50px */
+  box-shadow: var(--st-sh-brand);              /* THẬT: 0 2px 0 #E7313B */
+}
+#st-navbar::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -3px;
+  width: 49%;
+  height: 5px;
+  margin: auto;
+  border-radius: 1000%;
+  background: linear-gradient(90deg,
+    var(--st-red-grad) 0%, rgba(255,255,255,.97) 50%, var(--st-red-grad) 100%);
+}
+
+.st-nav-list {
+  display: flex;
+  align-items: center;
+  gap: 10px;   /* THẬT: .halink-nav-menu{gap:10px} */
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Mỗi nhóm canh GIỮA nửa của mình → thụt lề ngoài và khoảng cách tới logo
+   luôn bằng nhau và co giãn mượt, không cần @media.
+   padding 2 bên bằng nhau để logo vẫn nằm ĐÚNG TÂM navbar. */
+.st-nav-left,
+.st-nav-right { justify-content: center; padding: 0 42px; }
+
+.st-nav-item { position: relative; }
+.st-nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 41px;                                /* THẬT: li h=41 */
+  padding: 0 7px 0 0;                          /* THẬT: a{padding:0 7px 0 0} */
+  font: 700 14px/1 var(--st-font-display);     /* THẬT: Arima Madurai 14px w700 */
+  letter-spacing: normal;                      /* THẬT */
+  text-transform: uppercase;                   /* THẬT */
+  color: #fff;                                 /* THẬT */
+  white-space: nowrap;
+}
+/* KHÔNG có nền khi hover — site chính ghi rõ:
+   `.search-form-menu .halink-nav-menu li a:hover { background: none; }`
+   Phản hồi hover CHỈ là gạch chân gradient bên dưới. */
+.st-nav-link .st-caret { width: 13px; height: 13px; opacity: .8; }
+
+/* Gạch chân hover — gradient trắng mờ dần, .3s (THẬT) */
+.st-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 7px;                         /* THẬT: a::after{left:0;right:0} */
+  bottom: 0;
+  height: 2px;
+  width: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,.42) 50%, rgba(255,255,255,0) 100%);
+  transition: width var(--st-dur-nav) var(--st-ease);
+}
+.st-nav-link:hover::after,
+.st-nav-item.st-open > .st-nav-link::after { width: calc(100% - 7px); }
+
+/* Tab VR360 — luôn active (Q19).
+   Cũng KHÔNG dùng nền: dấu hiệu "đang ở trang này" chỉ là gạch chân đứng sẵn
+   (không cần hover). Giữ đúng ngôn ngữ của site chính. */
+#st-nav-vr360 .st-nav-link::after {
+  width: calc(100% - 7px);
+  height: 2.5px;
+  background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,.75) 60%, rgba(255,255,255,.35) 100%);
+}
+
+/* Logo — Ở GIỮA navbar, tràn CẢ LÊN TRÊN và XUỐNG DƯỚI (THẬT) */
+.st-logo {
+  position: relative;
+  z-index: 2;                        /* trên vệt gradient ::after */
+  flex: none;
+  width: 115px;                      /* THẬT: logo w=115 */
+  margin: 0 var(--st-s-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--st-dur-base) var(--st-ease);
+}
+.st-logo img {
+  height: 111px;             /* THẬT: logo h=111, căn giữa navbar → tràn 26px mỗi bên */
+  width: auto;
+  /* KHÔNG shadow — gốc: filter:none */
+}
+.st-logo:hover { transform: translateY(-2px); }
+/* Fallback khi ảnh logo lỗi (offline) */
+.st-logo.st-fallback img { display: none; }
+.st-logo.st-fallback::after {
+  content: "SUỐI TIÊN";
+  font: var(--st-t-nav);
+  font-size: 19px;
+  letter-spacing: .06em;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.35);
+}
+
+/* Nút search — THẬT: `.search-item-show i{background:#fff;padding:10px;
+   border-radius:50px;box-shadow:rgba(0,0,0,.48) 0 0 10px}` · glyph 16px màu
+   rgb(33,37,41) (KHÔNG phải xanh lá) · hover đổi sang quầng trắng.
+   ⚠️ position:absolute — nếu để trong luồng flex, nút chiếm chỗ ở nửa phải và
+   đẩy logo LỆCH TRÁI đúng 1/2 bề rộng nút. */
+#st-btn-search {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px; height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-pill);
+  background: #fff;
+  color: #212529;
+  box-shadow: 0 0 10px rgba(0,0,0,.48);
+  transition: box-shadow var(--st-dur-nav) var(--st-ease);
+}
+#st-btn-search:hover { box-shadow: 0 0 10px rgba(255,255,255,.38); }
+#st-btn-search svg { width: 16px; height: 16px; }
+
+#st-btn-menu {
+  flex: none;
+  width: 38px; height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: #fff;
+  color: #212529;
+  box-shadow: 0 0 10px rgba(0,0,0,.48);
+}
+#st-btn-menu svg { width: 18px; height: 18px; }
+#st-btn-menu { display: none; }
+
+/* ══ DROPDOWN — nền XANH giống navbar (THẬT), không phải trắng ════════ */
+.st-nav-dd {
+  position: absolute;
+  top: calc(100% + 11px);                      /* dán ngay dưới mép pill + đường đỏ, không hở */
+  left: 0;
+  z-index: var(--st-z-dropdown);
+  min-width: 240px;                            /* THẬT */
+  padding: 10px 0;                             /* THẬT */
+  background: var(--st-green-600);             /* THẬT */
+  border-radius: 0;                            /* THẬT — không bo góc, không bóng */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease),
+              visibility 0s linear var(--st-dur-fast);
+}
+.st-nav-item.st-open > .st-nav-dd {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+/* Bắc cầu qua khoảng hở 6px giữa nav item và dropdown — nếu không, chuột đi
+   xuống dropdown sẽ lọt vào vùng trống → mouseleave → dropdown đóng. */
+.st-nav-dd::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  top: -13px;
+  height: 13px;
+}
+.st-nav-right .st-nav-dd { left: auto; right: 0; }
+
+.st-nav-dd a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--st-s-3);
+  padding: 9px 16px;
+  font: var(--st-t-body);
+  font-size: 14px;                             /* THẬT */
+  font-weight: 400;                            /* THẬT */
+  text-transform: none;                        /* THẬT */
+  color: rgba(255,255,255,.94);
+}
+/* Hover: KHÔNG nền — dùng đúng gạch chân gradient như nav cha */
+.st-nav-dd a::after {
+  content: "";
+  position: absolute;
+  left: 16px; right: 16px;
+  bottom: 5px;
+  height: 2px;
+  width: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,.42) 50%, rgba(255,255,255,0) 100%);
+  transition: width var(--st-dur-nav) var(--st-ease);
+}
+.st-nav-dd a:hover { color: #fff; }
+.st-nav-dd a:hover::after { width: calc(100% - 32px); }
+
+/* Dropdown nhiều cột cho "TRÒ CHƠI" (3 nhóm) */
+.st-nav-dd.st-dd-cols {
+  display: flex;
+  gap: var(--st-s-2);
+  min-width: 720px;
+  padding: 14px 10px;
+  border-radius: 0;
+}
+.st-nav-right .st-nav-dd.st-dd-cols { right: 0; }
+.st-dd-col { flex: 1 1 0; min-width: 210px; }
+.st-dd-col > h3 {
+  padding: 4px 16px 8px;
+  font: var(--st-t-xs);
+  letter-spacing: .07em;
+  color: var(--st-gold-300);
+  text-transform: uppercase;
+}
+.st-dd-col a { padding: 7px 16px; font-size: 13.5px; }
+
+/* ══ #st-nav-peek — tab mở lại header (Q20 d) ════════════════════════ */
+#st-nav-peek {
+  position: fixed;
+  top: var(--st-sat);
+  left: 50%;
+  z-index: var(--st-z-peek);
+  width: 58px; height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 0 0 14px 14px;
+  background: var(--st-green-600);
+  border-bottom: 2px solid var(--st-red-line);
+  color: #fff;
+  box-shadow: var(--st-sh-md);
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  transition: opacity var(--st-dur-base) var(--st-ease),
+              transform var(--st-dur-base) var(--st-ease),
+              height var(--st-dur-fast) var(--st-ease);
+}
+html.st-nav-hidden #st-nav-peek {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+  transition-delay: 120ms;                     /* chờ header thu xong */
+}
+#st-nav-peek svg {
+  width: 19px; height: 19px;
+  animation: st-peek-bob 1.6s ease-in-out infinite;
+}
+@keyframes st-peek-bob {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(3px); }
+}
+#st-nav-peek:hover { height: 31px; }
+#st-nav-peek:hover svg { animation: none; transform: translateY(4px); }
+/* Vùng bấm rộng 44px cho ngón tay */
+#st-nav-peek::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 44px;
+}
+
+/* ══ DRAWER mobile ═══════════════════════════════════════════════════ */
+.st-drawer-panel {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: min(86vw, 360px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: var(--st-sh-xl);
+  transform: translateX(100%);
+  transition: transform var(--st-dur-base) var(--st-ease);
+}
+#st-drawer.st-open .st-drawer-panel { transform: none; }
+
+.st-drawer-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--st-s-3);
+  padding: calc(var(--st-s-3) + var(--st-sat)) var(--st-s-4) var(--st-s-3);
+  background: var(--st-green-600);
+  box-shadow: var(--st-sh-brand);
+}
+.st-drawer-logo { height: 46px; width: auto; }
+.st-drawer-head .st-modal-close {
+  position: static;
+  background: rgba(255,255,255,.16);
+  color: #fff;
+}
+.st-drawer-nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--st-s-2) 0;
+}
+.st-dnav-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: var(--st-s-2);
+}
+.st-dnav-row > a, .st-dnav-row > span {
+  flex: 1 1 auto;
+  padding: 12px var(--st-s-4);
+  font: var(--st-t-h3);
+  color: var(--st-n-800);
+  min-width: 0;
+}
+.st-dnav-row.st-lv1 > a, .st-dnav-row.st-lv1 > span { padding-left: var(--st-s-8); font: var(--st-t-body); }
+.st-dnav-row.st-lv2 > a, .st-dnav-row.st-lv2 > span { padding-left: var(--st-s-12); font: var(--st-t-sm); color: var(--st-n-600); }
+.st-dnav-toggle {
+  flex: none;
+  width: 44px; height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--st-n-500);
+}
+.st-dnav-toggle svg { width: 18px; height: 18px; transition: transform var(--st-dur-fast) var(--st-ease); }
+.st-dnav-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.st-dnav-sub { display: none; }
+.st-dnav-sub.st-open { display: block; }
+.st-dnav-row.st-current > a { color: var(--st-green-600); }
+.st-dnav-row.st-current { background: var(--st-green-50); }
+
+.st-drawer-foot {
+  flex: none;
+  padding: var(--st-s-4) var(--st-s-4) calc(var(--st-s-4) + var(--st-sab));
+  border-top: 1px solid var(--st-n-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--st-s-3);
+}
+.st-drawer-foot .st-df-links { display: flex; flex-direction: column; gap: var(--st-s-2); }
+.st-drawer-foot .st-df-links a {
+  display: flex; align-items: center; gap: var(--st-s-2);
+  font: var(--st-t-sm); color: var(--st-n-700);
+}
+.st-drawer-foot .st-df-links svg { width: 16px; height: 16px; color: var(--st-green-600); }
+.st-drawer-foot .st-df-social { display: flex; gap: var(--st-s-1); }
+.st-drawer-foot .st-df-social a {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-green-50); color: var(--st-green-700);
+}
+.st-drawer-foot .st-df-social svg { width: 17px; height: 17px; }

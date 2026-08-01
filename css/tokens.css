@@ -1,0 +1,154 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   tokens.css — NGUỒN DUY NHẤT của mọi giá trị design.
+   Màu + font đọc thật từ suoitien.vn/.../theme/css/style.css (2026-07-30).
+   Đổi brand? Sửa DUY NHẤT file này. Xem docs/02-design-system.md
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand green — thang dẫn xuất từ #128125 (site dùng 54 lần) ─────── */
+  --st-green-50:  #e9f7ec;
+  --st-green-100: #c9ecd1;
+  --st-green-200: #95d9a6;
+  --st-green-300: #5cbf76;
+  --st-green-400: #65a723;   /* THẬT — lá non */
+  --st-green-500: #169e2c;
+  --st-green-600: #128125;   /* THẬT — PRIMARY, nền navbar */
+  --st-green-700: #0e6b2e;   /* THẬT — màu nút VR hiện tại, dùng cho pressed */
+  --st-green-800: #0a5220;
+  --st-green-900: #063514;
+
+  /* ── Brand gold — nền topbar ────────────────────────────────────────── */
+  --st-gold-100: #fef4d6;
+  --st-gold-200: #fde79f;
+  --st-gold-300: #fbd255;    /* THẬT — nền nút Mua vé */
+  --st-gold-400: #f0bc24;
+  --st-gold-500: #dea800;    /* THẬT — nền topbar */
+  --st-gold-600: #b88800;
+  --st-gold-icon: #fed12b;   /* THẬT — nền tròn của icon topbar (.list-top-nav i) */
+
+  /* ── Brand red — chữ nút vé + đường viền nhận diện ──────────────────── */
+  --st-red-400:  #f53d2d;    /* THẬT */
+  --st-red-500:  #eb0029;    /* THẬT — chữ nút Mua vé */
+  --st-red-600:  #d6282e;    /* THẬT — gradient viền chạy */
+  --st-red-line: #e7313b;    /* THẬT — box-shadow 2px dưới navbar */
+  --st-red-grad: #d9242c;    /* THẬT — vệt gradient ::after */
+  --st-orange-500: #ff7b01;  /* THẬT */
+
+  /* ── Neutral (khớp rgba(15,23,42) / #1e293b / #cbd5e1 của floorplan.css) */
+  --st-n-0:   #ffffff;
+  --st-n-50:  #f8fafc;
+  --st-n-100: #f1f5f9;
+  --st-n-200: #e2e8f0;
+  --st-n-300: #cbd5e1;
+  --st-n-400: #94a3b8;
+  --st-n-500: #64748b;
+  --st-n-600: #475569;
+  --st-n-700: #334155;
+  --st-n-800: #1e293b;
+  --st-n-900: #0f172a;
+
+  /* ── Bề mặt — LIGHT (Q25 = a) ───────────────────────────────────────── */
+  --st-surface:        #ffffff;
+  --st-surface-blur:   rgba(255,255,255,.82);
+  --st-surface-hi:     #ffffff;
+  --st-surface-border: rgba(18,129,37,.14);   /* viền có hue brand, không xám */
+  --st-blur:           blur(14px) saturate(120%);
+  --st-scrim:          rgba(6,12,20,.52);
+  --st-scrim-blur:     blur(8px);
+
+  /* ── Typography — Arima Madurai (site) + Be Vietnam Pro (body) · D-23 ─ */
+  --st-font-display: 'Arima Madurai','Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',cursive;
+  --st-font-ui:      'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+
+  --st-t-display: 700 clamp(25px,3.6vw,41px)/1.14 var(--st-font-display);
+  --st-t-h1:      700 clamp(21px,2.6vw,29px)/1.2  var(--st-font-display);
+  --st-t-h2:      700 20px/1.3 var(--st-font-display);
+  --st-t-nav:     700 15px/1   var(--st-font-display);
+  --st-t-btn:     700 15px/1   var(--st-font-display);
+  --st-t-h3:      700 16px/1.35 var(--st-font-ui);
+  --st-t-body:    400 15px/1.55 var(--st-font-ui);
+  --st-t-sm:      500 13px/1.5  var(--st-font-ui);
+  --st-t-xs:      700 11px/1.4  var(--st-font-ui);
+
+  /* ── Spacing (thang 4px) ────────────────────────────────────────────── */
+  --st-s-1: 4px;  --st-s-2: 8px;  --st-s-3: 12px; --st-s-4: 16px;
+  --st-s-5: 20px; --st-s-6: 24px; --st-s-8: 32px; --st-s-10: 40px;
+  --st-s-12: 48px; --st-s-16: 64px;
+
+  /* ── Safe area (iPhone notch / home bar) ────────────────────────────── */
+  --st-sat: env(safe-area-inset-top, 0px);
+  --st-sab: env(safe-area-inset-bottom, 0px);
+  --st-sal: env(safe-area-inset-left, 0px);
+  --st-sar: env(safe-area-inset-right, 0px);
+
+  /* ══ VÙNG CẤM — UI CÓ SẴN của trip360, tuyệt đối không đè lên (D-40) ═══
+     Prototype chỉ giao cụm C (dưới-trái). 4 cụm còn lại đã tồn tại trên bản
+     3DVista thật; nếu design mới lấn vào, khi ghép lên site nó sẽ CHỒNG và
+     che mất control gốc. Các token này là ràng buộc hình học, mọi rule đặt
+     vị trí phải tham chiếu chúng thay vì gõ số tay.
+     Số đo: docs/00-requirements.md §0.3 + js/data.js RESERVED_ZONES. */
+  --st-rz-a-h:  60px;    /* ⓐ trên-phải  — VN + chia sẻ */
+  --st-rz-b-w:  244px;   /* ⓑ trái       — sidebar danh mục (đã gồm lề) */
+  --st-rz-d-w:  340px;   /* ⓓ dưới-giữa  — pill 4 nút (đã cộng lề an toàn 2×20) */
+  --st-rz-d-h:  76px;    /* ⓓ chiều cao pill + lề dưới */
+  --st-rz-e-w:  72px;    /* ⓔ phải-giữa  — 2 nút tròn */
+
+  /* Bề rộng tối đa cụm C trước khi chạm mép trái của cụm ⓓ. */
+  --st-c-max-w: calc(50vw - var(--st-rz-d-w) / 2 - var(--st-s-4));
+
+  /* ── Chiều cao header ───────────────────────────────────────────────── */
+  /* Cấu trúc header giống site chính: dải vàng cao 90px, navbar là pill ĐÈ LÊN
+     dải vàng từ y=60px (`.header-content{height:90px}` + `.container-wrapper
+     {position:absolute; top:60px; height:65%}`) → navbar tràn xuống dưới dải vàng. */
+  --st-topbar-h:  90px;
+  --st-navbar-h:  58px;
+  --st-navbar-top: 60px;
+  --st-header-h:  calc(var(--st-navbar-top) + var(--st-navbar-h));
+
+  /* ── Radius (site dùng 50px cho navbar → pill) ──────────────────────── */
+  --st-r-sm: 8px; --st-r-md: 12px; --st-r-lg: 18px; --st-r-xl: 24px;
+  --st-r-pill: 999px; --st-r-circle: 50%;
+
+  /* ── Shadow ─────────────────────────────────────────────────────────── */
+  --st-sh-sm:    0 1px 2px rgba(18,19,18,.08), 0 1px 3px rgba(18,19,18,.10);
+  --st-sh-md:    0 2px 4px rgba(18,19,18,.06), 0 4px 12px rgba(18,19,18,.12);
+  --st-sh-lg:    0 8px 24px rgba(18,19,18,.14), 0 2px 6px rgba(18,19,18,.08);
+  --st-sh-xl:    0 24px 64px rgba(6,12,20,.34);
+  --st-sh-brand: 0 2px 0 var(--st-red-line);           /* đường đỏ dưới navbar */
+  --st-sh-cta:   0 4px 14px rgba(222,168,0,.45);
+  --st-sh-focus: 0 0 0 3px rgba(18,129,37,.40);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --st-dur-fast:  140ms;
+  --st-dur-base:  240ms;
+  --st-dur-nav:   300ms;    /* khớp transition: all .3s của site */
+  --st-dur-slow:  400ms;
+  --st-dur-scene: 500ms;
+  --st-ease:        cubic-bezier(.4,0,.2,1);
+  --st-ease-out:    cubic-bezier(.16,1,.3,1);
+  --st-ease-spring: cubic-bezier(.34,1.56,.64,1);
+
+  /* ── Z-index — KHÔNG hardcode z-index ở file CSS nào khác ───────────── *
+   * Bản thật phải dịch lên >10010 (floorplan.css chiếm 10000-10009).      *
+   * Xem docs/07-integration.md §7.4                                       */
+  --st-z-viewer:      0;
+  --st-z-hint:        5;
+  --st-z-scene-label: 10;
+  --st-z-dock:        20;
+  --st-z-cta:         30;
+  --st-z-navbar:      40;
+  --st-z-dropdown:    45;
+  --st-z-peek:        50;
+  --st-z-modal:       70;
+  --st-z-drawer:      75;
+  --st-z-toast:       85;
+  --st-z-debug:       90;
+}
+
+/* Trình duyệt không hỗ trợ backdrop-filter → tăng độ đặc để chữ vẫn đọc được */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --st-surface-blur: rgba(255,255,255,.94);
+    --st-scrim:        rgba(6,12,20,.72);
+  }
+}

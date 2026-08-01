@@ -1,0 +1,249 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   overlays.css — khung modal dùng chung + share/help/placeholder + toast
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.st-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--st-z-modal);
+  display: grid;
+  place-items: center;
+  visibility: hidden;
+  pointer-events: none;
+}
+.st-modal.st-open { visibility: visible; pointer-events: auto; }
+#st-drawer { z-index: var(--st-z-drawer); place-items: stretch; }
+
+/* ══ Overlay TOÀN MÀN HÌNH (M2 chỉ đường · M3 danh sách · D-43) ══════════
+   Khác .st-modal-panel ở chỗ: không canh giữa, không scrim, không bo góc —
+   nó là một "trang" phủ kín, đúng như 2 overlay có sẵn trên trip360.
+   Vòng đời vẫn do js/overlays.js lo. */
+.st-fs { place-items: stretch; }
+.st-fs-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--st-n-0);
+  opacity: 0;
+  transform: scale(.99);
+  transition: opacity var(--st-dur-base) var(--st-ease-out),
+              transform var(--st-dur-base) var(--st-ease-out);
+}
+.st-fs.st-open .st-fs-panel { opacity: 1; transform: none; }
+
+.st-fs-close {
+  position: absolute;
+  top: var(--st-s-5); right: var(--st-s-5);
+  z-index: 4;
+  width: 52px; height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-n-700);
+  color: #fff;
+  box-shadow: var(--st-sh-md);
+  transition: background var(--st-dur-fast) var(--st-ease);
+}
+.st-fs-close:hover { background: var(--st-n-900); }
+.st-fs-close svg { width: 21px; height: 21px; }
+
+.st-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--st-scrim);
+  -webkit-backdrop-filter: var(--st-scrim-blur);
+  backdrop-filter: var(--st-scrim-blur);
+  opacity: 0;
+  transition: opacity var(--st-dur-slow) var(--st-ease-out);
+}
+.st-modal.st-open .st-scrim { opacity: 1; }
+
+.st-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 520px);
+  max-height: 90dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--st-s-8) var(--st-s-6) var(--st-s-6);
+  border-radius: var(--st-r-xl);
+  background: #fff;
+  border: 1px solid var(--st-surface-border);
+  box-shadow: var(--st-sh-xl);
+  opacity: 0;
+  transform: scale(.94) translateY(16px);
+  transition: opacity var(--st-dur-slow) var(--st-ease-out),
+              transform var(--st-dur-slow) var(--st-ease-out);
+}
+.st-modal.st-open .st-modal-panel { opacity: 1; transform: none; }
+/* Trong lúc morph FLIP, JS lái transform → tắt transition của CSS */
+.st-modal.st-morphing .st-modal-panel { transition: none; }
+
+.st-modal-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 2;
+  width: 40px; height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-n-100);
+  color: var(--st-n-600);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease);
+}
+.st-modal-close:hover { background: var(--st-n-200); color: var(--st-n-900); }
+.st-modal-close svg { width: 19px; height: 19px; }
+
+.st-modal-panel h2 {
+  font: var(--st-t-h1);
+  color: var(--st-n-900);
+  margin-bottom: var(--st-s-3);
+  padding-right: 44px;
+}
+
+/* ── Share ────────────────────────────────────────────────────────────── */
+.st-share-scene {
+  font: var(--st-t-sm);
+  color: var(--st-n-500);
+  margin-bottom: var(--st-s-4);
+}
+.st-copyrow { display: flex; gap: var(--st-s-2); margin-bottom: var(--st-s-4); }
+.st-copyrow input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;
+  padding: 0 var(--st-s-3);
+  border: 1px solid var(--st-n-200);
+  border-radius: var(--st-r-md);
+  background: var(--st-n-50);
+  font: var(--st-t-sm);
+  color: var(--st-n-700);
+}
+.st-copyrow input:focus-visible { border-color: var(--st-green-600); }
+.st-share-social { display: flex; gap: var(--st-s-2); margin-bottom: var(--st-s-4); }
+.st-share-social a {
+  width: 46px; height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-md);
+  background: var(--st-green-50);
+  color: var(--st-green-700);
+  transition: background var(--st-dur-fast) var(--st-ease), transform var(--st-dur-fast) var(--st-ease);
+}
+.st-share-social a:hover { background: var(--st-green-100); transform: translateY(-2px); }
+.st-share-social svg { width: 20px; height: 20px; }
+
+/* ── Help ─────────────────────────────────────────────────────────────── */
+.st-help-steps { display: flex; flex-direction: column; gap: var(--st-s-3); margin-bottom: var(--st-s-5); }
+.st-help-steps li { display: flex; gap: var(--st-s-3); align-items: flex-start; }
+.st-help-ic {
+  flex: none;
+  width: 40px; height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  color: var(--st-green-600);
+  box-shadow: inset 0 0 0 1.75px var(--st-green-200);
+}
+.st-help-ic svg { width: 19px; height: 19px; }
+.st-help-steps h3 { font: var(--st-t-h3); color: var(--st-n-900); margin-bottom: 2px; }
+.st-help-steps p { font: var(--st-t-sm); color: var(--st-n-500); }
+.st-check {
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-2);
+  font: var(--st-t-sm);
+  color: var(--st-n-600);
+  cursor: pointer;
+}
+.st-check input { width: 18px; height: 18px; accent-color: var(--st-green-600); cursor: pointer; }
+
+/* ── Placeholder "overlay đã có sẵn" (D-09v2) ─────────────────────────── */
+#st-existing .st-modal-panel { text-align: center; }
+#st-existing h2 { padding-right: 0; }
+.st-existing-icon {
+  width: 56px; height: 56px;
+  margin: 0 auto var(--st-s-4);
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-green-50);
+  color: var(--st-green-600);
+}
+.st-existing-icon svg { width: 26px; height: 26px; }
+.st-existing-body {
+  font: var(--st-t-body);
+  color: var(--st-n-600);
+  margin-bottom: var(--st-s-4);
+  text-wrap: pretty;
+}
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
+#st-toast {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--st-sat) + var(--st-header-h) + 16px);
+  transform: translateX(-50%);
+  z-index: var(--st-z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--st-s-2);
+  pointer-events: none;
+  width: max-content;
+  max-width: min(92vw, 460px);
+}
+.st-toast-item {
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-2);
+  padding: 11px 18px;
+  border-radius: var(--st-r-pill);
+  background: rgba(15,23,42,.92);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font: var(--st-t-sm);
+  font-weight: 600;
+  text-align: center;
+  box-shadow: var(--st-sh-lg);
+  animation: st-toast-in var(--st-dur-base) var(--st-ease-out);
+}
+.st-toast-item.st-out { animation: st-toast-out var(--st-dur-base) var(--st-ease) forwards; }
+.st-toast-item.st-t-success { box-shadow: var(--st-sh-lg), inset 0 0 0 1.5px var(--st-green-400); }
+.st-toast-item.st-t-warn    { box-shadow: var(--st-sh-lg), inset 0 0 0 1.5px var(--st-gold-500); }
+.st-toast-item svg { width: 17px; height: 17px; flex: none; }
+@keyframes st-toast-in  { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes st-toast-out { to { opacity: 0; transform: translateY(-8px); } }
+
+/* ── Debug panel ──────────────────────────────────────────────────────── */
+#st-debug {
+  position: fixed;
+  left: calc(var(--st-s-3) + var(--st-sal));
+  top: calc(var(--st-sat) + var(--st-header-h) + 16px);
+  z-index: var(--st-z-debug);
+  width: 250px;
+  padding: var(--st-s-3);
+  border-radius: var(--st-r-md);
+  background: rgba(15,23,42,.94);
+  color: #cbd5e1;
+  font: 500 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  box-shadow: var(--st-sh-lg);
+}
+#st-debug h4 { font: 700 11px/1.4 ui-monospace, monospace; color: #fff; letter-spacing: .08em; margin-bottom: 6px; text-transform: uppercase; }
+#st-debug .st-dbg-row { display: flex; justify-content: space-between; gap: 8px; }
+#st-debug .st-dbg-row b { color: #fff; font-weight: 600; }
+#st-debug .st-dbg-grp { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.14); }
+#st-debug button {
+  padding: 5px 9px;
+  margin: 3px 3px 0 0;
+  border-radius: 6px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font: 600 11px/1 ui-monospace, monospace;
+}
+#st-debug button:hover { background: rgba(255,255,255,.24); }
+#st-debug button.st-on { background: var(--st-green-500); }

@@ -41,13 +41,51 @@ Các file bắt buộc phải có và phải khớp với code thực tế:
 - Giữ nguyên các seam đã có trên site thật: `window.VRCore`, `#fp-overlay`, `#fp-fabs`.
 - Mọi thứ mô phỏng (mock) phải comment rõ `// MOCK:` để dev biết chỗ cần nối API thật.
 
-## Bối cảnh kỹ thuật site thật (đã verify 2026-07-30)
+## Bối cảnh kỹ thuật (đã verify 2026-07-30)
+
+### Trang VR — https://suoitien.trip360.vn/
 
 - Engine: **3DVista** (`vr-360/lib/tdvplayer.js` + `vr-360/script.js`), `<base href="vr-360/">`.
 - Seam điều hướng: `packages/vr-core/index.js` → `window.VRCore`
   (`ensureTourLoaded`, `mountViewer`, `navigateToPano`, `getCurrentPanoInfo`, `getCurrentPanoId`).
-- Overlay bản đồ hiện có: `js/floorplan.js` + `js/floorplan.dc.html` (React/DC) + `js/floorplan.css`.
-- Dữ liệu: `data/catalog.json` (158 destinations: `name`, `type`, `icon`, `pano`), map `map/img/map.jpg` (~1.2 MB).
-- 2 nút hiện tại: `#fp-launch` "Chỉ đường" (`#0e6b2e`), `#fp-list-launch` "Điểm đến" (`#1769ff`), trong `#fp-fabs` (fixed left/bottom).
-- Font site VR: `Be Vietnam Pro`.
+- Overlay bản đồ hiện có: `js/floorplan.js` + `js/floorplan.dc.html` (React/DC, 173 KB) + `js/floorplan.css`.
+- Dữ liệu: `data/catalog.json` (158 destinations: `name`, `type`, `icon`, `pano`), `map/img/map.jpg` (~1.2 MB),
+  `map/map_{places,places_content,panos,graph,geo,locales}.json`.
+- Font trang VR: `Be Vietnam Pro`.
 - Analytics: `js/vr360-tracking.js` → `/backend/analytics/track.php`.
+- **5 cụm control hiện có** (từ ảnh khách gửi): ⓐ VN+share trên-phải · ⓑ sidebar trái
+  (THAM QUAN/ẨM THỰC/FARM/DỊCH VỤ/VỊ TRÍ/LIÊN HỆ) · ⓒ Chỉ đường+Điểm đến dưới-trái ·
+  ⓓ **VR/compass/sound/fullscreen dưới-GIỮA** (pill trắng, icon circle viền xanh) ·
+  ⓔ 2 nút tròn phải-giữa. → Xem `docs/00-requirements.md` §0.3.
+
+### Site chính — https://suoitien.vn/ (NGUỒN CHUẨN cho màu & font)
+
+CSS: `halink-content/themes/halink-c5/public/theme/css/style.css`
+
+| Hex | Vai trò |
+|---|---|
+| `#128125` | **Xanh lá thương hiệu** — navbar, submenu, heading (dùng 54 lần) |
+| `#DEA800` | **Vàng** — nền topbar |
+| `#EB0029` | **Đỏ** — chữ nút "Mua vé" |
+| `#E7313B` | Đỏ — `box-shadow: 0 2px 0` dưới navbar |
+| `#FBD255` | Vàng nhạt — nền nút "Mua vé" |
+| `#D6282E` `#F53D2D` `#FF7B01` `#65A723` `#148225` | phụ |
+
+- Font: **`Arima Madurai`** (Google Fonts, w100–700, **có subset `vietnamese`**).
+  → Dùng hệ 2 font, xem `docs/02-design-system.md` §2.2 và D-23.
+- Navbar: `border-radius: 50px`, `width: 90%`, logo **ở giữa**, chữ trắng bold UPPERCASE,
+  có **đường đỏ 2px + vệt gradient đỏ→trắng→đỏ** dưới đáy (chi tiết nhận diện, phải clone).
+- Menu: **84 mục, 3 cấp**, href thật — xem `docs/06-data.md` §6.6.
+- Link: mua vé `/chon-ve` · bản đồ `/ban-do` · farm `stf.suoitien.vn` ·
+  logo `/halink-content/uploads/logosuoitien.png`.
+
+### Chốt quan trọng từ khách (2026-07-30)
+
+- Prototype **chỉ dựng phần cần thay đổi**: header + modal welcome + dock nút. Overlay
+  chỉ đường/danh sách **đã hoàn thiện, không dựng lại**.
+- Tone **light/airy**, không dark-glass. Bỏ hẳn màu `#1769ff`.
+- Modal welcome: click hotspot **nhảy thẳng**, hiện **1 lần**, đóng thì **morph co về
+  1 nút trong dock** (bấm mở lại).
+- Header **slide lên** khi tương tác, có tab `#st-nav-peek` mũi tên kép nhấp nhô để mở lại.
+- **Cần bản EN** → i18n từ đầu (`data-i18n` + `COPY.vi/en`).
+- Link navbar `href="#"` + toast, nhưng **lưu URL thật** kèm cờ `LINKS_LIVE`.

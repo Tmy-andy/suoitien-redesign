@@ -1,0 +1,279 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   controls.css — CỤM C: Chỉ đường · Điểm đến (+ nút mở lại modal welcome)
+   D-05v3 / D-39 / D-40 / D-42
+
+   ⚠️ VỊ TRÍ: dưới-trái, đúng chỗ 2 nút gốc đang đứng — KHÔNG dời sang
+   dưới-giữa (D-05v2 bị lật, xem D-40). Dưới-giữa là cụm ⓓ có sẵn của trip360;
+   đè lên là che mất 4 nút VR/la bàn/âm thanh/toàn màn hình.
+
+   ⚠️ KHÔNG có div nền bọc ngoài (D-42, khách yêu cầu 2026-08-01). Các nút là
+   pill rời, mỗi nút tự mang bóng của nó — giống đúng hiện trạng trip360.
+   Mọi ràng buộc hình học đọc từ token --st-rz-* / --st-c-max-w.
+
+   Nút "Xem combo" KHÔNG ở đây — nó là thẻ vé riêng, xem css/ticket.css.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#st-dock {
+  position: fixed;
+  left: calc(var(--st-s-4) + var(--st-sal));
+  bottom: calc(var(--st-s-5) + var(--st-sab));
+  z-index: var(--st-z-dock);
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-2);
+  /* Trần cứng: không được chạm mép trái cụm ⓓ dưới-giữa */
+  max-width: var(--st-c-max-w);
+}
+
+/* Bản v2 đầy đủ (?full=1): 10 phần tử thì PHẢI có nền bọc, không thì thành
+   một dãy nút rời rạc. Giữ nguyên để đối chiếu. */
+html:not(.st-scope-min) #st-dock {
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - var(--st-s-6));
+  padding: var(--st-s-2);
+  border-radius: var(--st-r-pill);
+  background: var(--st-surface-blur);
+  -webkit-backdrop-filter: var(--st-blur);
+  backdrop-filter: var(--st-blur);
+  border: 1px solid var(--st-surface-border);
+  box-shadow: var(--st-sh-lg);
+}
+
+.st-dock-sep {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  margin: 0 2px;
+  background: var(--st-surface-border);
+}
+
+/* ── Nút chung trong dock ─────────────────────────────────────────────── */
+.st-dbtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--st-s-2);
+  flex: none;
+  border-radius: var(--st-r-pill);
+  font: var(--st-t-btn);
+  white-space: nowrap;
+  text-decoration: none;                 /* nút combo là <a> */
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease),
+              box-shadow var(--st-dur-fast) var(--st-ease);
+}
+.st-dbtn:hover { transform: translateY(-1px); }
+.st-dbtn:active { transform: translateY(0); }
+.st-dbtn svg { flex: none; }
+
+/* Vùng bấm tối thiểu 44px kể cả khi nút vẽ 40px */
+.st-dbtn::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%,-50%);
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+}
+
+/* ── 2 nút deliverable: 2 bậc ưu tiên, màu THẬT của thương hiệu ─────────
+   Không còn div nền bọc ngoài (D-42) nên MỖI nút tự mang bóng — nếu không,
+   pill trắng đặt trên panorama sáng sẽ biến mất mép.                      */
+
+/* primary — Chỉ đường */
+.st-dbtn.st-v-primary {
+  min-height: 46px;
+  padding: 0 17px;
+  background: var(--st-green-600);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(10,82,32,.28), 0 6px 16px rgba(18,129,37,.32);
+}
+.st-dbtn.st-v-primary:hover  { background: var(--st-green-500); }
+.st-dbtn.st-v-primary:active { background: var(--st-green-700); }
+.st-dbtn.st-v-primary svg { width: 19px; height: 19px; }
+
+/* secondary — Điểm đến (thay #1769ff · D-04) */
+.st-dbtn.st-v-secondary {
+  min-height: 46px;
+  padding: 0 16px;
+  background: #fff;
+  color: var(--st-green-700);
+  box-shadow: inset 0 0 0 1.5px var(--st-green-200),
+              0 1px 2px rgba(18,19,18,.10), 0 6px 16px rgba(18,19,18,.14);
+}
+.st-dbtn.st-v-secondary:hover {
+  background: var(--st-green-50);
+  box-shadow: inset 0 0 0 1.5px var(--st-green-600),
+              0 1px 2px rgba(18,19,18,.10), 0 6px 16px rgba(18,19,18,.14);
+}
+.st-dbtn.st-v-secondary svg { width: 19px; height: 19px; color: var(--st-green-600); }
+
+/* tonal — nút mở lại modal welcome (affordance của modal, D-29).
+   Nền TRẮNG + viền xanh chứ không phải nền xanh nhạt: đứng rời trên panorama
+   thì nền nhạt trông như vết bẩn, còn trắng-viền-xanh là đúng ngôn ngữ của
+   cụm ⓓ có sẵn. */
+.st-dbtn.st-v-tonal {
+  width: 46px; height: 46px;
+  border-radius: var(--st-r-circle);
+  background: #fff;
+  color: var(--st-green-700);
+  box-shadow: inset 0 0 0 1.5px var(--st-green-200),
+              0 1px 2px rgba(18,19,18,.10), 0 6px 16px rgba(18,19,18,.14);
+}
+.st-dbtn.st-v-tonal:hover {
+  background: var(--st-green-50);
+  box-shadow: inset 0 0 0 1.5px var(--st-green-600),
+              0 1px 2px rgba(18,19,18,.10), 0 6px 16px rgba(18,19,18,.14);
+}
+.st-dbtn.st-v-tonal svg { width: 20px; height: 20px; }
+
+/* Nút mở lại welcome — ẩn cho tới khi modal đóng lần đầu */
+#st-welcome-reopen { display: none; }
+#st-welcome-reopen.st-visible { display: inline-flex; }
+#st-welcome-reopen .st-dot {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 8px; height: 8px;
+  border-radius: var(--st-r-circle);
+  background: var(--st-gold-500);
+  box-shadow: 0 0 0 2px #fff;
+}
+#st-welcome-reopen .st-dot.st-pulse { animation: st-dot-pulse 1.5s var(--st-ease) 3; }
+@keyframes st-dot-pulse {
+  0%,100% { box-shadow: 0 0 0 2px #fff, 0 0 0 2px rgba(222,168,0,.7); }
+  60%     { box-shadow: 0 0 0 2px #fff, 0 0 0 9px rgba(222,168,0,0); }
+}
+
+/* ── Tooltip cho nút icon-only (hover VÀ focus) ───────────────────────── */
+.st-dbtn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(4px);
+  padding: 5px 10px;
+  border-radius: var(--st-r-sm);
+  background: var(--st-n-900);
+  color: #fff;
+  font: var(--st-t-xs);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease);
+}
+.st-dbtn[data-tip]:hover::after,
+.st-dbtn[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Popover ⋯ — mở LÊN TRÊN vì dock ở đáy ───────────────────────────── */
+#st-more-popover {
+  position: fixed;
+  z-index: var(--st-z-dropdown);
+  min-width: 216px;
+  padding: 6px;
+  border-radius: var(--st-r-lg);
+  background: #fff;
+  border: 1px solid var(--st-surface-border);
+  box-shadow: var(--st-sh-lg);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease),
+              visibility 0s linear var(--st-dur-fast);
+}
+#st-more-popover.st-open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+.st-pop-item {
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-3);
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--st-r-md);
+  font: var(--st-t-body);
+  font-weight: 500;
+  color: var(--st-n-800);
+  text-align: left;
+  transition: background var(--st-dur-fast) var(--st-ease);
+}
+.st-pop-item:hover { background: var(--st-green-50); color: var(--st-green-800); }
+.st-pop-item .st-pop-ic {
+  flex: none;
+  width: 32px; height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  color: var(--st-green-600);
+  box-shadow: inset 0 0 0 1.5px var(--st-green-200);
+}
+.st-pop-item .st-pop-ic svg { width: 17px; height: 17px; }
+.st-pop-item[aria-pressed="true"] .st-pop-ic {
+  background: var(--st-green-600);
+  color: #fff;
+  box-shadow: none;
+}
+.st-pop-sep { height: 1px; margin: 5px 8px; background: var(--st-n-200); }
+
+/* ── CTA vé — clone 3 nút vàng nổi bên phải của site chính ───────────── */
+#st-cta-tickets {
+  position: fixed;
+  right: var(--st-sar);
+  bottom: 22%;
+  z-index: var(--st-z-cta);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+.st-cta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 13px 15px;
+  border-radius: var(--st-r-md) 0 0 var(--st-r-md);
+  background: rgba(251,210,85,.92);              /* THẬT: rgba(251,210,85,.79) */
+  color: var(--st-red-500);                      /* THẬT: rgb(235,0,41) */
+  font: var(--st-t-btn);
+  font-size: 13px;
+  letter-spacing: .02em;
+  text-transform: uppercase;                     /* THẬT */
+  box-shadow: var(--st-sh-cta);
+  overflow: hidden;
+  transition: background var(--st-dur-fast) var(--st-ease),
+              padding-right var(--st-dur-base) var(--st-ease);
+}
+.st-cta:hover { background: rgba(251,215,92,.98); padding-right: 20px; }
+.st-cta svg { width: 18px; height: 18px; flex: none; }
+
+/* 4 vệt viền CHẠY — copy animate1..4 của site (D-25) */
+.st-cta i {
+  position: absolute;
+  border-radius: 100%;
+  background: linear-gradient(to right, var(--st-red-600), var(--st-green-600));
+}
+.st-cta i:nth-child(1) { top: 0; left: 0; width: 100%; height: 3px; animation: st-run1 2s linear infinite; }
+.st-cta i:nth-child(2) { top: 0; right: 0; width: 3px; height: 100%; animation: st-run2 2s linear 1s infinite;
+                         background: linear-gradient(var(--st-green-600), var(--st-red-600)); }
+.st-cta i:nth-child(3) { bottom: 0; left: 0; width: 100%; height: 3px; animation: st-run3 2s linear infinite;
+                         background: linear-gradient(to left, var(--st-green-600), var(--st-red-600)); }
+.st-cta i:nth-child(4) { top: 0; left: 0; width: 3px; height: 100%; animation: st-run4 2s linear 1s infinite;
+                         background: linear-gradient(to top, var(--st-green-600), var(--st-red-600)); }
+@keyframes st-run1 { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes st-run2 { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+@keyframes st-run3 { 0% { transform: translateX(100%); }  100% { transform: translateX(-100%); } }
+@keyframes st-run4 { 0% { transform: translateY(100%); }  100% { transform: translateY(-100%); } }

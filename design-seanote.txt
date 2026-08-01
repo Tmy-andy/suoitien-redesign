@@ -1,0 +1,202 @@
+================================================================================
+THIẾT KẾ & STYLE — THẺ UP-SELL "VÉ NƯỚC / BIỂN TIÊN ĐỒNG"  (.j-seanote)
+================================================================================
+Component: thẻ nhắc mua vé bổ sung, nổi trên sân khấu VR 360° của màn Journey.
+Nguồn:  app.js  1214–1232 (markup) · 137–157 (logic) · 426 (event)
+        styles.css 1309–1397 (style + keyframes)
+Ngày ghi: 2026-08-01
+
+
+--------------------------------------------------------------------------------
+1. Ý TƯỞNG THIẾT KẾ
+--------------------------------------------------------------------------------
+Ẩn dụ: MỘT TẤM VÉ GIẤY BỊ ĐÓNG DẤU "CHƯA BAO GỒM".
+
+- Hình khối vé thật: thân vé trắng, có phần cuống (stub) bên trái, ngăn cách
+  bằng đường răng cưa đục lỗ (perforation) + 2 khuyết tròn trên/dưới.
+- Con dấu cao su đỏ nghiêng, nằm đè nửa trong nửa ngoài mép vé — tạo cảm giác
+  giấy tờ hành chính bị "đóng dấu từ chối", nhấn mạnh khu này CHƯA có trong vé.
+- Khi người dùng bấm "Thêm vé": con dấu đỏ đổi thành "Đã thêm ✓" đập xuống,
+  rồi cả tấm vé bị "xé rời" trôi xuống và biến mất.
+- Tông màu: trắng giấy + xanh nước (teal) cho vé nước, cam (orange) cho eyebrow
+  báo hiệu "bổ sung", đỏ cho con dấu. Đặt trên nền VR tối nên có đổ bóng sâu.
+
+Giọng điệu chữ: thân thiện, không hù dọa. Nói rõ đang xem trước 360°, muốn chơi
+thật thì thêm vé — không dùng từ mang nghĩa chặn/khóa.
+
+
+--------------------------------------------------------------------------------
+2. CẤU TRÚC HTML
+--------------------------------------------------------------------------------
+.j-seanote-wrap                     ← khung định vị tuyệt đối + vùng animation xé
+ ├─ span.j-seanote-stamp.mono       ← con dấu đỏ "CHƯA BAO GỒM"
+ ├─ span.j-seanote-stamp.added.mono ← con dấu "Đã thêm ✓" (ẩn, chờ xác nhận)
+ └─ .j-seanote                      ← tấm vé (mask răng cưa)
+     ├─ .j-seanote-stub             ← cuống vé trái
+     │   ├─ .j-seanote-ic           ← icon lucide 'water' trong vòng tròn
+     │   └─ .j-seanote-stub-lab     ← chữ "VÉ / NƯỚC" (mono, uppercase)
+     └─ .j-seanote-main             ← thân vé
+         ├─ .j-seanote-body
+         │   ├─ .j-seanote-eyebrow  ← "Vé bổ sung · Biển Tiên Đồng"
+         │   ├─ .j-seanote-title    ← "Khu này chưa có trong vé của bạn"
+         │   └─ .j-seanote-sub      ← câu giải thích
+         └─ button.j-seanote-btn    ← "Thêm vé"  (data-act="seaAddJourney")
+
+
+--------------------------------------------------------------------------------
+3. TOKEN MÀU & FONT SỬ DỤNG
+--------------------------------------------------------------------------------
+--card      #FFFFFF   nền vé (cả stub và thân)
+--line      #E3EAE2   viền vé 1.5px
+--ink       #13231A   tiêu đề
+--ink-soft  #384B3F   câu phụ + nhãn cuống vé
+--teal      #10A6AE   icon nước, viền + chữ nút "Thêm vé"
+--orange    #F2671C   eyebrow "Vé bổ sung"
+--mono      "DM Mono" cho eyebrow, nhãn cuống, con dấu
+font body   "Be Vietnam Pro" cho tiêu đề / câu phụ / nút
+
+Màu rời (không token):
+  #EAF6F6  nền vòng tròn icon nước
+  #D3E8E8  viền vòng tròn icon nước
+  red      con dấu "CHƯA BAO GỒM" (chữ + viền 2.5px)
+  #ffffff8b nền con dấu (trắng 55% cho chữ đỏ nổi trên vé)
+  #D33A2C  con dấu "Đã thêm ✓" (nền trong suốt)
+
+
+--------------------------------------------------------------------------------
+4. THÔNG SỐ STYLE CHÍNH
+--------------------------------------------------------------------------------
+[Khung .j-seanote-wrap]
+  position:absolute; z-index:12
+  left: clamp(16px, 3vw, 30px)
+  top : clamp(132px, 15vw, 156px)   ← đẩy xuống để không đè nút mua vé ở header
+  width:max-content; max-width:min(560px, calc(100% - 32px))
+
+[Tấm vé .j-seanote]
+  display:flex; align-items:stretch; border-radius:12px; background:var(--card)
+  box-shadow: 0 18px 40px -20px rgba(0,0,0,.7)   ← bóng sâu vì nền VR tối
+  --seam:84px    ← vị trí đường răng cưa (đúng bằng bề rộng cuống vé)
+  --notch:11px   ← bán kính 2 khuyết tròn trên/dưới
+
+  Răng cưa làm bằng CSS mask, 3 lớp, composite intersect:
+    1) radial-gradient khuyết tròn tại (seam, 0)     — khuyết mép trên
+    2) radial-gradient khuyết tròn tại (seam, 100%)  — khuyết mép dưới
+    3) radial-gradient chấm r=3px tại (seam, 7px), lặp dọc mỗi 14px — lỗ đục
+  Có cả bản -webkit- (-webkit-mask-composite:source-in) cho Safari.
+
+[Cuống vé .j-seanote-stub]
+  width:84px (= --seam); padding:16px 0; gap:7px
+  border:1.5px solid var(--line); BỎ border-right (để mép răng cưa liền mạch)
+  border-radius:12px 0 0 12px
+  .j-seanote-ic     34×34, bo tròn 50%, nền #EAF6F6, viền 1.5px #D3E8E8
+  .j-seanote-stub-lab  9.5px / line-height 1.2 / letter-spacing .12em / UPPERCASE
+
+[Thân vé .j-seanote-main]
+  padding:15px 18px 15px 16px; gap:16px; align-items:center
+  border:1.5px solid var(--line); BỎ border-left; border-radius:0 12px 12px 0
+
+[Chữ]
+  eyebrow  mono  10px   / letter-spacing .2em / uppercase / w500 / cam
+  title          14.5px / lh 1.25 / w600 / ink
+  sub            12.5px / lh 1.5  / ink-soft
+  body gap 3px
+
+[Nút .j-seanote-btn]
+  13px / w600 / màu teal / nền trắng / viền 1.5px teal / bo 9px / padding 10px 18px
+  hover: nền teal, chữ trắng, transition .16s
+
+[Con dấu .j-seanote-stamp — "CHƯA BAO GỒM"]
+  absolute top:-14px right:16px (nhô nửa ra ngoài mép trên vé), z-index:3
+  mono 16px / w800 / letter-spacing .12em
+  màu red, viền 2.5px red, bo 8px, padding 6px 13px, nền #ffffff8b
+  transform: rotate(-7deg)
+  animation: stampPress .5s cubic-bezier(.3,1.4,.5,1) delay .28s both
+
+[Con dấu .added — "Đã thêm ✓"]
+  absolute bottom:-14px right:-8px (tràn qua góc phải dưới), z-index:6
+  mono 24px / w800 / letter-spacing .1em
+  màu + viền 3px #D33A2C, nền TRANSPARENT, bo 9px, padding 5px 14px
+  mặc định opacity:0, pointer-events:none, animation:none
+
+
+--------------------------------------------------------------------------------
+5. HOẠT ẢNH (keyframes ở styles.css 1309–1330)
+--------------------------------------------------------------------------------
+@keyframes stampPress   — dấu đỏ đập xuống lúc thẻ xuất hiện
+    0%   opacity 0, translateY(-10px) rotate(2deg)   scale(1.9)
+    55%  opacity 1, translateY(0)     rotate(-9deg)  scale(.92)
+    72%                                rotate(-6deg)  scale(1.04)
+    86%                                rotate(-7.5deg)scale(.99)
+    100%                               rotate(-7deg)  scale(1)
+    → cảm giác con dấu cao su ấn xuống rồi rung nhẹ ổn định.
+
+@keyframes stampSwap    — dấu "Đã thêm ✓" đáp xuống khi bấm Thêm vé
+    0%   opacity 0, rotate(-2deg)  scale(2.6)
+    45%  opacity 1, rotate(-8deg)  scale(1)
+    68%              rotate(-6.5deg) scale(1.22)
+    100% opacity 1, rotate(-7deg)  scale(1.12)   ← dừng to hơn dấu thường
+
+@keyframes seanoteTear  — tấm vé bị xé rời & trôi xuống
+    0%   nguyên vị trí, opacity 1
+    35%  translateY(-3px) rotate(-1.5deg)        ← nhấc nhẹ trước khi rơi
+    100% translateY(26px) rotate(4deg), opacity 0
+
+Trình tự khi bấm "Thêm vé":
+  .j-seanote-wrap nhận class .confirming
+    → dấu đỏ tắt ngay (opacity 0, animation none)
+    → dấu .added chạy stampSwap .44s cubic-bezier(.2,.9,.3,1)
+    → sau delay .55s, cả wrap chạy seanoteTear .6s cubic-bezier(.4,0,.6,1)
+      forwards, pointer-events:none
+  Tổng ~1.15s rồi journey remount, thẻ biến mất.
+
+Reduced motion:
+  @media(prefers-reduced-motion:reduce) → tắt animation của .j-seanote-stamp.
+  Trong JS, reducedMotion() → bỏ qua toàn bộ hoạt ảnh, remount ngay.
+
+
+--------------------------------------------------------------------------------
+6. RESPONSIVE (max-width:640px)
+--------------------------------------------------------------------------------
+.j-seanote-wrap   left:12px; right:12px; top:210px; width:auto; max-width:none
+                  (top 210px để lọt dưới header 2 dòng của mobile)
+.j-seanote-main   flex-wrap:wrap; gap:11px      → chữ và nút xuống dòng
+.j-seanote-btn    width:100%; margin-left:0      → nút full-width
+.j-seanote-stub-lab  display:none                → giấu chữ "VÉ NƯỚC", còn icon
+.j-seanote-stub   width:64px
+.j-seanote        --seam:64px                    → răng cưa dịch theo cuống vé
+GHI CHÚ: --seam PHẢI luôn bằng width của .j-seanote-stub, nếu lệch thì đường
+đục lỗ sẽ không nằm đúng ranh giới cuống/thân vé.
+
+
+--------------------------------------------------------------------------------
+7. LOGIC HIỂN THỊ
+--------------------------------------------------------------------------------
+app.js:1140–1142
+  seaOn       = !!state.seaBy[c.id]   → combo đã mua vé Biển Tiên Đồng chưa
+  onSea       = !!cur.sea             → điểm đang xem có thuộc Biển Tiên Đồng
+  showSeaNote = onSea && !seaOn && !imm
+Chỉ hiện khi: đang xem điểm thuộc Biển Tiên Đồng, CHƯA có vé, và KHÔNG ở chế độ
+immersive. Ẩn/hiện bằng inline style display block|none.
+
+app.js:147–157 seaAddJourney(id)
+  1. commitSea(id) — ghi state ngay lập tức, để combo card / buy bar tick đúng
+     kể cả khi người dùng đóng VR giữa chừng animation.
+  2. Nếu không có wrap hoặc reduced-motion → mountJourney() luôn.
+  3. Ngược lại: add class .confirming, lắng nghe animationend === 'seanoteTear'
+     ({once:true}) rồi mới mountJourney() — remount dựng lại DOM không còn thẻ,
+     nên không bị nháy giữa lúc đang xé.
+  Không hiện toast, vì bản thân thẻ đã tự diễn hoạt xác nhận.
+
+
+--------------------------------------------------------------------------------
+8. NGUYÊN TẮC KHI CHỈNH SỬA
+--------------------------------------------------------------------------------
+- Đổi bề rộng cuống vé → phải đổi --seam khớp y hệt (cả desktop lẫn mobile).
+- Không thêm border-right cho stub / border-left cho main: mép giáp phải trống
+  để răng cưa liền, nếu không sẽ thấy vạch đôi.
+- Con dấu phải nằm ngoài overflow của .j-seanote (đặt ở wrap, không đặt trong
+  .j-seanote) vì mask sẽ cắt mất phần nhô ra.
+- Giữ z-index: dấu thường 3, dấu .added 6, cả wrap 12 trên sân khấu VR.
+- Câu chữ tránh từ mang nghĩa chặn/khóa/"cõi tiên"; dùng "Suối Tiên"/"thần tiên".
+- Có một biến thể tương tự ở màn Explore (data-act="seaAddExplore") — nếu đổi
+  concept, sửa cả hai cho đồng bộ.

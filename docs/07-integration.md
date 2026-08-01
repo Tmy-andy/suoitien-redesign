@@ -1,4 +1,4 @@
-> Cập nhật: 2026-07-30
+> Cập nhật: 2026-08-01 (v3 — §7.6.1 port M2/M3 clone · D-43)
 
 # 07 — Integration: ghép prototype vào bản 3DVista thật
 
@@ -247,7 +247,7 @@ Tất cả > 10010 → prototype UI luôn nằm trên mọi thứ của `floorpl
 - [ ] ⚠️ Test: modal có scrim blur — trên mobile cũ `backdrop-filter` trên toàn màn hình
       rất tốn GPU khi 3DVista đang render. Cân nhắc pause render 3DVista khi modal mở.
 
-### Dock thay 2 nút FAB (YC-2)
+### Cụm C thay 2 nút FAB (YC-2 + nút combo · D-39/D-40)
 
 - [ ] Đọc `js/floorplan.js` tìm chỗ bind `#fp-launch` và `#fp-list-launch`
 - [ ] Expose 2 handler đó thành `window.fpOpenMap()` / `window.fpOpenList()`
@@ -261,6 +261,65 @@ Tất cả > 10010 → prototype UI luôn nằm trên mọi thứ của `floorpl
 - [ ] Thêm class `.st-split-mode` lên `<html>` khi `#viewer.fp-vrsplit` bật → ẩn dock (§7.4)
 - [ ] Dùng `MutationObserver` trên `#viewer` để phát hiện class `fp-vrsplit` thay đổi
       (giống cách `context-menu.js` dùng MutationObserver)
+- [ ] Thẻ vé `#st-ticket` (§3.3b) là `<a>`: bật `ST.data.LINKS_LIVE = true` để href
+      thành `https://suoitien.vn/combo-tro-choi` + `target="_blank"`
+- [ ] Kiểm răng cưa thẻ vé trên **Safari** — `mask-composite` là chỗ dễ vỡ nhất;
+      nếu hỏng thì vé thành hình chữ nhật trơn (vẫn dùng được, chỉ mất ẩn dụ)
+
+### 7.6.1 M2/M3 clone — port thế nào phụ thuộc Q-36 🔴
+
+Prototype có 2 overlay clone `#st-route` + `#st-places`. **Chưa chốt** chúng đóng vai
+gì ở bản thật — Q-36 ở [`00-requirements.md`](00-requirements.md) §0.6:
+
+| Nếu chọn | Phải làm gì | Rủi ro |
+|---|---|---|
+| **(a) chỉ để trình bày** *(giả định hiện tại)* | Không port gì. Nút thật gọi lại handler `#fp-launch` / `#fp-list-launch` như cũ | Không có. Giao diện thật vẫn là overlay cam-đỏ cũ, **lệch với header + cụm C mới** |
+| **(b) thay hẳn overlay cũ** | Nối đủ 6 nguồn dữ liệu ở [`06-data.md`](06-data.md) §6.7, viết lại `distance`/`buildSteps`/`pathD` bằng Dijkstra | Cao — `floorplan.dc.html` (173 KB React/DC) có những hành vi chưa quan sát hết |
+| **(c) lấy vỏ, giữ ruột** | Áp CSS mới lên DOM của `floorplan`, không dùng `route.js`/`places.js` | Trung bình — phải map từng class của bundle React đã minify |
+
+**Khuyến nghị: (c)**, cùng lý do đã chọn PA-B ở §7.5 — phần khó và đã chạy tốt
+(pathfinding, GPS, 158 điểm) thì đừng viết lại; phần dễ và đang lệch (màu, font,
+radius, khoảng cách) thì thay.
+
+Nếu chọn (b) thì làm theo đúng thứ tự ở §6.7: ảnh bản đồ → `map_places.json` → cuối
+cùng mới thay 3 hàm tính đường. Ba hàm đó cố tình gom một chỗ trong `route.js`.
+
+**Bẫy riêng cho M2/M3 khi ghép:**
+- `.st-fs-panel` phủ **toàn màn hình** → nó sẽ che cả header mới. Đúng ý (overlay là
+  chế độ riêng), nhưng phải kiểm nút đóng: `.st-fs-close` ở `top: 20px; right: 20px`
+  **trùng chỗ** với `#fp-close` (`top: 15px; right: 16px`) của overlay cũ. Chạy song
+  song 2 overlay là có 2 nút × chồng nhau.
+- z-index của `.st-modal` phải dịch lên >10010 như §7.4, nếu không overlay cũ
+  (`z: 10001`) sẽ nằm đè lên bản clone.
+- `mask`/`aspect-ratio`/`dvh` — kiểm Safari, xem §7.9.
+
+### ⭐ KHÔNG được đè lên 4 cụm control có sẵn (D-40)
+
+Đây là ràng buộc **cứng** của bản ghép, không phải khuyến nghị: prototype được thả ĐÈ
+LÊN bản 3DVista đang chạy, 4 cụm kia vẫn còn nguyên tại chỗ.
+
+- [ ] Kiểm tra `--st-c-max-w` trong `tokens.css` còn khớp bề ngang thật của cụm ⓓ
+      (đang giả định `340px` gồm lề). Đo lại trên site thật rồi sửa `--st-rz-d-w`.
+- [ ] Mở `index.html?zones=1` ở 1280×720, 1440×900, 390×844 → cụm C **không** chạm
+      ghost nào (trừ ghost vàng ⓐ, xem dưới)
+- [ ] Đối chiếu trực tiếp trên site thật: chụp màn hình trip360 rồi chồng lên
+      screenshot prototype cùng độ phân giải
+- [ ] **KHÔNG** dựng lại `#st-cta-tickets`, popover `⋯`, nhóm nút VR/la bàn/âm
+      thanh/toàn màn hình — trip360 đã có (cụm ⓓ, ⓔ). Chúng đang bị `scope.css` tắt;
+      đừng gỡ `class="st-scope-min"` trên bản ghép.
+
+### 🔴 Cụm ⓐ — điểm DUY NHẤT còn xung đột (Q-35)
+
+Header trải hết bề ngang nên đè lên cụm ⓐ (VN + chia sẻ, trên-phải). Header đã có sẵn
+`#st-lang` và 5 icon social → nó **thay thế** chức năng của ⓐ chứ không chỉ che.
+
+- [ ] **Chờ khách chốt Q-35.** Giả định đang dùng: ẩn cụm ⓐ gốc.
+- [ ] Nếu chốt "ẩn": tìm selector cụm ⓐ trong export 3DVista → `display:none`, và **ẩn
+      chứ không xoá** (script gốc có thể còn tham chiếu)
+- [ ] Nếu chốt "giữ": đẩy ⓐ xuống `top: calc(var(--st-header-h) + 12px)` và kiểm tra
+      lại khi header slide lên (`html.st-nav-hidden`)
+- [ ] Nhắc lại: `#fp-close` của overlay ở `top:15px; right:16px; z:10002` cũng bị header
+      che → phải xử lý cùng lúc (§7.2)
 
 ## 7.7 Thứ tự load ở `index.htm` bản thật
 

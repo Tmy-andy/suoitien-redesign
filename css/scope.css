@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   scope.css — PHẠM VI PROTOTYPE (D-39). NẠP CUỐI CÙNG, sau responsive.css.
+
+   Khách chốt 2026-08-01, prototype giao ĐÚNG 3 thứ:
+     1. Header (topbar + navbar clone site chính)  — YC-3, GIỮ
+     2. Cụm C: Chỉ đường · Điểm đến                — YC-2 (2 pill RỜI, D-42)
+     3. Thẻ vé combo `#st-ticket`                  — dưới navbar, phải (D-41)
+     4. Modal welcome                              — YC-1
+
+   Phân biệt QUAN TRỌNG — "ẩn hết phần còn lại" nghĩa là gì:
+     · Vùng TRỐNG trên trip360 (dải trên cùng) → được phép dựng. trip360
+       KHÔNG có header, nên navbar không đè lên cái gì cả.
+     · Vùng ĐÃ CÓ control của trip360 (4 cụm ⓐ ⓑ ⓓ ⓔ) → cấm tuyệt đối.
+       Mọi component của bản v2 rơi vào đó (CTA vé nằm đè cụm ⓔ, popover ⋯
+       và nhóm nút xem nằm đè cụm ⓓ) đều bị tắt ở đây.
+
+   File này KHÔNG xoá code cũ — chỉ tắt đầu ra. Bỏ class `st-scope-min`
+   (tức mở `?full=1`) là bản v2 đầy đủ hiện lại nguyên vẹn.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Tắt phần rơi vào vùng cấm / ngoài phạm vi ───────────────────────
+   Dùng `display:none` chứ không xoá khỏi DOM: markup còn đó để bản v2 và
+   docs/03-components.md vẫn trace được, và để bật lại không cần build lại.
+
+   ⚠️ #st-header / #st-nav-peek / #st-drawer KHÔNG nằm trong danh sách này:
+   dải trên cùng của trip360 trống, navbar là phần THÊM VÀO chỗ trống. */
+html.st-scope-min #st-cta-tickets,   /* 3 nút vàng nổi phải → đè cụm ⓔ   */
+html.st-scope-min #st-more-popover,  /* menu ⋯ → thuộc cụm ⓓ đã có sẵn   */
+html.st-scope-min #st-scene-label,   /* nhãn "đang ở điểm nào" — thêm mới */
+html.st-scope-min #st-hint,          /* gợi ý "kéo để xem"   — thêm mới   */
+html.st-scope-min #st-share,         /* M4 → cụm ⓐ đã có nút chia sẻ     */
+html.st-scope-min #st-help {         /* M5 → mở từ popover ⋯ đã tắt      */
+  display: none !important;
+}
+
+/* ── 2. Ràng buộc vùng cấm cho cụm C ────────────────────────────────────
+   Cụm C chỉ được sống trong góc dưới-trái. Đây là rào chắn: nếu sau này ai
+   thêm nút làm cụm phình ra, nó bị chặn lại chứ không lấn sang cụm ⓓ. */
+html.st-scope-min #st-dock { max-width: var(--st-c-max-w); }
+
+/* Modal welcome full-screen nên không đụng vùng cấm — nhưng scrim thì có,
+   và đó là đúng: modal là lớp trên cùng, chiếm toàn màn hình có chủ đích. */
+
+/* ── 3. Cụm C — responsive ──────────────────────────────────────────────
+   Bố cục (hàng ngang, dưới-trái, KHÔNG div nền) đặt ở controls.css.
+   Phần dưới đây chỉ huỷ các rule của bản v2 vốn giả định dock nằm GIỮA, có
+   nền, và kéo ngang được. Không sửa responsive.css để `?full=1` vẫn đúng.
+
+   Bề ngang cần: VI ≈ 304px · EN ≈ 342px (nhãn EN dài hơn ~40px).
+   Chỗ trống bên trái cụm ⓓ = --st-c-max-w = 50vw − 170 − 16.
+     1440px → 534   ✓        1280px → 454   ✓
+     1152px → 390   ✓        1099px → 364   ✓ (sát trần với EN)
+     1024px → 326   ✗ EN     → từ đây phải leo lên trên cụm ⓓ            */
+
+/* ≤1099px: không đứng cạnh cụm ⓓ được nữa → leo LÊN TRÊN nó, chỗ đó full
+   bề ngang. Đồng thời huỷ rule "dàn full-width + cuộn ngang" của bản v2 ở
+   ≤599px — dàn ngang chính là thứ sẽ chồng lên cụm ⓓ. */
+@media (max-width: 1099px) {
+  html.st-scope-min #st-dock {
+    left: calc(var(--st-s-3) + var(--st-sal));
+    right: auto;
+    bottom: calc(var(--st-s-5) + var(--st-sab) + var(--st-rz-d-h));
+    transform: none;
+    max-width: calc(100vw - var(--st-s-6));
+    overflow-x: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* Cảm ứng: tooltip vô nghĩa. Bản v2 tắt ở ≤599, mở rộng cho cả tablet. */
+@media (max-width: 899px) {
+  html.st-scope-min .st-dbtn[data-tip]::after { display: none; }
+}
+
+/* ≤380px: GIỮ nhãn chữ, chỉ thu padding. Bản v2 bỏ hẳn chữ (chỉ còn icon) vì
+   khi đó dock có tới 10 phần tử; giờ chỉ còn 2 nút nên không cần — mà 2 nút
+   này là toàn bộ deliverable, mất chữ là mất nghĩa.
+   360px: chỗ trống 328px, nhãn EN sau khi thu còn ~326px → vừa khít. */
+@media (max-width: 380px) {
+  html.st-scope-min #st-dock { gap: 6px; }
+  html.st-scope-min .st-dbtn.st-v-primary   { width: auto; padding: 0 13px; font-size: 13.5px; }
+  html.st-scope-min .st-dbtn.st-v-secondary { width: auto; padding: 0 12px; font-size: 13.5px; }
+  html.st-scope-min .st-dbtn.st-v-primary span,
+  html.st-scope-min .st-dbtn.st-v-secondary span { display: inline; }
+  html.st-scope-min .st-dbtn.st-v-tonal { width: 42px; height: 42px; }
+}
+
+/* Màn THẤP (điện thoại xoay ngang, cửa sổ desktop bị kéo dẹt) */
+@media (max-height: 460px) {
+  html.st-scope-min #st-dock { bottom: calc(var(--st-s-3) + var(--st-sab)); }
+  html.st-scope-min .st-dbtn.st-v-primary,
+  html.st-scope-min .st-dbtn.st-v-secondary { min-height: 40px; font-size: 13.5px; }
+  html.st-scope-min .st-dbtn.st-v-tonal { width: 40px; height: 40px; }
+}
+
+/* ── 3b. Thẻ vé combo (D-41) ────────────────────────────────────────────
+   Nhỏ hơn trên máy hẹp; --seam PHẢI đổi cùng lúc với width của .st-ticket-stub,
+   lệch một pixel là hàng lỗ đục không nằm đúng ranh giới cuống/thân vé. */
+@media (max-width: 599px) {
+  #st-ticket-wrap {
+    right: calc(var(--st-s-3) + var(--st-sar));
+    top: calc(var(--st-sat) + var(--st-header-h) + var(--st-s-2));
+    max-width: calc(100vw - var(--st-s-6));
+  }
+  .st-ticket        { --seam: 44px; --notch: 7px; }
+  .st-ticket-stub   { width: 44px; padding: 7px 0; }
+  .st-ticket-ic     { width: 23px; height: 23px; }
+  .st-ticket-ic svg { width: 13px; height: 13px; }
+  .st-ticket-lab    { display: none; }          /* còn icon là đủ nhận ra vé */
+  .st-ticket-main   { padding: 8px 11px 8px 10px; gap: var(--st-s-2); }
+  .st-ticket-title  { font-size: 12.5px; }
+  .st-ticket-eyebrow{ font-size: 8.5px; letter-spacing: .14em; }
+}
+
+/* Màn thấp: thẻ vé và cụm C ở 2 góc đối nhau nên không đụng, chỉ cần thu lề */
+@media (max-height: 460px) {
+  #st-ticket-wrap { top: calc(var(--st-sat) + var(--st-header-h) + var(--st-s-2)); }
+}
+
+/* ── 4. Lớp GHOST kiểm tra (?zones=1) ───────────────────────────────────
+   Mặc định KHÔNG có trong DOM. Chỉ dựng khi cần soi bằng mắt xem cụm C có
+   chạm 4 cụm có sẵn không. Nét đứt xám, không phải design. */
+#st-zones {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--st-z-dock) - 1);
+  pointer-events: none;
+}
+.st-zone {
+  position: absolute;
+  border: 1.5px dashed rgba(15,23,42,.42);
+  border-radius: var(--st-r-md);
+  background: rgba(15,23,42,.06);
+  display: grid;
+  place-items: center;
+  padding: 4px;
+}
+.st-zone span {
+  font: var(--st-t-xs);
+  color: var(--st-n-700);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+/* Vùng cấm MỀM (ⓐ): header mới thay thế chức năng của nó → vàng, không xám.
+   Phải đặt SAU `.st-zone span` — cùng specificity, thắng nhờ thứ tự. */
+.st-zone-soft {
+  border-color: rgba(184,136,0,.55);
+  background: rgba(222,168,0,.12);
+}
+.st-zone-soft span { color: var(--st-gold-600); }
