@@ -38,7 +38,7 @@ suoitien-vr360redes/
 │   └── popup2.js              # ⟨bản 2⟩ bootstrap + máy trạng thái. Nạp CUỐI.
 │
 ├── assets/
-│   ├── img/cards/*.webp       # 12 ảnh banner 760×507 (~930 KB tổng)
+│   ├── img/cards/*.webp       # 12 ảnh banner 3:2, 500–1200px (~1,32 MB)
 │   │                          #   Nguồn suoitien.vn — URL gốc ở 06-data.md §6.8
 │   └── map/park-2400.webp     # Bản đồ 2D 2400×1208 (391 KB), đã flatten #0f172a
 │                              #   Nguồn `Ban Do Suoi Tien/` — 06-data.md §6.10

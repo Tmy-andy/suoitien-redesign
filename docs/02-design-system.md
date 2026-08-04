@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-04 (v11 — §2.11 viết lại: hai bản dùng CHUNG nền trắng · D-54)
+> Cập nhật: 2026-08-04 (v12 — §2.6 thêm `--st-ease-flow` + dàn nhịp vào màn · D-55)
 
 # 02 — Design System
 
@@ -177,7 +177,7 @@ Giữ thang slate khớp với `floorplan.css` thật (`rgb(15,23,42)`, `#1e293b
 | `--st-n-500` | `#64748b` | Text phụ |
 | `--st-n-600` | `#475569` | Text body phụ |
 | `--st-n-700` | `#334155` | Text body |
-| `--st-n-800` | `#1e293b` | ✅ màu thật — **text chính** |
+| `--st-n-800` | `#1e293b` | ✅ màu thật — **text chính**; nền `.st-sld-panel` của bản 2. *(Bậc này từng bị thiếu trong `tokens.css` dù bảng đây vẫn khai là có — đã bổ sung ở D-55(g).)* |
 | `--st-n-900` | `#0f172a` | ✅ màu thật — heading, scrim |
 
 ### 2.1.6 Bề mặt — LIGHT (Q25 = a)
@@ -440,7 +440,41 @@ Kỹ thuật lấy từ [`../design-seanote.txt`](../design-seanote.txt) §4.
 | `--st-dur-scene` | `500ms` | Chuyển panorama |
 | `--st-ease` | `cubic-bezier(.4, 0, .2, 1)` | Mặc định |
 | `--st-ease-out` | `cubic-bezier(.16, 1, .3, 1)` | Modal xuất hiện |
-| `--st-ease-spring` | `cubic-bezier(.34, 1.56, .64, 1)` | Nút morph, chấm carousel giãn thành gạch |
+| `--st-ease-spring` | `cubic-bezier(.34, 1.56, .64, 1)` | Nút morph, chấm carousel giãn thành gạch, nút × pop vào |
+| `--st-ease-flow` | `cubic-bezier(.32, .04, .12, 1)` | ⭐ **Chỉ** cho quãng đường dài của thẻ carousel (D-55) |
+
+### `--st-ease-out` sai chỗ nào, và vì sao phải thêm `--st-ease-flow`
+
+`--st-ease-out` là expo-out: **80% quãng đường xong trong 25% thời gian**. Ở quãng
+ngắn (một nút nảy lên, một panel trượt 20px) đó là "nhanh nhẹn". Nhưng thẻ carousel đi
+một quãng dài bằng **cả bề ngang của chính nó** — ở quãng đó cùng đường cong ấy đọc ra
+là *giật rồi trôi*: mắt thấy thẻ biến mất khỏi chỗ cũ rồi bò nốt đoạn cuối.
+
+`--st-ease-flow` vào chậm, ra chậm, nhanh ở giữa → mắt bám được cả hành trình. Dùng
+đúng một chỗ; đừng lấy nó làm easing mặc định (ở quãng ngắn nó đọc ra là *nặng nề*).
+
+### Dàn nhịp VÀO MÀN (D-55)
+
+Cả hai bản dùng chung một khung nhịp — mở bản nào cũng phải ra cùng một "tay nghề":
+
+| Mốc | Bản 1 (`index.html`) | Bản 2 (`index2.html`) |
+|---|---|---|
+| 0 | `.st-brandline` kéo ngang từ mép trái (`scaleX 0→1`, 620ms) | như bản 1 |
+| 100–310ms | eyebrow → title → sub → hàng tìm, lệch 70ms | eyebrow → title → sub |
+| 120–200ms | `.st-cr-stage` bay lên 38px + `scale(.9)` | ô wall so le 46px + `scale(.86)`, cách nhau 76ms |
+| 180–260ms | ảnh thẻ Ken Burns `1.16 → 1` | ảnh ô Ken Burns `1.18 → 1` |
+| 240ms+ | thẻ hiện so le **từ giữa ra** (`--st-oa × 130ms`) | — |
+| 620–940ms | nút ‹ › · chấm · footer | nút × · thanh công cụ |
+
+Ba quy tắc rút ra:
+
+1. **Quãng đường phải ĐỦ DÀI trên nền trắng.** 14px + `scale(.97)` — nhịp cũ của bản 2
+   — chạy đúng nhưng không ai nhìn ra là chuyển động. 22px cho chữ, 38–46px cho khối.
+2. **Lớp fade của KHUNG phải xong sớm.** `#st-pop2` fade 400ms đè lên đúng lúc 9 ô đang
+   so le, nuốt trọn nhịp bên trong → hạ xuống 320ms.
+3. **`animation-fill-mode: backwards`, không phải `both`.** `forwards` giữ quyền điều
+   khiển thuộc tính sau khi chạy xong — ảnh thẻ còn phải nhận transform parallax khi
+   hover, ô wall còn phải nhận `scale(1.028)`. Cả hai sẽ chết cứng.
 
 Animation đặc trưng lấy từ site: **4 vệt viền chạy quanh nút vé** (`animate1..4`,
 2s linear infinite, gradient `#D6282E → #128125`). Tái dùng cho nút "Mua vé" +
@@ -726,7 +760,7 @@ Nền tối làm hai việc miễn phí mà nền trắng phải trả tiền:
 | Token | Vai ở bản 2 |
 |---|---|
 | `--st-bg` | Nền `#st-pop2` + `.st-wall` |
-| `--st-n-800` | Nền ô **chưa tải xong ảnh** (chỉ còn vai này của thang tối) |
+| `--st-n-200` | Nền ô **chưa tải xong ảnh**. ⚫ Trước là `--st-n-800` — vừa sai màu (trên nền trắng, chỗ giữ ảnh phải *sáng hơn* ảnh) vừa **trỏ vào một token lúc đó chưa tồn tại**, xem D-55(g) |
 | `--st-green-700` trên `--st-green-50` | Eyebrow `SUỐI TIÊN 360` |
 | `--st-n-900` / `--st-n-600` | `#st-wall-title` / `#st-wall-sub` |
 | `--st-green-600/500` | Nút "Bắt đầu hành trình", "Khám phá VR 360°", hover ‹ ›, viền ô khi hover |

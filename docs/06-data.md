@@ -182,7 +182,7 @@ CARDS = [
 | Field | Kiểu | Ý nghĩa |
 |---|---|---|
 | `key` | string | Trỏ vào `DESTINATIONS` — tên, nhóm, blurb, `pano` đều lấy từ đó |
-| `img` | string | Đường dẫn tương đối tới ảnh **760×507 (3:2)**, webp |
+| `img` | string | Đường dẫn tương đối tới ảnh **tỉ lệ 3:2**, webp. Bề ngang **không đồng nhất** (500–1200px) — bằng đúng bề ngang thật của nguồn, xem §6.8 |
 | `must` | boolean | `true` → badge vàng `★ Nên xem` (Q9, hint nhẹ) |
 
 **Thứ tự** xếp theo nhịp thị giác (cổng → cung điện → tuyết → thú → nước → …), **không**
@@ -701,36 +701,66 @@ Khách chốt: *"Lấy ảnh từ nguồn này https://suoitien.vn/"*. 12 ảnh 
 site chính, **không hotlink** (RULE #3 — prototype phải xem được khi không có mạng, và
 có tấm gốc nặng 17 MB).
 
-### Xử lý
+### ⚠️ Ảnh trên trang DANH SÁCH chỉ là thumbnail 600×600 (D-55)
+
+Bộ ảnh đầu tiên lấy hết từ `/kham-pha` — trang danh sách. **9 trong 12 ảnh ở đó là
+thumbnail vuông 600×600** (`tulinh` còn 500×499). Cắt 600×600 về 3:2 được `600×400`,
+rồi khâu dựng asset **phóng lên** `760×507` — ảnh đã bị nội suy **1,27× trước khi
+trình duyệt chạm vào**. D-54 nâng thẻ giữa lên 820 CSS px → tổng ~2,05× ở màn thường
+và **~4,1× trên màn 2×**. Đó là cái khách gọi là "ảnh vỡ".
+
+> **Vì sao lần đầu không phát hiện:** bảng này từng ghi *"gốc 116 KB – 17 MB"* —
+> **dung lượng**, không phải **kích thước pixel**. Một PNG 600×600 nặng 846 KB nên con
+> số dung lượng trông rất yên tâm. **Bảng nguồn ảnh phải ghi `W×H`.**
+
+Ảnh lớn nằm ở **trang chi tiết** của từng điểm (`/cung-vang-dien-ngoc`,
+`/lau-dai-tuyet`, …) — 975–1200px, trang danh sách không có.
+
+### Xử lý (bản 2, D-55)
 
 ```
-gốc (.jpg/.png/.webp, 116 KB – 17 MB)
-  → resize 760×507, fit cover, position centre   ← trừ `bien`, xem ghi chú
-  → webp q78
-  → assets/img/cards/<key>.webp
+gốc  → cắt 3:2 (canh giữa; `bien` canh mép TRÊN)
+     → resize xuống, TRẦN 1200px            ← KHÔNG BAO GIỜ phóng to
+     → webp q72–78, ép mỗi file ≤ ~180 KB
+     → assets/img/cards/<key>.webp
 ```
 
-Tổng sau xử lý: **~930 KB / 12 ảnh** (gốc ~38 MB). Lệnh dùng `sharp-cli` cài global —
-là **công cụ dev một lần**, không phải dependency của bản demo.
+**Luật bất di bất dịch: bề ngang xuất = bề ngang thật của nguồn sau khi cắt, trần
+1200.** Ảnh nào nguồn nhỏ hơn thì để nhỏ. Phóng ở khâu dựng chỉ làm file nặng thêm mà
+không thêm một chi tiết nào — và giấu mất việc ảnh đó đang thiếu độ phân giải.
+
+Tổng sau xử lý: **~1,32 MB / 12 ảnh** (trước: ~930 KB). Dùng Pillow — **công cụ dev
+một lần**, không phải dependency của bản demo.
+
+Với `cungvang` và `bien` (ảnh nhiều chi tiết) thì **hạ CỠ chứ không hạ CHẤT**: q dưới
+60 sinh vệt khối, còn xấu hơn là nhỏ đi.
 
 ### Bảng nguồn
 
 Tiền tố chung: `https://suoitien.vn/halink-content/uploads/`
 
-| key | File gốc | Lấy từ trang | Nhãn trên site |
-|---|---|---|---|
-| `cong` | `ZqPoL1721372111.png` | `/cong-trinh-van-hoa-lich-su` | CỔNG THIÊN TIÊN MÔN |
-| `cungvang` | `GO1eA1721807623.jpg` | `/kham-pha` | Cung vàng điện ngọc |
-| `tuyet` | `QSoy91721543358.jpg` | `/kham-pha` | Lâu Đài Tuyết |
-| `casau` | `Oh0dz1721549115.jpg` | `/kham-pha` | VƯƠNG QUỐC CÁ SẤU |
-| `bien` | `U5GrK1728966906.webp` | `/bien-tien-dong-ngoc-nu-2` | *(ảnh thân bài)* |
-| `kylan` | `lFlRk1721549911.jpg` | `/kham-pha` | Kỳ lân cung |
-| `phuthuy` | `zbPyc1721536795.jpg` | `/kham-pha` | Lâu Đài Pháp Thuật |
-| `amcung` | `Cwxyr1721617249.jpg` | `/kham-pha` | Âm cung đệ nhất cung đình tửu |
-| `tulinh` | `thum.jpg` | `/kham-pha` | DU THUYỀN TỨ LINH |
-| `diabay` | `volKR1721379881.png` | `/cam-giac-manh` | Đĩa bay hành tinh lạ |
-| `vongxoay` | `R0ChC1721456855.png` | `/cam-giac-manh` | Vòng xoay vũ trụ |
-| `farm` | `banner-farm-1-1.jpg` | `/` (trang chủ) | *(banner Trang Trại 4.0)* |
+| key | File gốc | Gốc W×H | Lấy từ trang | Xuất |
+|---|---|---|---|---|
+| `cong` | `ZqPoL1721372111.png` | 600×600 ⚠️ | `/cong-trinh-van-hoa-lich-su` | 600×400 |
+| `cungvang` | `7Ku8Q1721807617.jpg` | 1200×800 | `/cung-vang-dien-ngoc` | 900×600 |
+| `tuyet` | `vLkmH1721543336.jpg` | 975×650 | `/lau-dai-tuyet` | 975×650 |
+| `casau` | `Oh0dz1721549115.jpg` | 600×600 ⚠️ | `/kham-pha` | 600×400 |
+| `bien` | `U5GrK1728966906.webp` | 1920×9742 | `/bien-tien-dong-ngoc-nu-2` | 980×653 |
+| `kylan` | `ZaOVt1721549904.jpg` | 1200×799 | `/ky-lan-cung` | 1198×799 |
+| `phuthuy` | `iPuGX1721698197.jpg` | 1000×667 | `/bi-mat-rung-phu-thuy` | 1000×667 |
+| `amcung` | `MhTa81721807164.jpg` | 1200×800 | `/am-cung-de-nhat-cung-dinh-tuu` | 1200×800 |
+| `tulinh` | `thum.jpg` | 500×499 ⚠️ | `/kham-pha` | 500×333 |
+| `diabay` | `Tajy91721379670.jpg` | 1000×625 | `/dia-bay-hanh-tinh-la` | 938×625 |
+| `vongxoay` | `Sh8Vp1721457010.png` | 1000×667 | `/vong-xoay-vu-tru` | 1000×667 |
+| `farm` | `banner-farm-1-1.jpg` | 1532×670 | `/` (trang chủ) | 1005×670 |
+
+⚠️ = **site không có bản nào lớn hơn.** Đã kiểm cả `/vuong-quoc-ca-sau`, `/ca-sau`,
+`/du-thuyen-tu-linh`, `/thuy-cung`. Ba tấm này vẫn phải phóng lên khi hiển thị ở thẻ
+giữa → **chỉ khách mới có bản gốc (Q-37 🔴)**.
+
+> Vài ảnh của bản 1 bị **loại vì có chữ to đè lên**: `LtTFl…` (`diabay`) in nguyên
+> dòng "ĐĨA BAY HÀNH TINH LẠ", `jiQ07…` (`cong`) là banner khuyến mại. Ảnh nền của thẻ
+> đã có tên điểm viết đè bằng HTML rồi — chữ trong ảnh sẽ chồng lên chính nó.
 
 > **`bien` cắt từ mép TRÊN, không phải giữa.** Ảnh gốc là một infographic dọc rất dài;
 > cắt giữa ra đúng đoạn chữ. Chỉ dải trên cùng mới là ảnh chụp công viên nước.
@@ -742,7 +772,8 @@ Tiền tố chung: `https://suoitien.vn/halink-content/uploads/`
 | Việc | Vì sao |
 |---|---|
 | Xác nhận quyền dùng 12 ảnh này trong tour VR | Ảnh lấy từ site của chính khách nên gần như chắc chắn OK, nhưng cần khách nói rõ |
-| Xin bản gốc độ phân giải cao | Vài tấm đã bị site nén sẵn; phóng lên màn 2× sẽ thấy nhiễu |
+| 🔴 **Xin bản gốc của `cong` · `casau` · `tulinh`** | Site chỉ có 600×600 (và 500×499). Ba tấm này đang phải phóng to khi hiện ở thẻ giữa — đây chính là "ảnh vỡ" khách thấy (D-55). Chín tấm còn lại đã lấy được bản 975–1200px từ trang chi tiết |
+| Xin bản gốc ≥1640px cho cả bộ | Thẻ giữa 820 CSS px → **1640 px thật** trên màn 2×. Nguồn tốt nhất hiện có là 1200px, vẫn thiếu 1,37× |
 | Bổ sung ảnh cho 8 điểm còn thiếu | Xem ghi chú ở `ST.data.CARDS` §6.2 — đủ 20 ảnh thì carousel phủ hết bộ highlight |
 
 ---

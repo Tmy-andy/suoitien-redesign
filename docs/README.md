@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-04 (v12 — hai bản cùng nền trắng, carousel to hơn · D-54)
+> Cập nhật: 2026-08-04 (v13 — chuyển động + ảnh nguồn + danh sách thẻ ảnh · D-55/D-56)
 
 # Suối Tiên VR360 — Popup chọn điểm bắt đầu · Docs
 
@@ -11,7 +11,7 @@ thứ, mà là hai ý tưởng thiết kế khác nhau:
 
 | | Bản 1 — `index.html` | Bản 2 — `index2.html` |
 |---|---|---|
-| Chọn khu vực | **3D carousel** — xem tuần tự | **VR Wall** mosaic 9 ô — thấy hết cùng lúc |
+| Chọn khu vực | **3D carousel 5 thẻ** — xem tuần tự | **VR Wall** mosaic 9 ô — thấy hết cùng lúc |
 | Xem điểm | **Danh sách** — quét nhanh, so sánh được | **Slider** — mỗi điểm một cảnh lớn |
 | Nền | Trắng, light/airy | **Trắng y hệt** (D-54) — chỉ slider còn tối |
 | Tìm kiếm bỏ dấu | ✅ ở header, cạnh nút bản đồ | ✅ trong slider |

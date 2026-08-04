@@ -128,11 +128,22 @@ CSS: `halink-content/themes/halink-c5/public/theme/css/style.css`
   tối). Nút *"Xem trên bản đồ 2D"* chuyển từ footer lên cạnh ô tìm kiếm. Cỡ thẻ
   carousel suy từ **chiều cao sân khấu**, không còn hằng số `vh` — thẻ giữa to hơn
   21–46% (D-54).
+- **2026-08-04 (YC-15):** carousel bản 1 lên **5 thẻ**, autoplay 3,0s, thẻ giữa có
+  parallax khi hover; **dựng lại animation vào màn cho cả hai bản**; danh sách điểm
+  đổi từ dòng ngang sang **thẻ ảnh 4:3**; và truy ra *"ảnh vỡ"* là do **9/12 ảnh gốc
+  trên suoitien.vn chỉ 600×600** — đã đổi sang ảnh trang chi tiết (D-55 · D-56).
 - **2026-08-03 (YC-9):** bỏ hẳn bản đồ + hotspot, thay bằng **3D carousel ảnh banner**;
   click ảnh → nhảy tới panorama tương ứng.
 - Tone **light/airy**, không dark-glass. Bỏ hẳn màu `#1769ff`.
 - Nền popup là **một màu trắng phẳng**, không gradient — dưới 8% alpha trên vùng rộng
   đọc ra là vết bẩn, không phải sắc độ (D-54). Áp dụng cho **cả hai bản**.
+- **Ảnh: KHÔNG BAO GIỜ phóng to khi dựng asset.** Bề ngang xuất = bề ngang thật của
+  nguồn sau khi cắt (trần 1200). Phóng ở khâu dựng chỉ làm file nặng thêm mà không
+  thêm chi tiết nào, và **giấu mất** việc ảnh đó đang thiếu độ phân giải — chính chỗ
+  này đẻ ra lỗi "ảnh vỡ" của D-55. Bảng nguồn ảnh phải ghi `W×H`, không ghi KB.
+- Animation vào màn dùng `animation-fill-mode: **backwards**`, không phải `both`:
+  `forwards` giữ quyền điều khiển thuộc tính sau khi chạy xong và làm chết cứng mọi
+  transform của hover (D-55).
 - Bấm thẻ **nhảy thẳng**, không có bước xác nhận (Q10 = a).
 - **Cần bản EN** → i18n từ đầu (`data-i18n` + `COPY.vi/en`). Popup **không** có nút
   chuyển ngôn ngữ — nếu có, nó sẽ lệch với nút VN/EN của trang cha.

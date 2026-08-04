@@ -132,7 +132,7 @@ một:
 | Thẻ carousel nhỏ lại | `responsive.css` | ghi đè biến `--st-card-*` |
 | Footer đảo chiều + nút skip thành pill | `responsive.css` | `flex-direction: column-reverse` |
 | Ẩn eyebrow + subtitle ở landscape thấp | `responsive.css` | `display: none` |
-| Số thẻ hiện | **`js/popup.js`** | `visible: 1` truyền vào `carousel.create()` — thứ duy nhất về bố cục do JS quyết |
+| Số thẻ hiện | **`js/popup.js`** | `visible: 2` → 5 thẻ (D-55), truyền vào `carousel.create()` — thứ duy nhất về bố cục do JS quyết. Việc ẩn bậc ±2 dưới 1280px thì do **CSS**, không phải JS |
 
 **`js/popup.js` không có một dòng `matchMedia` nào.** Đây là kết quả trực tiếp của
 D-44: bản đồ cũ buộc JS phải đổi `viewBox` và đổi bộ toạ độ hotspot theo breakpoint,

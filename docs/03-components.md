@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-03 (v14 — thêm §3.6 bẫy max-width của ảnh phủ · D-53)
+> Cập nhật: 2026-08-04 (v15 — carousel 5 thẻ + parallax + vào màn · D-55 ·
+> danh sách thành thẻ ảnh · D-56)
 
 # 03 — Components
 
@@ -93,10 +94,34 @@ Muốn chỉnh cảm giác 3D thì sửa biến trong `.st-cr`, **không đụng
 | Biến | Mặc định | Mobile | Ý nghĩa |
 |---|---|---|---|
 | `--st-card-maxw` | `min(46vw, 820px)` | `78vw` | chặn theo **bề ngang màn** |
-| `--st-shadow-room` | `30px` | — | chỗ chừa dưới thẻ cho bóng đổ |
-| `--st-card-step` | `70%` | `82%` | dịch ngang mỗi bậc, **% bề ngang của chính thẻ** |
-| `--st-card-z` | `210px` | `140px` | lùi sâu mỗi bậc |
-| `--st-card-rot` | `34deg` | `28deg` | nghiêng `rotateY` mỗi bậc |
+| `--st-shadow-room` | `34px` | — | chỗ chừa dưới thẻ cho bóng đổ |
+| `--st-card-step` | `66%` | `74%` | dịch ngang mỗi bậc, **% bề ngang của chính thẻ** |
+| `--st-card-z` | `200px` | `140px` | lùi sâu mỗi bậc |
+| `--st-card-rot` | `33deg` | `28deg` | nghiêng `rotateY` mỗi bậc |
+
+### Bốn biến BẬC — chỗ 5 thẻ khác hẳn 3 thẻ (D-55)
+
+Với 3 thẻ, nhân thẳng `--st-o` vào mọi đại lượng là đủ. Với 5 thẻ thì **không**:
+bậc ±2 sẽ ra 132% bề ngang thẻ (nằm ngoài mép màn) và nghiêng 66° (chỉ còn một vệt).
+Nên mỗi đại lượng có biến riêng, mặc định = bậc tuyến tính, ghi đè cho bậc ±2:
+
+| Biến | Bậc ±1 | Bậc ±2 | Vào chỗ nào của `transform` |
+|---|---|---|---|
+| `--st-spread` | `var(--st-o)` | `--st-o × .92` (= 1,84) | `translateX(× --st-card-step)` |
+| `--st-depth` | `var(--st-oa)` | `1.62` | `translateZ` · `scale` · `opacity` |
+| `--st-turn` | `var(--st-o)` | `--st-o × .5` (= **±1**) | `rotateY(× --st-card-rot)` |
+| `--st-hs` | `1` | `1` | hệ số nhân vào `scale` — hover thẻ giữa đặt `1.028` |
+
+`--st-turn` của bậc ±2 **bằng đúng bậc ±1**: các thẻ rìa thành một chồng mặt phẳng
+**song song** lùi dần — dáng coverflow thật. Nghiêng tăng dần thì thẻ ngoài cùng chỉ
+còn là một vệt màu.
+
+> `--st-hs` tồn tại vì hover **không được** viết `transform` riêng: nó sẽ đè cả chuỗi
+> 3D. Muốn phóng thẻ khi hover thì phải nhân vào biến đang nằm sẵn trong `scale()`.
+
+**Ghi đè bằng `[data-oa="2"]`, không phải bằng biến.** Custom property không dùng làm
+selector được — đó chính là lý do `js/carousel.js` ghi attribute `data-oa` song song
+với `--st-oa` từ D-44. Bố cục 5 thẻ là chỗ đầu tiên dùng đến nó thật.
 
 ### Cỡ thẻ suy từ CHIỀU CAO SÂN KHẤU (D-54) — không còn `--st-card-w`
 
@@ -145,9 +170,10 @@ CSS không biểu diễn được phép toán đó.
 
 | State | Style |
 |---|---|
-| Thẻ giữa (`.st-active`) | Phẳng, `opacity 1`, viền xanh `3px --st-green-500`, `--st-sh-xl`, ảnh `scale(1.04)` |
-| Thẻ preview ±1 | `rotateY(∓34°)`, lùi `210px`, `scale .90`, `opacity .70`, `brightness(.86)` |
-| Thẻ xa hơn ±1 | `display: none` — chỉ 3 thẻ trên màn (D-49) |
+| Thẻ giữa (`.st-active`) | Phẳng, `opacity 1`, viền xanh `3px --st-green-500`, `--st-sh-xl`, ảnh `scale(1.045)` + parallax |
+| Thẻ preview ±1 | `rotateY(∓33°)`, lùi `200px`, `scale .915`, `opacity .925`, `brightness(.80)` |
+| Thẻ preview ±2 | `rotateY(∓33°)` (**bằng bậc ±1**), lùi `324px`, `scale .862`, `opacity .878`, `brightness(.66)` |
+| Thẻ xa hơn ±2 | `display: none`. Dưới 1280px thì bậc ±2 cũng bị ẩn → về 3 thẻ (D-55) |
 | Hover thẻ rìa | Bỏ `brightness`, `opacity: 1` — cách "xem trước" mà không cần bấm |
 | Focus | Ring vàng `--st-gold-400` `4px` (ring xanh mặc định chìm vào viền thẻ giữa) |
 | Đang chọn (`.st-going`) | `scale(1.14)` + `opacity 0`, `300ms`, rồi popup đóng |
@@ -189,31 +215,61 @@ chữ ở đó không đọc ra mà chỉ làm rối.
 | Nút ‹ › | Lùi/tiến 1 thẻ |
 | Chấm | Nhảy tới thẻ thứ n |
 | `←` `→` `Home` `End` | Roving tabindex; focus **đi theo** thẻ giữa |
-| Autoplay | 3600 ms/thẻ. Dừng khi hover / focus / tab ẩn. **Tắt hẳn** khi `prefers-reduced-motion` (WCAG 2.2.2) |
+| Rê vào thẻ giữa | Ảnh lệch theo con trỏ (parallax) + phóng `1.045 → 1.10`, lớp phủ đậm thêm, cả thẻ `scale(1.028)` |
+| Autoplay | **3000 ms/thẻ** (D-55). Dừng khi hover / focus / tab ẩn. **Tắt hẳn** khi `prefers-reduced-motion` (WCAG 2.2.2) |
+| Chuyển bậc | `720ms` `--st-ease-flow` + `transition-delay: --st-oa × 34ms` — cả dải trôi thành một làn sóng thay vì 5 mảnh nhảy cùng lúc |
 
 > **Bẫy đã vấp:** không được dùng `setPointerCapture` để theo con trỏ khi kéo. Khi con
 > trỏ đang bị capture, Chrome bắn `click` vào chính phần tử capture chứ không vào thẻ
 > nằm dưới ngón tay → `e.target.closest('.st-cr-card')` ra `null` và **bấm thẻ không đi
 > đâu cả**. Thay bằng nghe `pointermove`/`pointerup` trên `window`.
 
-### Số thẻ hiện — `visible` (D-49)
+### Số thẻ hiện — `visible` (D-55, ⚫ trước là 3 thẻ · D-49)
 
-`js/popup.js` truyền `visible: 1` vào `ST.carousel.create()` → **3 thẻ trên màn**
-(1 giữa + 1 preview mỗi bên). Muốn 5 thẻ như bản trước thì đổi đúng con số đó thành
-`2` — không phải sửa CSS.
+`js/popup.js` truyền `visible: 2` → **5 thẻ trên màn** (1 giữa + 2 preview mỗi bên).
+Đổi được là nhờ D-54 đã làm thẻ giữa to hẳn: bậc ±2 giờ là *lớp nền có chiều sâu*,
+không phải "thêm 2 thứ nữa phải chọn" — vốn là lý do D-49 hạ xuống 3 thẻ.
+
+**Dưới 1280px vẫn là 3 thẻ**, nhưng ẩn bằng **CSS** chứ không hạ `visible`:
+
+```css
+@media (max-width: 1279px) { .st-cr-card[data-oa="2"] { display: none } }
+```
+
+Ở 1024–1279 `--st-card-maxw` đã nới lên `56vw` (D-54), đẩy bậc ±2 ra chỉ còn hở ~110px
+— một vệt màu, không phải "còn ảnh nữa". Ẩn bằng CSS thì xoay ngang máy là bậc ±2 hiện
+lại ngay, không phải dựng lại carousel.
+
+*Không cần `!important`:* `js/carousel.js` chỉ ghi `display:'none'` (thẻ quá xa) hoặc
+`display:''` (xoá hẳn khai báo inline) — không bao giờ ghi giá trị *hiện*.
 
 Thẻ ngoài tầm `visible` bị `display: none` chứ không chỉ ẩn bằng `opacity`: 12 thẻ
 cùng chạy transition là 12 lớp composite, máy yếu không chịu nổi.
 
-> `js/carousel.js` vẫn ghi attribute `data-oa` song song với biến `--st-oa` (biến cho
-> `calc()`, attribute cho selector — custom property **không** dùng làm selector được).
-> Hiện CSS không còn dùng `[data-oa]` nữa, nhưng giữ lại vì nó là cách duy nhất để
-> nhắm một bậc cụ thể từ CSS nếu sau này cần.
+### Parallax trên thẻ giữa (D-55)
+
+`js/carousel.js` ghi `--px/--py` theo vị trí con trỏ, `css/carousel.css` gộp vào
+`transform` của `.st-cr-img` cùng với `scale`. Cùng ý tưởng với ô wall bên bản 2
+([`09-variant2.md`](09-variant2.md) §9.2) — chép được **ý tưởng**, không chép được code
+vì thẻ 3D và ô grid không dùng chung markup.
+
+> ⚠️ Nghe `pointermove` trên **`.st-cr-stage`**, không phải trên từng thẻ. Thẻ rìa
+> nghiêng 33° nên `getBoundingClientRect()` của chúng lệch hẳn so với hình người dùng
+> thấy — bám theo sẽ ra parallax **ngược chiều**. Thẻ giữa có `rotateY = 0` nên rect
+> khớp đúng những gì trên màn.
+
+`go()` gọi `clearParallax()` mỗi lần đổi thẻ: thẻ vừa rời khỏi giữa phải trả ảnh về
+đúng tâm, nếu không nó mang theo độ lệch của lần hover cuối suốt vòng đời còn lại.
 
 ### Mobile (≤599px)
 
-Thẻ giữa chiếm gần trọn bề ngang (`min(78vw, 340px)`), 2 thẻ preview chỉ hé ra ở rìa
-— vừa đủ báo "còn nữa, quẹt tiếp đi". Thao tác chính trên mobile là **quẹt**.
+Thẻ giữa `92vw` (⚫ trước `78vw` · D-55) → `359×239` thay vì `304×203`, **+45% diện
+tích**. Ở màn dọc thứ chặn cỡ thẻ là **bề ngang**, không phải chiều cao: `78vw` để lại
+hơn 200px sân khấu bỏ không, mà tỉ lệ đã khoá 3:2 nên chiều cao thừa không dùng được.
+
+`--st-card-step` phải xuống `74%` theo, nếu không 2 thẻ preview bị đẩy ra gần hết màn,
+chỉ còn hở ~37px — hết ý nghĩa "còn nữa, quẹt tiếp đi". Thao tác chính trên mobile là
+**quẹt**.
 
 ---
 
@@ -247,9 +303,28 @@ Chỉ bản 1. Bản 2 có ô tìm kiếm riêng trong slider — [`09-variant2.
 | `.st-list-back` | Về carousel |
 | `.st-list-title` `.st-list-count` | Tên khu vực (hoặc "Kết quả tìm kiếm") + số điểm |
 | `.st-list-map` | *"Xem khu vực này trên bản đồ"* — mở §3.5 với đúng bộ đang hiện |
-| `.st-list-grid` | `repeat(auto-fill, minmax(300px, 1fr))`, cuộn dọc, fade đáy |
-| `.st-li` | Một điểm: ảnh · nhóm + số hiệu · tên · blurb · cột "Xem ảnh 360°" |
+| `.st-list-grid` | `repeat(auto-fill, minmax(238px, 1fr))` + `align-content: start`, cuộn dọc, fade đáy |
+| `.st-li` | Một điểm = **một thẻ ảnh `4:3`** (D-56), chữ đè lên đáy |
+| `.st-li-no` · `.st-li-must` | Số hiệu bản đồ (góc trên-trái) · badge ★ (góc trên-phải) |
+| `.st-li-blurb` · `.st-li-cta` | `max-height: 0` → chỉ hiện khi hover |
 | `.st-li-noimg` | Ô giữ chỗ cho 8 điểm chưa có ảnh (Q-38) |
+
+### Thẻ ảnh, không phải dòng (D-56) — ⚫ trước là hàng ngang
+
+Bản D-52 mỗi điểm là một dòng: ảnh 104px trái · chữ giữa · cột nút xanh phải. Ba mảng
+màu trên mỗi dòng, 12 dòng chồng nhau ra một **bảng dữ liệu** — trong khi thứ đang chọn
+là **cảnh để đi xem**. Giờ thẻ ảnh phủ kín, chữ trên gradient: **đúng ngôn ngữ của thẻ
+carousel ở màn trước và của ô wall bên bản 2**.
+
+- `.st-li-no` mang **cùng con số với pin** trên bản đồ 2D (§3.5) — đó là cách người
+  dùng nối được hai màn với nhau.
+- `.st-li-blurb`/`.st-li-cta` chỉ hiện khi hover: 12 thẻ cùng khoe mô tả một lúc thì
+  không đọc được cái nào. Cùng cách làm với `.st-wt-sub` của bản 2.
+- Vào màn so le `--i × 38ms` nhưng **chặn ở `min(--i, 9)`**: `renderList()` chạy lại
+  mỗi lần gõ vào ô tìm, không chặn thì thẻ thứ 20 đợi 760ms mới hiện — gõ nhanh sẽ
+  thấy danh sách như đang treo.
+- `listGrid.scrollTop = 0` sau mỗi lần dựng: đổi khu vực mà giữ vị trí cuộn cũ thì
+  danh sách mới hiện ra ở giữa chừng, trông như bấm nhầm.
 
 ### Hai chi tiết có chủ ý
 
@@ -271,8 +346,11 @@ không giới hạn trong khu vực đang xem. Gõ là nhảy thẳng sang `list
 ### Mobile (≤599px)
 
 `.st-search-row` chuyển `column` (390px không đủ cho ô tìm + nút nằm ngang).
-`.st-list-top` xuống 2 hàng (tên khu vực chiếm cả hàng trên), 2 nút chỉ còn icon, lưới
-1 cột, ẩn blurb, cột "Xem ảnh 360°" thu còn mũi tên.
+`.st-list-top` xuống 2 hàng (tên khu vực chiếm cả hàng trên), 2 nút chỉ còn icon.
+
+Lưới **2 cột** thẻ ảnh (D-56): một cột ở 390px ra thẻ cao 292px — cuộn 12 thẻ như vậy
+là 3,5 màn hình. Bỏ hẳn `.st-li-blurb`/`.st-li-cta`: chúng chỉ hiện khi hover mà điện
+thoại không có hover, để lại chỉ tốn chỗ tính toán.
 
 ---
 
@@ -345,7 +423,7 @@ img { max-width: 100%; display: block; object-fit: cover; }
 |---|---|---|
 | `.st-cr-img` | `100%` | không |
 | `.st-sld-img` | `100%` | không |
-| `.st-li-media img` | `100%` | không |
+| `.st-li-img` | `100%` (`position: absolute; inset: 0`) | không |
 | `.st-map-img` | `100%` | không |
 | **`.st-wt-img`** | **`112%`** | **CÓ** — nếu quên: hụt 34px mép phải |
 

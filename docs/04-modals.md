@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-03 (v9 — bản 1 thành 3 trạng thái: deck/list/map · D-51/D-52)
+> Cập nhật: 2026-08-04 (v10 — §4.4 dựng lại nhịp vào màn · D-55)
 
 # 04 — Popup
 
@@ -141,10 +141,25 @@ khoảng trống ngay giữa carousel.
 | Phase | Chi tiết |
 |---|---|
 | Cả màn vào | `opacity 0→1`, `--st-dur-slow` (400ms), `--st-ease-out` |
-| Nội dung | eyebrow → title → subtitle → carousel, mỗi bước lệch `60ms` |
-| Thẻ carousel | fade `460ms`; thẻ giữa trễ `300ms` (không stagger transform — [`03-components.md`](03-components.md) §3.2) |
-| Chuyển bậc carousel | `transform` + `opacity` `620ms`, `--st-ease-out` |
+| Dải 3 màu | `scaleX(0) → 1` từ mép **trái**, `620ms` — nhịp mở đầu, chạy trước mọi thứ |
+| Nội dung | eyebrow `100` → title `170` → sub `240` → hàng tìm `310ms`, mỗi bước `22px + scale(.97)` |
+| Sân khấu | `.st-cr-stage` bay lên `38px` + `scale(.9)`, `820ms`, trễ `120ms` |
+| Thẻ carousel | chỉ `opacity`, `620ms`, so le **từ giữa ra**: `240ms + --st-oa × 130ms` |
+| Ảnh thẻ | Ken Burns `scale(1.16) → 1`, `1200ms`, trễ `180ms` |
+| Nút ‹ › · chấm · footer | `660` / `720` / `780ms` |
+| Chuyển bậc carousel | `transform` + `opacity` `720ms` **`--st-ease-flow`** + delay `--st-oa × 34ms` |
 | Cả màn ra | `opacity 1→0`, nội dung lùi `scale(.98)`, `--st-dur-base` (240ms) |
+
+Nhịp này dựng lại ở D-55 — bản trước chỉ có fade nên popup mở ra trông như trang đã
+đứng đó từ trước. Dàn nhịp đầy đủ của **cả hai bản** ở
+[`02-design-system.md`](02-design-system.md) §2.6.
+
+> ⚠️ Mọi animation vào màn dùng `animation-fill-mode: **backwards**`, không phải `both`.
+> `forwards` giữ quyền điều khiển thuộc tính sau khi animation kết thúc, và `.st-cr-img`
+> còn phải nhận `transform` parallax khi hover — nó sẽ chết cứng ở giá trị cuối.
+
+`#st-popup-deck` **không** có animation nào: `.st-cr-stage` bên trong đã tự bay lên,
+chồng thêm một lớp fade ở đây chỉ làm cả cụm mờ đi đúng lúc nó cần rõ nhất.
 
 Bản trước panel **morph co về một nút trong dock** (Q12 / D-29). Bỏ vì (a) không còn
 dock nào để co về, và (b) nút mở lại — nếu trang cha có — nằm ở document khác, popup

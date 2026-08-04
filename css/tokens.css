@@ -37,6 +37,12 @@
   --st-n-500: #64748b;
   --st-n-600: #475569;
   --st-n-700: #334155;
+  /* ⚠️ Bậc 800 TỪNG BỊ THIẾU ở đây trong khi docs/02 §2.1.5 vẫn khai là có, và
+     css/slider.css + css/wall.css đã gọi `var(--st-n-800)`. Khai báo hỏng không
+     báo lỗi — nó chỉ lặng lẽ thành `transparent`, nên ô wall chưa tải xong ảnh
+     hiện ra thành một vệt xám trông y như ảnh lỗi (D-55(g)). Thang màu THIẾU
+     một bậc mà tài liệu ghi là có thì sớm muộn cũng có người gọi tới nó. */
+  --st-n-800: #1e293b;
   --st-n-900: #0f172a;
 
   /* ── Bề mặt — LIGHT (Q25 = a) ───────────────────────────────────────── */

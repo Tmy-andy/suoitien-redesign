@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-04 (v11 — YC-14: nền trắng 2 bản, nút bản đồ lên hàng tìm kiếm,
+> Cập nhật: 2026-08-04 (v12 — YC-15: chuyển động + 5 thẻ + ảnh nguồn + danh sách
+> thành thẻ ảnh · D-55/D-56). v11 — YC-14: nền trắng 2 bản, nút bản đồ lên hàng tìm kiếm,
 > carousel to nhất có thể · D-54)
 
 # 00 — Yêu cầu
@@ -134,7 +135,7 @@ event `modal:shown` (bắn sau khi morph xong) + 2 chốt an toàn khác — D-4
 **Chốt (2) — thiết kế.** M1 bỏ **hoàn toàn** bản đồ SVG, 8 hotspot, mini-card hover,
 tooltip touch và danh sách mobile. Thay bằng **3D coverflow carousel 12 ảnh banner**:
 tự chạy ngang 3,6 s/thẻ, thẻ giữa nằm phẳng, thẻ hai bên nghiêng và lùi sâu; **bấm thẻ
-nào đi thẳng điểm đó**. Ảnh tải về từ `suoitien.vn` (12 tấm, resize 760×507 webp,
+nào đi thẳng điểm đó**. Ảnh tải về từ `suoitien.vn` (12 tấm, cắt 3:2 webp,
 930 KB) — **không hotlink**, để prototype vẫn xem được khi không có mạng.
 
 **Đây là ĐẢO NGƯỢC** của D-08 (bản đồ SVG stylized) cùng hai nhánh mọc ra từ nó: nhánh
@@ -233,6 +234,49 @@ theo chủ đề"* (chính là cái wall đang hiện). Còn 3 mục, cả 3 ch�
 
 Chi tiết: [`09-variant2.md`](09-variant2.md) (spec đầy đủ) ·
 [`08-decisions.md`](08-decisions.md) D-50.
+
+---
+
+## 0.1k YC-15 — Chuyển động + ảnh vỡ + danh sách (nguyên văn, 2026-08-04)
+
+> bên index.html:
+> - animation tự động chuyển slide mượt mà hơn, thời gian ngắn lại một chút, nếu ảnh đã
+>   to thì preview 2 bên mỗi bên 2 tấm ok.
+> - hover vào ảnh chính có chuyển động giống bên index2
+> - animation xuất hiện khi mở modal chưa đẹp, tôi muốn sống động và kích thích mắt nhìn hơn
+> - Xem lại xem vì sao ảnh vỡ như thế.
+> - Trang danh sách các nơi trong từng khu vực không đẹp, thiết kế kiểu khác đi
+>
+> bên index2:
+> - Animation xuất hiện chưa có
+
+**Chốt (1) — 5 thẻ + nhịp chạy.** `visible: 1 → 2`; bậc ±2 phải nén lại và nghiêng
+**bằng** bậc ±1, nếu không nó nằm ngoài mép màn. Autoplay `3600 → 3000ms`, transition
+`620 → 720ms` với easing mới `--st-ease-flow`. Dưới 1280px vẫn 3 thẻ. → D-55(a,c).
+
+**Chốt (2) — parallax.** Chép ý tưởng của `js/wall.js` sang thẻ giữa của carousel;
+nghe `pointermove` trên sân khấu, không trên từng thẻ. → D-55(d).
+
+**Chốt (3) — vào màn.** Dựng lại cho **cả hai bản**. Bản 2 *"chưa có"* thật ra là
+**có mà không thấy**: quãng đường quá ngắn trên nền trắng + lớp fade của khung nuốt
+mất nhịp bên trong. → D-55(e).
+
+**Chốt (4) — "vì sao ảnh vỡ".** Không phải lỗi CSS: **9/12 ảnh gốc trên site chỉ
+600×600**, và bản cũ đã phóng lên 760×507 ngay từ khâu dựng asset. Đổi nguồn sang ảnh
+trang chi tiết (975–1200px), luật mới là **không bao giờ phóng to khi dựng**. Ba tấm
+`cong` · `casau` · `tulinh` site không có bản lớn hơn → **Q-37 lên 🔴**. → D-55(f).
+
+**Chốt (5) — danh sách.** Từ **dòng ngang** sang **thẻ ảnh 4:3**, cùng ngôn ngữ với thẻ
+carousel và ô wall. → D-56.
+
+> Nhân tiện bắt được 1 lỗi: `--st-n-800` **không tồn tại** trong `tokens.css`, làm ô
+> wall chưa tải ảnh thành vệt xám. → D-55(g).
+
+Chi tiết: [`08-decisions.md`](08-decisions.md) D-55 · D-56 ·
+[`02-design-system.md`](02-design-system.md) §2.6 ·
+[`03-components.md`](03-components.md) §3.2 · §3.4 ·
+[`04-modals.md`](04-modals.md) §4.4 · [`06-data.md`](06-data.md) §6.8 ·
+[`09-variant2.md`](09-variant2.md) §9.2.0.
 
 ---
 

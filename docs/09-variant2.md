@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-04 (v4 — wall đổi sang nền TRẮNG như bản 1 · D-54)
+> Cập nhật: 2026-08-04 (v5 — dựng lại animation vào màn + sửa `--st-n-800` · D-55)
 
 # 09 — Bản 2: VR Wall + Infinite Slider
 
@@ -64,12 +64,57 @@ chứng minh ngay tại chỗ. Hợp đồng iframe: [`07-integration.md`](07-in
 | `.st-p2-gate` | Lớp "mở cổng" khi bấm ô — `js/popup2.js` dựng rồi tự xoá (§9.4) |
 | `.st-wall` | Trạng thái 1, nền `--st-bg`; `.st-state-slider` trên `#st-pop2` làm nó mờ + `scale(1.04)` |
 | `.st-wall-grid` | Grid **4 cột × 3 hàng** |
-| `.st-wall-tile` | Một ô = một **khu vực** (`D.GROUPS`). Trên nền trắng **bắt buộc** có `inset 0 0 0 1px var(--st-n-200)` — xem §9.2.1 |
+| `.st-wall-tile` | Một ô = một **khu vực** (`D.GROUPS`). Trên nền trắng **bắt buộc** có `inset 0 0 0 1px var(--st-n-200)` — xem §9.2.2 |
 | `.st-wt-media` `.st-wt-img` | 2–3 ảnh xếp chồng, chỉ ảnh có `.st-on` hiện. Ảnh rộng **112%** + `max-width: none` — xem cảnh báo dưới |
 | `.st-wt-body` | Số điểm · tên · mô tả · CTA |
 | `.st-wall-bar` | Thanh công cụ 3 nút |
 
-### 9.2.1 Hai chỗ phải kê lại khi bỏ nền tối (D-54)
+### 9.2.0 Animation vào màn — "chưa có" mà thật ra là "không thấy" (D-55)
+
+Khách báo bản 2 *"Animation xuất hiện chưa có"*. Kiểm bằng Playwright thì animation
+**vẫn chạy đúng** (9 ô, delay `260 + gi×55ms`) — nó chỉ không nhìn ra được:
+
+| Nguyên nhân | Sửa |
+|---|---|
+| Ô dịch `14px` + `scale(.97)` **trên nền trắng** — quá ngắn để đọc ra là chuyển động | `46px` + `scale(.86)`, `680ms`, cách nhau `76ms` |
+| `#st-pop2` fade `opacity` **400ms đè lên đúng lúc** 9 ô đang so le → nuốt trọn nhịp | lớp fade khung xuống **320ms**, xong sớm |
+| Ảnh trong ô đứng im | Ken Burns `scale(1.18) → 1`, `1300ms` — thứ làm nó "sống" |
+| Nút × và thanh công cụ hiện sẵn từ frame đầu | pop `620ms` · fade-up `940ms` |
+| Dải 3 màu hiện sẵn | `scaleX(0) → 1` từ mép trái, `620ms` (`transform-origin` khai ở `base.css` để **cả hai bản** dùng chung) |
+
+⚠️ Đổi hết `both` → **`backwards`**: `forwards` giữ quyền điều khiển `transform` sau
+khi chạy xong, mà ô còn phải nhận `scale(1.028)` khi hover.
+
+**Cách kiểm** (chỉ đợi rồi chụp thì không chứng minh được gì — `page.goto()` đợi tới
+`load` nên lúc chụp animation đã gần xong): ghim `animation-play-state: paused` **từ
+trước khi trang chạy**, rồi tự tua `currentTime` tới từng mốc. Animation vẫn được tạo,
+vẫn nằm trong `getAnimations()`, nhưng đứng yên cho tới khi ta bảo nó chạy.
+*(Tua `currentTime` sau khi animation kết thúc thì vô dụng — trình duyệt đã vứt nó ra
+khỏi `getAnimations()`.)*
+
+### 9.2.1 `--st-n-800` KHÔNG TỒN TẠI — ô chưa tải ảnh thành vệt xám (D-55)
+
+`.st-wall-tile { background: var(--st-n-800) }`. Thang neutral trong `tokens.css` nhảy
+thẳng **700 → 900**; không có 800. Khai báo hỏng → nền thành `transparent`, nên ô chưa
+tải xong ảnh chỉ còn `.st-wt-veil` phủ lên nền trắng: **một vệt xám dọc trông y như ảnh
+lỗi**. Đổi sang `--st-n-200`, cũng là lựa chọn đúng hơn cho nền trắng — chỗ giữ ảnh
+phải *sáng hơn* ảnh, không tối hơn.
+
+Chỉ lộ ra khi chụp ở mốc 500ms của animation vào: ở trạng thái cuối ảnh đã tải xong nên
+lỗi này **không bao giờ hiện ra** trong ảnh chụp thường.
+
+Sửa xong thì lộ tiếp nguyên nhân **thật sự** làm ô rỗng: `js/wall.js` đặt
+`loading="lazy"` theo chỉ số ô (`gi < 3`), tức **6 ô cuối** đều tải trễ. Mosaic phủ
+trọn màn nên cả 9 ô đều nằm trong viewport từ frame đầu — lazy ở đây không tiết kiệm
+được gì mà lại làm ô hiện ra rỗng đúng lúc animation vào màn đang chạy. Đổi điều kiện
+sang `i === 0`: **ảnh đầu của mọi ô tải ngay**, chỉ 2 ảnh dùng để đổi cảnh sau vài giây
+mới lazy.
+
+Và chỗ giữ ảnh đổi từ màu trơn sang **gradient brand**
+(`--st-green-100 → --st-gold-200`, cùng công thức với `.st-li-noimg` của bản 1): màu
+trơn nằm dưới `.st-wt-veil` vẫn ra một mảng xám chết.
+
+### 9.2.2 Hai chỗ phải kê lại khi bỏ nền tối (D-54)
 
 Nền tối làm hai việc **miễn phí** mà nền trắng phải trả tiền:
 

@@ -160,13 +160,17 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--st-r-lg);
-  /* ⚠️ Từng là `var(--st-n-800)` — token đó KHÔNG TỒN TẠI trong tokens.css
-     (thang neutral nhảy 700 → 900). Khai báo hỏng → nền thành `transparent`,
-     nên ô chưa tải xong ảnh chỉ còn `.st-wt-veil` phủ lên nền trắng: một vệt
-     xám dọc trông y như ảnh lỗi. Bắt được lúc chụp ô ở mốc 500ms (D-55).
-     `--st-n-200` cũng là lựa chọn ĐÚNG hơn cho nền trắng: chỗ giữ ảnh phải
-     sáng hơn ảnh, không tối hơn. */
-  background: var(--st-n-200);
+  /* ⚠️ Từng là `var(--st-n-800)` — và bậc 800 lúc đó KHÔNG CÓ trong tokens.css
+     (thang nhảy 700 → 900) dù docs/02 §2.1.5 vẫn khai là có. Khai báo hỏng →
+     nền thành `transparent`, nên ô chưa tải xong ảnh chỉ còn `.st-wt-veil` phủ
+     lên nền trắng: một vệt xám dọc trông y như ảnh lỗi. Bắt được lúc chụp ô ở
+     mốc 500ms của animation vào màn (D-55(g)); ở trạng thái cuối ảnh đã tải
+     xong nên lỗi không bao giờ lộ ra.
+     Token đã được bổ sung, nhưng ô wall vẫn KHÔNG dùng nó: trên nền trắng, chỗ
+     giữ ảnh phải sáng hơn ảnh chứ không tối hơn.
+     Dùng gradient brand chứ không xám trơn — `.st-wt-veil` phủ đè lên, xám trơn
+     dưới lớp veil vẫn ra một mảng xám chết. Cùng cách với `.st-li-noimg`. */
+  background: linear-gradient(140deg, var(--st-green-100), var(--st-gold-200));
   text-align: left;
   isolation: isolate;
   /* Trên nền trắng, bóng nhẹ + viền mảnh mới tách được ô khỏi nền; bóng đậm

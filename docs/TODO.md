@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-04 (v15 — nền trắng 2 bản + carousel to hơn · D-54)
+> Cập nhật: 2026-08-04 (v16 — chuyển động + ảnh nguồn + danh sách thẻ ảnh · D-55/D-56)
 
 # TODO
 
@@ -395,6 +395,35 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ## ⏭️ Việc tiếp theo (SAU PIVOT 2026-08-03) — phần còn sống
 
+### ✅ Vòng YC-15 (2026-08-04) — chuyển động, ảnh nguồn, danh sách
+
+- [x] Carousel `visible: 1 → 2` (5 thẻ) + 4 biến bậc tách riêng, bậc ±2 nén lại và
+      nghiêng bằng bậc ±1 · 2026-08-04
+- [x] Ẩn bậc ±2 dưới 1280px bằng CSS (`[data-oa="2"]`), không hạ `visible` · 2026-08-04
+- [x] Độ mờ thôi diễn tả chiều sâu (`.70 → .925`), dồn cho `brightness` — 5 thẻ chồng
+      nhau nên thẻ mờ 70% thành cửa kính · 2026-08-04
+- [x] Autoplay `3600 → 3000ms` · transition `620 → 720ms` · token `--st-ease-flow` mới
+      · `transition-delay` so le theo bậc · 2026-08-04
+- [x] Parallax trên thẻ giữa (mượn `js/wall.js`), nghe trên sân khấu · 2026-08-04
+- [x] Dựng lại animation vào màn **cả 2 bản**: brandline sweep, header so le, sân khấu
+      bay lên, Ken Burns, `both → backwards` · 2026-08-04
+- [x] **Ảnh nguồn**: truy ra 9/12 ảnh gốc chỉ 600×600 và bản cũ đã phóng lên 760 từ
+      khâu dựng → đổi sang ảnh trang chi tiết, 9/12 lên ≥900px, luật "không bao giờ
+      phóng to khi dựng" · 2026-08-04 · D-55(f)
+- [x] Bổ sung token `--st-n-800` còn thiếu trong `tokens.css` (docs/02 §2.1.5 vẫn khai
+      là có, `css/slider.css` đã gọi tới) · 2026-08-04
+- [x] Nền ô wall: `--st-n-800` (hỏng) → gradient brand; và `loading="lazy"` của ảnh đầu
+      mỗi ô bỏ đi — cả 9 ô đều trong viewport nên lazy chỉ làm ô rỗng lúc vào màn · 2026-08-04
+- [x] Mobile thẻ `78vw → 92vw` + step `82% → 74%` (+45% diện tích thẻ) · 2026-08-04
+- [x] Danh sách điểm từ DÒNG sang **THẺ ẢNH 4:3** + `D.mustOf()` · 2026-08-04 · D-56
+- [x] Playwright: 6 viewport × hình học, danh sách 12 thẻ, và **đo animation bằng cách
+      ghim `animation-play-state: paused` rồi tua `currentTime`** (đợi rồi chụp không
+      chứng minh được gì — `goto()` đợi tới `load`) · 0 lỗi console · 2026-08-04
+- [ ] **3 ảnh còn vỡ: `cong` · `casau` · `tulinh`** — site chỉ có 600×600 / 500×499,
+      không có nguồn nào lớn hơn. Chặn bởi Q-37
+- [ ] Xem lại tổng dung lượng ảnh `930 KB → 1,32 MB`. Chấp nhận được cho prototype;
+      bản thật nên cân nhắc `srcset` 2 cỡ thay vì một cỡ lớn cho mọi máy
+
 ### ✅ Vòng YC-14 (2026-08-04)
 
 - [x] Nút *"Xem trên bản đồ 2D"* từ footer lên `.st-search-row` cạnh ô tìm · 2026-08-04
@@ -409,8 +438,11 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 - [ ] **Verify contrast bằng tool cho chrome MỚI của wall trên nền trắng** — eyebrow
       `--st-green-700` trên `--st-green-50`, `#st-wall-sub` `--st-n-600` trên trắng, và
       nút `.st-wall-bar .st-ghost` `--st-n-500`. Mới xem bằng mắt trên screenshot
-- [ ] Xem lại `--st-n-800` (nền ô chưa tải ảnh) trên nền trắng — giờ nó là vệt tối duy
-      nhất của wall, có thể nên đổi sang `--st-n-200`
+- [x] ~~Xem lại `--st-n-800` (nền ô chưa tải ảnh) trên nền trắng — giờ nó là vệt tối duy
+      nhất của wall, có thể nên đổi sang `--st-n-200`~~ → **hoá ra là LỖI, không phải
+      chuyện thẩm mỹ**: token `--st-n-800` không tồn tại trong `tokens.css` (thang nhảy
+      700 → 900) nên nền ô thành `transparent`, ô chưa tải ảnh chỉ còn lớp veil phủ lên
+      nền trắng = một vệt xám. Đổi `--st-n-200` · 2026-08-04 · D-55(g)
 
 ### 🟡 Cần khách trả lời
 
@@ -430,8 +462,12 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
       cảm nhận, Suối Tiên chưa có phân loại chính thức. Bảng nhóm:
       [`06-data.md`](06-data.md) §6.9
 
-- [ ] **Q-37 · Quyền dùng 12 ảnh banner** lấy từ suoitien.vn cho tour VR, và xin **bản
-      gốc độ phân giải cao** (vài tấm site đã nén sẵn) — nguồn từng ảnh:
+- [ ] **Q-37 🔴 · Quyền dùng 12 ảnh banner + XIN BẢN GỐC** — nâng lên 🔴 ở D-55.
+      Không còn là chuyện "cho đẹp hơn": **9/12 ảnh trên site chỉ là thumbnail
+      600×600**, và `cong` · `casau` · `tulinh` thì **không có bản nào lớn hơn ở bất
+      kỳ đâu trên site** — ba tấm này đang phải phóng to ở thẻ giữa, đúng cái khách gọi
+      là "ảnh vỡ". Chín tấm còn lại đã cứu được bằng ảnh trang chi tiết (975–1200px)
+      nhưng vẫn thiếu 1,37× cho màn 2×. Nguồn từng ảnh + W×H:
       [`06-data.md`](06-data.md) §6.8
 - [ ] **Q-38 · Ảnh cho 8 điểm còn thiếu** — `xelua` `taxi` `tauluon` `massage` `coixay`
       `vrgame` `thuyenrong` `thuyenbay`. Có ảnh là carousel phủ hết bộ 20 điểm highlight
@@ -491,6 +527,7 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 | Ngày | Việc |
 |---|---|
+| 2026-08-04 (v8) | **Chuyển động + ảnh nguồn + danh sách (YC-15).** (a) Carousel 5 thẻ với 4 biến bậc tách riêng; độ mờ thôi làm việc diễn tả chiều sâu; autoplay `3600 → 3000ms`, transition `620 → 720ms` + `--st-ease-flow`; parallax thẻ giữa. (b) Dựng lại animation vào màn cho **cả hai bản** — bản 2 trước đây "chưa có" thật ra là có mà bị lớp fade khung nuốt mất. (c) **Truy ra nguyên nhân "ảnh vỡ": 9/12 ảnh gốc trên site chỉ 600×600**, bản cũ còn phóng lên 760 ngay từ khâu dựng asset → đổi nguồn sang trang chi tiết, 9/12 lên ≥900px, tổng `930 KB → 1,32 MB`. (d) Danh sách điểm từ dòng sang thẻ ảnh 4:3 (D-56). (e) Sửa `--st-n-800` — token không tồn tại. (f) Mobile thẻ `78vw → 92vw`. D-55 · D-56. |
 | 2026-08-04 (v7) | **Nền trắng phẳng 2 bản + carousel to hơn (YC-14).** (a) Bỏ 2 vệt radial ở `#st-popup`; `#st-pop2` + `.st-wall` đổi từ nền tối sang `--st-bg` — **đảo ngược D-50 #4**, kèm kê lại viền ô (`inset 1px --st-n-200`), độ mờ hover (`.42 → .62`), eyebrow, tiêu đề, nút thanh công cụ, nút `×` (có override kính mờ ở slider). (b) Nút bản đồ chuyển từ `.st-foot-map` (footer) lên `.st-search-row` cạnh ô tìm; xoá hẳn `.st-foot-actions`. (c) Viết lại `css/carousel.css`: cỡ thẻ suy từ chiều cao sân khấu thay vì hằng số `66vh`, bỏ cặp auto-margin — thẻ giữa `547 → 662px` ở 1440×900, `560 → 820px` ở 1920. Playwright 7 viewport → PASS, 0 lỗi console. D-54. |
 | 2026-08-03 (v6) | **Sửa lỗi ảnh ô wall hụt mép phải.** `base.css` `img { max-width: 100% }` kẹp `.st-wt-img` (`width: 112%`) xuống 100% → dải trống dọc 34px (51px khi parallax). Thêm `max-width: none`. Thêm `tools/check-image-cover.js` đo rect thật ở 2 bản × {mặc định, parallax ±2.5%, hover, mobile}; đã kiểm ngược là tool bắt đúng lỗi. D-53. |
 | 2026-08-03 (v5) | **Bản đồ 2D + bản 1 đổi sang khu vực (YC-13).** Thêm `js/map2d.js` + `css/map2d.css` (dùng chung 2 bản: pan/zoom, pin số hiệu màu theo nhóm, thẻ chi tiết, lọc theo khu vực đang xem) + `assets/map/park-2400.webp` (flatten `#0f172a`, 391 KB) + `D.MAP`/`D.MAP_META`. Bản 1: thẻ carousel đổi từ ĐIỂM sang **KHU VỰC**, thêm ô tìm kiếm bỏ dấu và trạng thái danh sách. Rule `img { object-fit: cover }` trong `base.css`. Test Playwright 13 nhóm kiểm, cả 2 bản → 0 lỗi console. D-51 + D-52. |

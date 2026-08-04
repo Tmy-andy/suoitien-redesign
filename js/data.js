@@ -132,7 +132,8 @@ window.ST = window.ST || {};
      Thứ tự dưới đây LÀ thứ tự chạy vòng, xếp theo nhịp thị giác (cổng →
      cung điện → tuyết → thú → nước → …), không theo bảng chữ cái.
 
-     img  = ảnh banner THẬT tải từ suoitien.vn, đã resize 760×507 (3:2) và
+     img  = ảnh banner THẬT tải từ suoitien.vn, đã cắt 3:2 (bề ngang 500–1200px
+            tuỳ nguồn, KHÔNG phóng to — docs/06-data.md §6.8) và
             chuyển webp. URL gốc từng ảnh: docs/06-data.md §6.8.
             Ảnh nằm TRONG repo, không hotlink (RULE #3: không dependency ngoài).
      must = true → badge vàng "nên xem" (hint nhẹ, không xếp hạng · Q9).

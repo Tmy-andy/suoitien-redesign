@@ -49,8 +49,14 @@ window.ST = window.ST || {};
         var imgs = g.keys.slice(0, 3).map(function (k, i) {
           var src = D.imgOf(k);
           if (!src) return '';
+          /* `loading="lazy"` CHỈ cho ảnh thứ 2–3 (ảnh để đổi cảnh sau vài giây).
+             Ảnh đầu của MỌI ô phải tải ngay: mosaic phủ trọn màn nên cả 9 ô đều
+             nằm trong viewport từ frame đầu — lazy ở đây không tiết kiệm được gì
+             mà lại làm ô hiện ra rỗng đúng lúc animation vào màn đang chạy, đọc
+             thành một vệt xám như ảnh lỗi (D-55(g)). Trước đây điều kiện là
+             `gi < 3`, tức 6 ô cuối đều dính. */
           return '<img class="st-wt-img' + (i === 0 ? ' st-on' : '') + '" src="' + esc(src) +
-                 '" alt="" ' + (gi < 3 ? '' : 'loading="lazy" ') + 'decoding="async">';
+                 '" alt="" ' + (i === 0 ? '' : 'loading="lazy" ') + 'decoding="async">';
         }).join('');
 
         return '<button type="button" class="st-wall-tile st-s-' + g.size + '"' +
