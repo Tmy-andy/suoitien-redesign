@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════
    map2d.css — Bản đồ 2D + pin (D-51). Cặp với js/map2d.js.
-   DÙNG CHUNG cho index.html và index2.html.
+   Mở được từ cả hai trạng thái của popup (wall → "all", slider → "area").
    ═══════════════════════════════════════════════════════════════════════ */
 
 #st-map {
@@ -278,17 +278,10 @@
 /* Gợi ý biến mất khi người dùng đã hiểu (đã zoom) hoặc khi thẻ đang che chỗ */
 #st-map.st-zoomed .st-map-hint { opacity: 0; }
 
-@media (max-width: 599px) {
-  .st-map-top { padding: calc(var(--st-sat) + var(--st-s-3)) var(--st-s-3) var(--st-s-2); gap: var(--st-s-2); }
-  .st-map-title { font-size: 16px; }
-  .st-map-count { display: none; }        /* nhường chỗ cho tên khu vực */
-  .st-map-x { width: 40px; height: 40px; }
-  .st-map-card { width: calc(100vw - var(--st-s-6)); }
-  .st-map-card-img { width: 92px; }
-  .st-map-tools { right: var(--st-s-3); bottom: calc(var(--st-sab) + var(--st-s-16)); }
-  .st-map-tools button { width: 40px; height: 40px; }
-  .st-map-hint { display: none; }
-}
+/* @media của bản đồ nằm HẾT ở css/responsive2.css, không có ở đây.
+   Trước D-58 nó nằm cả hai nơi: khối ≤599px ở cuối file này và vài dòng nữa
+   bên responsive2 — sửa một chỗ thì chỗ kia lặng lẽ đè lên (responsive2 nạp
+   sau). Mọi thứ thuộc mobile giờ chỉ có MỘT chỗ để tìm. */
 
 @media (prefers-reduced-motion: reduce) {
   #st-map, .st-map-card { transition: none; animation: none; }

@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-04 (v16 — chuyển động + ảnh nguồn + danh sách thẻ ảnh · D-55/D-56)
+> Cập nhật: 2026-08-04 (v17 — YC-16: chốt MỘT bản + dựng lại mobile · D-57/D-58)
 
 # TODO
 
@@ -395,6 +395,68 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ## ⏭️ Việc tiếp theo (SAU PIVOT 2026-08-03) — phần còn sống
 
+### ✅ Vòng YC-16 (2026-08-04) — chốt một bản + dựng lại mobile
+
+**Dọn (D-57)**
+
+- [x] Gỡ `css/carousel.css` · `css/popup.css` · `css/responsive.css` · `js/carousel.js`
+      · `js/popup.js` — 2026-08-04
+- [x] Gỡ `host-demo.html` (khách: *"chỉ làm index"*) — 2026-08-04
+- [x] Gỡ khối `COPY.vi/en.popup` + `.list` — 21 khoá, không khoá nào còn được gọi — 2026-08-04
+- [x] Gỡ `D.mustOf()` + cờ `must:true` · gỡ token `--st-ease-flow` — 2026-08-04
+- [x] Quyết định **không đổi tên** `#st-pop2` / `popup2.js` / `responsive2.css`, ghi
+      chú lý do ở đầu mỗi file + D-57 — 2026-08-04
+- [x] Dọn mọi chú thích còn trỏ `index2.html` / `carousel.js` / `host-demo.html`
+      trong `js/` và `css/` — 2026-08-04
+
+**Mobile (D-58)**
+
+- [x] `.st-wall` thành scroll container; bỏ cuộn lồng trên `.st-wall-grid` — 2026-08-04
+- [x] Ô theo `aspect-ratio` thay chiều cao cố định; ô lớn thành thẻ hero tràn ngang — 2026-08-04
+- [x] Thanh công cụ `sticky bottom` 2 hàng + gradient fade; ≤379px xếp dọc — 2026-08-04
+- [x] Header căn trái ở ≤599px — 2026-08-04
+- [x] Landscape 3 cột (cuộn 4,4 màn → 2,6 màn) — 2026-08-04
+- [x] Slider: back thành nút tròn · `object-position: center 38%` · ‹ › lên 30%
+      (26% ở landscape) · thanh dưới từ 3 hàng xuống 2 — 2026-08-04
+- [x] Bản đồ thành bottom sheet; cụm zoom né bằng `--st-card-h` đo thật — 2026-08-04
+- [x] `:active` cho mọi thứ bấm được · tắt parallax trên cảm ứng ·
+      `touch-action: pan-y` trên track — 2026-08-04
+- [x] `imgsPerTile()` — mobile 2 ảnh/ô thay vì 3 — 2026-08-04
+- [x] Dồn @media của bản đồ từ `map2d.css` về `responsive2.css` — 2026-08-04
+
+**Ba lỗi có sẵn lôi ra được**
+
+- [x] `--st-t-h3` **không tồn tại** trong `tokens.css` dù `docs/02` khai là có và
+      `map2d.css` đã gọi — tên điểm trong thẻ bản đồ hiện bằng cỡ chữ body suốt từ
+      D-51. **Lần thứ HAI dính đúng bẫy này** (lần đầu `--st-n-800`) — 2026-08-04
+- [x] `g.cover` chưa bao giờ được `wall.js` đọc → ô hero và ô "Điểm đến nổi bật" hiện
+      cùng một tấm ảnh. Thêm `coverFirst()` — 2026-08-04
+- [x] @media của bản đồ nằm ở hai file, file nạp sau đè file nạp trước — 2026-08-04
+
+**Kiểm**
+
+- [x] Playwright/Chromium 7 khổ × 4 màn (320 · 375 · 390 · 390-EN · 844 ngang · 820 ·
+      1440), 9 bất biến hình học → **sạch, 0 lỗi console** — 2026-08-04
+- [ ] Kiểm trên **thiết bị thật** — Chromium hạ màn không thay được ngón tay thật:
+      độ trễ của `:active`, quán tính cuộn của Safari iOS, `env(safe-area-inset-*)` ở
+      máy có notch, và cử chỉ "lùi trang" có thật sự bị `touch-action: pan-y` chặn không
+
+**Còn nợ từ vòng này**
+
+- [ ] **Dựng lại `host-demo.html`** lúc bàn giao — bỏ nút "Bản 1 / Bản 2", `src` cố
+      định `index.html`. Lấy gốc: `git show 3be9e22:host-demo.html`.
+      *(Khách bảo "chỉ làm index" nên lượt này không dựng.)*
+- [ ] **Ảnh bản đồ có dải tối lớn phía trên-trái** (vùng ngoài công viên, đã flatten
+      `#0f172a`). Trên máy dọc, `cover` cắt đúng vào dải đó → ~40% chiều cao là mảng
+      tối trống. **Không sửa được bằng CSS** — mức zoom nào cũng dính, vì bản đồ 2:1
+      trong khung 0,51:1 thì hoặc cắt ngang hoặc chừa dải trên dưới. Phải **cắt lại
+      asset** về bounding box của công viên — kéo theo việc tính lại toàn bộ `x`/`y`
+      trong `D.MAP_META`, nên gộp chung với Q-43 (toạ độ pin thật) làm một lần
+- [ ] 8 điểm chưa có ảnh giờ **không xuất hiện ở đâu cả** (Q-38 gấp hơn trước) — bản 1
+      từng có ô giữ chỗ cho chúng, slider thì cần ảnh phủ toàn cảnh
+
+---
+
 ### ✅ Vòng YC-15 (2026-08-04) — chuyển động, ảnh nguồn, danh sách
 
 - [x] Carousel `visible: 1 → 2` (5 thẻ) + 4 biến bậc tách riêng, bậc ±2 nén lại và
@@ -446,13 +508,8 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ### 🟡 Cần khách trả lời
 
-- [ ] **Q-42 🔴 · CHỌN BẢN 1 HAY BẢN 2?** Đây là câu chặn mọi việc còn lại — chốt xong
-      thì xoá bản kia (3 css + 3 js riêng, [`01-architecture.md`](01-architecture.md) §1.1)
-      · Bản 1 `index.html` — nhanh hơn 1 click, gọn, light/airy
-      · Bản 2 `index2.html` — thấy quy mô 9 khu vực, có tìm/lọc
-      · **Từ D-54 hai bản cùng nền trắng** → so được đúng thứ đang hỏi (carousel
-        tuần tự ↔ mosaic toàn cảnh), không bị tông màu làm nhiễu
-      · So sánh cạnh nhau: mở `host-demo.html` rồi bấm nút "Bản 1 / Bản 2"
+- [x] **Q-42 · CHỌN BẢN 1 HAY BẢN 2?** → **khách chọn VR Wall + Infinite Slider**,
+      2026-08-04. Bản 1 đã gỡ hẳn (D-57)
 - [ ] **Q-43 🔴 · Số hiệu + toạ độ pin trên bản đồ 2D** — mới **2/20** số đọc được từ
       ảnh khách gửi (`1` = Cổng Thiên Tiên Môn, `22A` = Vương Quốc Cá Sấu). 18 số còn
       lại và **toàn bộ x/y** là ước lượng bằng mắt. Đủ để trình bày, **chưa đủ để chỉ
@@ -527,6 +584,7 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 | Ngày | Việc |
 |---|---|
+| 2026-08-04 (v9) | **Chốt MỘT bản + dựng lại mobile (YC-16).** (a) Khách chọn VR Wall + Slider → gỡ `css/carousel.css` · `css/popup.css` · `css/responsive.css` · `js/carousel.js` · `js/popup.js` · `host-demo.html`, gỡ 21 khoá i18n chết + `D.mustOf` + cờ `must` + `--st-ease-flow`. Giữ nguyên tên có hậu tố "2" và ghi rõ vì sao (decision log đang trỏ tới tên cũ ở ~40 chỗ). (b) **Dựng lại toàn bộ `responsive2.css`**: `.st-wall` thành trang cuộn thay vì cuộn lồng, ô theo `aspect-ratio`, ô lớn thành thẻ hero, thanh công cụ `sticky` 2 hàng (≤379 xếp dọc), header căn trái, landscape 3 cột, slider gọn còn 2 hàng dưới, bản đồ thành bottom sheet có `--st-card-h` đo thật. (c) Lôi ra 3 lỗi có sẵn: `--st-t-h3` không tồn tại · `g.cover` chưa bao giờ được đọc nên ô hero trùng ảnh ô kế · @media bản đồ nằm ở hai file. (d) Playwright 7 khổ × 4 màn, 9 bất biến hình học → sạch. D-57 · D-58. |
 | 2026-08-04 (v8) | **Chuyển động + ảnh nguồn + danh sách (YC-15).** (a) Carousel 5 thẻ với 4 biến bậc tách riêng; độ mờ thôi làm việc diễn tả chiều sâu; autoplay `3600 → 3000ms`, transition `620 → 720ms` + `--st-ease-flow`; parallax thẻ giữa. (b) Dựng lại animation vào màn cho **cả hai bản** — bản 2 trước đây "chưa có" thật ra là có mà bị lớp fade khung nuốt mất. (c) **Truy ra nguyên nhân "ảnh vỡ": 9/12 ảnh gốc trên site chỉ 600×600**, bản cũ còn phóng lên 760 ngay từ khâu dựng asset → đổi nguồn sang trang chi tiết, 9/12 lên ≥900px, tổng `930 KB → 1,32 MB`. (d) Danh sách điểm từ dòng sang thẻ ảnh 4:3 (D-56). (e) Sửa `--st-n-800` — token không tồn tại. (f) Mobile thẻ `78vw → 92vw`. D-55 · D-56. |
 | 2026-08-04 (v7) | **Nền trắng phẳng 2 bản + carousel to hơn (YC-14).** (a) Bỏ 2 vệt radial ở `#st-popup`; `#st-pop2` + `.st-wall` đổi từ nền tối sang `--st-bg` — **đảo ngược D-50 #4**, kèm kê lại viền ô (`inset 1px --st-n-200`), độ mờ hover (`.42 → .62`), eyebrow, tiêu đề, nút thanh công cụ, nút `×` (có override kính mờ ở slider). (b) Nút bản đồ chuyển từ `.st-foot-map` (footer) lên `.st-search-row` cạnh ô tìm; xoá hẳn `.st-foot-actions`. (c) Viết lại `css/carousel.css`: cỡ thẻ suy từ chiều cao sân khấu thay vì hằng số `66vh`, bỏ cặp auto-margin — thẻ giữa `547 → 662px` ở 1440×900, `560 → 820px` ở 1920. Playwright 7 viewport → PASS, 0 lỗi console. D-54. |
 | 2026-08-03 (v6) | **Sửa lỗi ảnh ô wall hụt mép phải.** `base.css` `img { max-width: 100% }` kẹp `.st-wt-img` (`width: 112%`) xuống 100% → dải trống dọc 34px (51px khi parallax). Thêm `max-width: none`. Thêm `tools/check-image-cover.js` đo rect thật ở 2 bản × {mặc định, parallax ±2.5%, hover, mobile}; đã kiểm ngược là tool bắt đúng lỗi. D-53. |

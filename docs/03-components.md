@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-04 (v15 — carousel 5 thẻ + parallax + vào màn · D-55 ·
-> danh sách thành thẻ ảnh · D-56)
+> Cập nhật: 2026-08-04 (v16 — D-57: §3.1 – §3.4 hết đối tượng, bản 1 đã gỡ;
+> §3.5 – §3.6 vẫn hiệu lực)
 
 # 03 — Components
 
@@ -9,9 +9,13 @@ component**. Spec cũ vẫn tra được ở `git show 9e5d46e:docs/03-component
 
 Vòng đời popup (mở / đóng / ARIA): [`04-modals.md`](04-modals.md).
 
-> ⚠️ **File này tả BẢN 1** (`index.html` — màn chào + 3D carousel).
-> Bản 2 (`index2.html` — VR Wall + Infinite Slider) có spec riêng ở
-> [`09-variant2.md`](09-variant2.md). Hai bản chạy song song để khách chọn (D-50).
+> ⚫ **§3.1 – §3.4 TẢ BẢN 1, ĐÃ GỠ (D-57 · 2026-08-04).** `#st-popup` · `.st-cr-*`
+> · `.st-search` · `.st-list-*` không còn tồn tại trong code. Giữ lại vì nhiều quyết
+> định của bản đang dùng được giải thích bằng cách đối chiếu với chúng.
+> Spec của bản đang dùng: [`09-variant2.md`](09-variant2.md).
+>
+> ✅ **Hai mục CÒN HIỆU LỰC, phải đọc:**
+> §3.5 bản đồ 2D `.st-map-*` · §3.6 bẫy `max-width` với ảnh phủ (D-53).
 
 ---
 
@@ -354,10 +358,17 @@ thoại không có hover, để lại chỉ tốn chỗ tính toán.
 
 ---
 
-## 3.5 Bản đồ 2D — `.st-map-*` ⭐ MỚI (D-51)
+## 3.5 ✅ Bản đồ 2D — `.st-map-*` (D-51) — CÒN HIỆU LỰC
 
-**DÙNG CHUNG cả hai bản.** Markup giống hệt nhau ở `index.html` và `index2.html` — sửa
-một bên phải sửa cả bên kia.
+Mở được từ cả hai trạng thái của popup: từ wall (`data-open-map="all"`, hiện không
+còn nút nào gọi — xem `09-variant2.md` §9.2) và từ slider (`data-open-map="area"`).
+
+> **@media của bản đồ nằm ở `css/responsive2.css`, KHÔNG ở `map2d.css`** (D-58).
+> Trên ≤599px nó là **bottom sheet** dính đáy chứ không phải thẻ nổi giữa màn, và cụm
+> nút zoom né sheet bằng biến `--st-card-h` do `js/map2d.js` đo thật mỗi lần mở thẻ.
+
+> ⚠️ `.st-map-card h3` dùng `font: var(--st-t-h3)` — token này **từng không tồn tại**
+> nên tên điểm hiện ra bằng đúng cỡ chữ body suốt từ D-51. Đã thêm ở D-58.
 
 | Selector | Vai trò |
 |---|---|
@@ -409,7 +420,7 @@ Kéo: `pointermove`/`pointerup` trên `window`, **không** `setPointerCapture` (
 
 ---
 
-## 3.6 Ảnh phủ — bẫy `max-width` ⚠️ (D-53)
+## 3.6 ✅ Ảnh phủ — bẫy `max-width` ⚠️ (D-53) — CÒN HIỆU LỰC
 
 `css/base.css` đặt mặc định cho ảnh nội dung:
 

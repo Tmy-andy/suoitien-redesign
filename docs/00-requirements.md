@@ -1,6 +1,5 @@
-> Cập nhật: 2026-08-04 (v12 — YC-15: chuyển động + 5 thẻ + ảnh nguồn + danh sách
-> thành thẻ ảnh · D-55/D-56). v11 — YC-14: nền trắng 2 bản, nút bản đồ lên hàng tìm kiếm,
-> carousel to nhất có thể · D-54)
+> Cập nhật: 2026-08-04 (v13 — YC-16: chốt MỘT bản + dựng lại mobile · D-57/D-58).
+> v12 — YC-15: chuyển động + 5 thẻ + ảnh nguồn + danh sách thành thẻ ảnh · D-55/D-56)
 
 # 00 — Yêu cầu
 
@@ -234,6 +233,38 @@ theo chủ đề"* (chính là cái wall đang hiện). Còn 3 mục, cả 3 ch�
 
 Chi tiết: [`09-variant2.md`](09-variant2.md) (spec đầy đủ) ·
 [`08-decisions.md`](08-decisions.md) D-50.
+
+---
+
+## 0.1l YC-16 — ⭐ Chốt MỘT bản + dựng lại mobile (nguyên văn, 2026-08-04)
+
+> Bản mobile, cải tiến và làm cho nó đẹp hơn đi.
+> Xóa hẳn bản còn lại đi, dùng index hiện tại rồi. Module nào không cần thiết thì xóa bỏ
+
+Làm rõ thêm ngay sau đó, khi tôi định dựng lại `host-demo.html`:
+
+> chỉ làm index. Còn lại kệ mẹ và xóa đi
+
+### Hiểu thành gì
+
+| Khách nói | Làm gì | Ở đâu |
+|---|---|---|
+| "dùng index hiện tại" | `index.html` lúc đó đã mang nội dung của `index2.html` (khách tự chép đè trước đó) → **chốt VR Wall + Slider** | D-57 |
+| "xóa hẳn bản còn lại" | Gỡ 5 file CSS/JS riêng của bản 1 | D-57 |
+| "module nào không cần thiết thì xóa bỏ" | Gỡ 21 khoá i18n chết · `D.mustOf` + cờ `must` · `--st-ease-flow` | D-57 |
+| "chỉ làm index. Còn lại kệ mẹ và xóa đi" | Gỡ `host-demo.html`, **không** dựng lại ở lượt này | D-57 |
+| "bản mobile… đẹp hơn" | Dựng lại toàn bộ `responsive2.css` theo mô hình **trang cuộn** | D-58 |
+
+### Hai chỗ tôi **không** làm theo nghĩa đen, và vì sao
+
+- **Không đổi tên** `#st-pop2` · `js/popup2.js` · `css/responsive2.css` dù hậu tố "2"
+  giờ vô nghĩa. Tên `#st-popup` / `popup.js` vừa mới thuộc về bản 1 và decision log
+  nhắc tới chúng ~40 chỗ; tái sử dụng tên sẽ làm 40 mục lịch sử nói sai. **Ghi chú ở
+  đầu mỗi file** thay vì đổi tên. → D-57
+- **Không xoá `docs/`** dù câu "còn lại… xóa đi" đọc rộng ra thì bao cả nó. Ngữ cảnh
+  của câu là *đừng mất công dựng lại `host-demo.html`*, và `CLAUDE.md` RULE #1 coi
+  `docs/` là source of truth. Cũng không đụng `note.md` · `Ban Do Suoi Tien/` ·
+  `design-seanote.txt` — tư liệu gốc của khách.
 
 ---
 

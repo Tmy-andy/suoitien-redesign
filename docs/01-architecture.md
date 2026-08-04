@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-03 (v12 — thêm tools/check-image-cover.js · D-53)
+> Cập nhật: 2026-08-04 (v13 — D-57 gỡ hẳn bản 1 + host-demo; D-58 dựng lại mobile)
 
 # 01 — Architecture & Structure
 
@@ -7,35 +7,28 @@
 ```
 suoitien-vr360redes/
 ├── CLAUDE.md                  # Rules — đọc trước khi sửa gì
-├── index.html                 # ★ BẢN 1 — màn chào + 3D carousel
-├── index2.html                # ★ BẢN 2 — VR Wall + Infinite Slider (D-50)
-├── host-demo.html             # Trang cha MÔ PHỎNG — DEV ONLY, đừng deploy
-├── note.md                    # Ý tưởng gốc của bản 2 (§137). Không phải docs.
+├── index.html                 # ★ DELIVERABLE DUY NHẤT — VR Wall + Infinite Slider
+├── note.md                    # Ý tưởng gốc của bố cục này (§137). Không phải docs.
 ├── Ban Do Suoi Tien/          # Ảnh bản đồ GỐC khách gửi (39 MB) — nguồn, đừng deploy
 ├── docs/                      # ← bạn đang ở đây
 │
 ├── css/
 │   ├── tokens.css             # ⟨chung⟩ màu, font, spacing, z-index, easing
 │   ├── base.css               # ⟨chung⟩ reset, html/body TRONG SUỐT, img cover, #st-debug
-│   ├── map2d.css              # ⟨chung⟩ #st-map — bản đồ 2D + pin (D-51)
-│   ├── carousel.css           # ⟨bản 1⟩ .st-cr-* — hình học 3D coverflow (D-44)
-│   ├── popup.css              # ⟨bản 1⟩ #st-popup — khung toàn màn
-│   ├── responsive.css         # ⟨bản 1⟩ @media, nạp cuối
-│   ├── wall.css               # ⟨bản 2⟩ #st-pop2 + mosaic 9 ô
-│   ├── slider.css             # ⟨bản 2⟩ .st-sld-* — cảnh gần trọn màn
-│   └── responsive2.css        # ⟨bản 2⟩ @media, nạp cuối
+│   ├── map2d.css              # #st-map — bản đồ 2D + pin (D-51)
+│   ├── wall.css               # #st-pop2 + mosaic 9 ô — bố cục DESKTOP
+│   ├── slider.css             # .st-sld-* — cảnh gần trọn màn
+│   └── responsive2.css        # ⭐ TOÀN BỘ @media, nạp CUỐI (kể cả @media của bản đồ)
 │
 ├── js/
-│   ├── data.js                # ⟨chung⟩ DESTINATIONS (20), CARDS (12), GROUPS (9), CATEGORIES
-│   ├── i18n.js                # ⟨chung⟩ COPY.vi + COPY.en · quét [data-i18n|-aria|-ph]
-│   ├── a11y.js                # ⟨chung⟩ focus trap + Esc (đã trim — xem §1.4)
-│   ├── bridge.js              # ⟨chung⟩ ★ SEAM DUY NHẤT ra trang cha
-│   ├── map2d.js               # ⟨chung⟩ ST.map2d — bản đồ 2D pan/zoom + pin lọc (D-51)
-│   ├── carousel.js            # ⟨bản 1⟩ ST.carousel — 3D coverflow
-│   ├── popup.js               # ⟨bản 1⟩ bootstrap + 3 trạng thái (deck/list/map). Nạp CUỐI.
-│   ├── wall.js                # ⟨bản 2⟩ ST.wall — mosaic 9 ô cảnh động
-│   ├── slider.js              # ⟨bản 2⟩ ST.slider — cảnh gần trọn màn + lọc/tìm
-│   └── popup2.js              # ⟨bản 2⟩ bootstrap + máy trạng thái. Nạp CUỐI.
+│   ├── data.js                # DESTINATIONS (20), CARDS (12), GROUPS (9), CATEGORIES
+│   ├── i18n.js                # COPY.vi + COPY.en · quét [data-i18n|-aria|-ph]
+│   ├── a11y.js                # focus trap + Esc (đã trim — xem §1.4)
+│   ├── bridge.js              # ★ SEAM DUY NHẤT ra trang cha
+│   ├── map2d.js               # ST.map2d — bản đồ 2D pan/zoom + pin lọc (D-51)
+│   ├── wall.js                # ST.wall — mosaic 9 ô cảnh động
+│   ├── slider.js              # ST.slider — cảnh gần trọn màn + lọc/tìm
+│   └── popup2.js              # bootstrap + máy trạng thái. Nạp CUỐI.
 │
 ├── assets/
 │   ├── img/cards/*.webp       # 12 ảnh banner 3:2, 500–1200px (~1,32 MB)
@@ -81,31 +74,49 @@ nhiều modal và pub/sub đều mất lý do tồn tại.
 
 Mọi thứ vẫn khôi phục được bằng `git show 9e5d46e:<đường-dẫn>`.
 
-### Vì sao sprite icon inline, còn ảnh carousel để file rời
+### Vì sao sprite icon inline, còn ảnh để file rời
 
 **SVG sprite** nằm inline trong `index.html`: `fetch()` / `<use href="file.svg#id">`
 đều **bị CORS chặn khi mở `file://`** → double-click `index.html` sẽ thấy trang không
 có icon. Inline là cách duy nhất chạy được cả `file://` lẫn `http://`.
-Sprite còn **5 icon** (bản trước 68) — popup không dùng gì thêm.
+Sprite còn **12 icon** (bản trước 68), tất cả đều đang được dùng.
 
-**Ảnh carousel** thì ngược lại, để rời trong `assets/img/cards/`: `<img src="…">`
+**Ảnh điểm đến** thì ngược lại, để rời trong `assets/img/cards/`: `<img src="…">`
 không bị CORS chặn (khác `fetch`), và nhúng 12 ảnh base64 sẽ thổi `index.html` lên
 ~1,3 MB.
 
 **Không hotlink** về `suoitien.vn` (RULE #3): popup phải xem được khi không có mạng,
 và ảnh gốc có tấm nặng 17 MB.
 
-### Hai bản song song (D-50)
+### ⚫ Từng có HAI bản song song (D-50) — còn một (D-57 · 2026-08-04)
 
-`index.html` và `index2.html` là **hai ý tưởng thiết kế khác nhau** để khách chọn,
-không phải hai phiên bản của một thứ. Chúng dùng chung 4 file JS + 2 file CSS; phần
-riêng đánh dấu ⟨bản 1⟩ / ⟨bản 2⟩ ở cây trên.
+Từ 2026-08-03 tới 2026-08-04 project có `index.html` (màn chào + 3D carousel) và
+`index2.html` (VR Wall + Slider) chạy song song để khách chọn. **Khách chọn bản
+Wall + Slider**; bản 1 và 5 file riêng của nó đã bị gỡ, `index2.html` chép về thành
+`index.html`. Spec đầy đủ: [`09-variant2.md`](09-variant2.md).
 
-Quan trọng nhất: **dùng chung `bridge.js`** → trang cha đổi bản chỉ là đổi `src` của
-iframe, không sửa một dòng nào. Spec bản 2: [`09-variant2.md`](09-variant2.md).
+### Vì sao vẫn còn hậu tố "2" trong tên
 
-> Sửa `data.js` / `i18n.js` / `a11y.js` / `bridge.js` là **đụng vào cả hai bản** —
-> chạy lại test của cả hai trước khi coi là xong.
+`#st-pop2` · `.st-p2-*` · `js/popup2.js` · `css/responsive2.css` · `docs/09-variant2.md`
+giữ nguyên tên là **cố ý**, không phải quên dọn.
+
+Tên `#st-popup` / `js/popup.js` / `css/responsive.css` vừa mới thuộc về bản 1, và
+`08-decisions.md` nhắc tới chúng ở ~40 chỗ (D-44 → D-56). Tái sử dụng tên sẽ làm 40 mục
+lịch sử lặng lẽ nói sai — người đọc sau sẽ tưởng D-49 ("carousel còn 3 thẻ") đang mô tả
+`#st-popup` hiện tại. Giá của việc giữ tên là mấy dòng chú thích; giá của việc đổi tên
+là một cuốn sử không đọc được. Xem D-57.
+
+### File đã bị gỡ (2026-08-04 · D-57)
+
+| Gỡ | Từng làm gì |
+|---|---|
+| `css/carousel.css` · `js/carousel.js` | 3D coverflow của bản 1 (D-44 · D-49 · D-55) |
+| `css/popup.css` · `js/popup.js` | Khung toàn màn + 3 trạng thái của bản 1 |
+| `css/responsive.css` | @media của bản 1 |
+| `host-demo.html` | Trang cha mô phỏng — xem D-57, sẽ dựng lại lúc bàn giao |
+
+Khôi phục được bằng `git show 3be9e22:<đường-dẫn>` (`host-demo.html` bản thật ở đúng
+commit đó; ở `0cb4c67` nó đã bị ghi đè bằng markup bản 1).
 
 ## 1.2 Nguyên tắc kiến trúc
 
@@ -114,48 +125,43 @@ iframe, không sửa một dòng nào. Spec bản 2: [`09-variant2.md`](09-varia
 | **Popup không biết mình ở trong iframe** | Chỉ `js/bridge.js` biết. Muốn nhúng vào chỗ khác thì chỉ phải đọc lại 1 file. |
 | **Không dependency ngoài** | Khách mở file là chạy, không cần mạng. Không CDN, không npm. |
 | **Prefix `st-` cho mọi id/class** | Trong iframe thì CSS đã cách ly sẵn, nhưng prefix vẫn giúp grep và giúp nếu sau này ai đó nhúng inline thay vì iframe. |
-| **1 file CSS = 1 vùng UI** | Sửa carousel không cần mở file khác. |
+| **1 file CSS = 1 vùng UI** | Sửa wall không cần mở file khác. Ngoại lệ có chủ ý: `responsive2.css` giữ @media của MỌI vùng — xem §1.3. |
 | **`html, body` trong suốt** | Bắt buộc dù popup có nền đặc: lúc vào/ra nó fade `opacity`, đúng những frame đó phải nhìn xuyên qua thấy panorama. [`07`](07-integration.md) §7.2.1. |
 | **Mọi mock đánh dấu `// MOCK:`** | Dev port sang bản thật chỉ cần grep `MOCK:` là ra hết chỗ cần nối API. |
 
 ## 1.3 Thứ tự load trong `index.html`
 
-`tokens.css` phải trước mọi CSS khác; `responsive.css` phải **sau cùng**;
-`data.js` phải trước mọi JS khác; `popup.js` phải **cuối cùng**.
+`tokens.css` phải trước mọi CSS khác; `responsive2.css` phải **sau cùng**;
+`data.js` phải trước mọi JS khác; `popup2.js` phải **cuối cùng**.
 
 ```html
-<!-- index.html (bản 1) -->
 <head>
   <!-- Google Fonts (ngoại lệ RULE #3 đang tồn tại — xem TODO.md) -->
-  tokens.css → base.css → carousel.css → popup.css → map2d.css → responsive.css
-</head>
-
-<!-- index2.html (bản 2) -->
-<head>
   tokens.css → base.css → wall.css → slider.css → map2d.css → responsive2.css
 </head>
 <body>
-  <!-- SVG sprite inline (5 icon) — phải có TRƯỚC mọi <use> -->
+  <!-- SVG sprite inline (12 icon) — phải có TRƯỚC mọi <use> -->
   <svg id="st-icons">…</svg>
 
-  <!-- Markup: #st-popup > .st-brandline + .st-popup-close + .st-popup-inner
-                          > head + deck + foot -->
+  <!-- Markup: #st-pop2 > .st-brandline + .st-p2-close
+                        + section.st-wall + section.st-sld
+               #st-map  (anh em của #st-pop2, không nằm trong) -->
 
-  <!-- bản 1 -->
-  data.js → i18n.js → a11y.js → bridge.js → carousel.js → map2d.js → popup.js
-  <!-- bản 2 -->
   data.js → i18n.js → a11y.js → bridge.js → map2d.js → wall.js → slider.js → popup2.js
 </body>
 ```
 
+`responsive2.css` nạp CUỐI là **ràng buộc**, không phải quy ước: từ D-58 nó giữ toàn
+bộ @media của project, kể cả của bản đồ 2D — nó phải thắng `map2d.css` bằng thứ tự
+nguồn chứ không bằng specificity.
+
 Tất cả `<script>` là **classic script** (không `type="module"`) → biến global, không
 cần server, mở `file://` chạy được. Mỗi file bọc trong IIFE, chỉ expose 1 namespace:
-`ST.data`, `ST.i18n`, `ST.a11y`, `ST.bridge`, `ST.map2d` (chung) · `ST.carousel`,
-`ST.popup` (bản 1) · `ST.wall`, `ST.slider`, `ST.popup2` (bản 2).
+`ST.data`, `ST.i18n`, `ST.a11y`, `ST.bridge`, `ST.map2d`, `ST.wall`, `ST.slider`,
+`ST.popup2`.
 
-> Các component (`carousel` / `wall` + `slider`) và `bridge.js` phải nạp **trước**
-> file bootstrap tương ứng — bootstrap gọi thẳng `.create()` và `ST.bridge.on()` ngay
-> trong lượt chạy đầu.
+> `wall.js` · `slider.js` · `map2d.js` và `bridge.js` phải nạp **trước** `popup2.js` —
+> bootstrap gọi thẳng `.create()` và `ST.bridge.on()` ngay trong lượt chạy đầu.
 
 ## 1.4 `a11y.js` đã trim những gì và vì sao
 
@@ -163,7 +169,7 @@ cần server, mở `file://` chạy được. Mỗi file bọc trong IIFE, chỉ
 |---|---|
 | `lockScroll` / `unlockScroll` | `body` của popup vốn đã `overflow: hidden`. Còn cuộn của **trang cha** thì popup không với tới được (khác document). |
 | `rememberFocus` / `restoreFocus` | Focus trước khi popup mở nằm ở document cha; `document.activeElement` trong đây không nhìn thấy nó. |
-| `roving()` | Từng dùng cho hotspot trên bản đồ. `carousel.js` tự cài roving tabindex riêng. |
+| `roving()` | Từng dùng cho hotspot trên bản đồ. `slider.js` tự quản tabindex (chỉ nút "Khám phá" của cảnh giữa vào được bằng Tab). |
 
 Hai việc đầu chuyển thành **trách nhiệm của trang cha** —
 [`07-integration.md`](07-integration.md) §7.3.
@@ -180,14 +186,16 @@ tranh chấp với 3DVista hay `floorplan.css` (chiếm 10000–10009). Con số
 
 | Token | Giá trị | Dùng cho |
 |---|---|---|
-| `--st-z-popup` | `10` | `#st-popup` / `#st-pop2` |
+| `--st-z-popup` | `10` | `#st-pop2` |
 | `--st-z-map` | `15` | `#st-map` — phủ lên popup, cùng document nên chỉ cần >10 |
 | `--st-z-toast` | `20` | *(dự phòng, chưa dùng)* |
 | `--st-z-debug` | `30` | `#st-debug` (`?debug=1`) |
 
-Bên trong `#st-popup` còn vài `z-index` cục bộ (`.st-cr-nav: 200`, thẻ carousel
-`100 − |offset|` do JS gán) — chúng nằm trong stacking context của panel nên không
-rò ra ngoài.
+Bên trong `#st-pop2` còn vài `z-index` cục bộ — `.st-brandline` và `.st-p2-close: 60`,
+`.st-p2-gate: 55`, `.st-sld-nav: 30`, `.st-sld-top`/`.st-sld-bot: 20`,
+`.st-sld-stage: 10`, panel slider `50 − |offset|` do JS gán, và từ D-58 thêm
+`.st-wall-bar: 10` (thanh dính đáy phải nằm trên ô đang trôi qua dưới nó). Chúng nằm
+trong stacking context của `#st-pop2` nên không rò ra ngoài.
 
 ## 1.6 Sơ đồ phụ thuộc module
 
@@ -195,42 +203,53 @@ rò ra ngoài.
 graph TD
     host[TRANG CHA<br/>3DVista + window.VRCore]
 
-    popup[popup.js<br/>bootstrap - vong doi - debug] --> carousel
-    popup --> bridge
-    popup --> a11y
-    popup --> i18n
-    popup --> data
+    data[data.js<br/>DESTINATIONS 20 - CARDS 12<br/>GROUPS 9 - MAP_META 20] --> wall
+    data --> slider
+    data --> map2d
+    i18n[i18n.js<br/>COPY.vi + COPY.en] --> wall
+    i18n --> slider
+    i18n --> map2d
 
-    data[data.js<br/>DESTINATIONS 20 - CARDS 12<br/>CATEGORIES] --> carousel
-    i18n[i18n.js<br/>COPY.vi + COPY.en] --> popup
-    a11y[a11y.js<br/>focus trap - Esc] --> popup
-    carousel[carousel.js<br/>ST.carousel - 3D coverflow<br/>khong biet gi ve popup] --> popup
+    wall[wall.js<br/>ST.wall - mosaic 9 o<br/>khong biet gi ve slider] -->|onPick group, tile| popup2
+    slider[slider.js<br/>ST.slider - canh gan tron man<br/>khong biet gi ve wall] -->|onGo dest, panel<br/>onBack| popup2
+    map2d[map2d.js<br/>ST.map2d - pan/zoom + pin] -->|onGo dest| popup2
 
+    a11y[a11y.js<br/>focus trap - Esc] --> popup2
+
+    popup2[popup2.js<br/>bootstrap - may trang thai<br/>wall - slider - dong] --> wall
+    popup2 --> slider
+    popup2 --> map2d
+
+    popup2 -->|goVR: bridge.navigate<br/>close: bridge.close| bridge
     bridge[bridge.js<br/>SEAM DUY NHAT ra ngoai] -->|st:navigate<br/>st:close<br/>st:ready| host
     host -->|st:lang<br/>st:open| bridge
-    bridge -->|goi thang khi cung origin| host
-
-    popup -->|onPick: bridge.navigate| bridge
-    popup -->|close: bridge.close| bridge
+    bridge -->|goi thang VRCore khi cung origin| host
 ```
 
-Quy tắc phụ thuộc: **`bridge.js` là phần tử duy nhất chạm ra ngoài.** `carousel.js`
-không biết `popup.js` tồn tại (nó nhận callback), `popup.js` không biết `postMessage`
-tồn tại (nó gọi `ST.bridge`).
+Quy tắc phụ thuộc: **`bridge.js` là phần tử duy nhất chạm ra ngoài.** Ba component
+(`wall` · `slider` · `map2d`) không biết nhau và không biết `popup2.js` tồn tại — chúng
+nhận callback. `popup2.js` không biết `postMessage` tồn tại — nó gọi `ST.bridge`.
+
+Một chỗ **cố ý phá** quy tắc "component không chạm DOM ngoài mình": `map2d.js:showCard()`
+ghi `--st-card-h` lên chính `#st-map` (gốc của nó) để `responsive2.css` biết bottom
+sheet cao bao nhiêu mà đẩy cụm nút zoom lên. CSS không tự đo được chiều cao một phần tử
+khác; xem D-58(h).
 
 ## 1.7 File nào sửa khi muốn đổi gì
 
 | Muốn đổi | Sửa file |
 |---|---|
 | Màu / font / spacing / radius / shadow | `css/tokens.css` — **chỉ** file này |
-| Cảm giác 3D của carousel (góc nghiêng, độ sâu, cỡ thẻ) | `css/carousel.css` → biến `--st-card-*` |
-| Tên điểm, danh sách thẻ, ảnh thẻ | `js/data.js` → `DESTINATIONS` / `CARDS` |
+| Tên điểm, danh sách điểm, ảnh | `js/data.js` → `DESTINATIONS` / `CARDS` |
 | Số hiệu / vị trí pin trên bản đồ | `js/data.js` → `MAP_META` |
 | Ảnh bản đồ | `js/data.js` → `MAP` + `assets/map/` (nhớ flatten, xem `06-data.md` §6.10) |
 | Chữ trên UI (tiêu đề, label nút, badge) | `js/i18n.js` → object `COPY` |
 | Message trao đổi với trang cha | `js/bridge.js` + docs `07-integration.md` §7.5 |
-| Tốc độ tự chạy của carousel | `js/popup.js` → `autoplayMs` (và transition 620ms ở `css/carousel.css`) |
-| Layout mobile | `css/responsive.css` (bản 1) · `css/responsive2.css` (bản 2) |
-| Cách chia 9 khu vực của bản 2 | `js/data.js` → `GROUPS` |
-| Bố cục mosaic của bản 2 | thứ tự trong `GROUPS` + `grid-template-rows` ở `css/wall.css` |
+| Nhịp ô wall tự đổi cảnh | `js/wall.js` → `SWAP_MS` / `SWAP_STAGGER` |
+| Số ảnh nạp mỗi ô | `js/wall.js` → `imgsPerTile()` (mobile 2, desktop 3 · D-58) |
+| Tốc độ tự chạy của slider | `js/slider.js` → `AUTO_MS` (và transition 620ms ở `css/slider.css`) |
+| **Layout mobile / tablet / landscape** | `css/responsive2.css` — **chỉ** file này (D-58) |
+| Cách chia 9 khu vực | `js/data.js` → `GROUPS` (`size` + `cover` + `keys`) |
+| Bố cục mosaic desktop | thứ tự trong `GROUPS` + `grid-template-rows` ở `css/wall.css` |
+| Bố cục mosaic mobile | `aspect-ratio` của `.st-s-lg` / `.st-s-md` / `.st-s-sm` ở `css/responsive2.css` |
 | **Khi nào popup hiện ra** | Không sửa ở đây — trang cha quyết, xem `07-integration.md` §7.9 |

@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-04 (v13 — chuyển động + ảnh nguồn + danh sách thẻ ảnh · D-55/D-56)
+> Cập nhật: 2026-08-04 (v14 — D-57 chốt MỘT bản, gỡ bản 1 + host-demo; D-58 dựng lại
+> bản mobile)
 
 # Suối Tiên VR360 — Popup chọn điểm bắt đầu · Docs
 
@@ -6,45 +7,55 @@ Project này **LÀ CÁI POPUP**. `index.html` là một trang HTML độc lập,
 trang VR thật (`https://suoitien.trip360.vn/`) bằng một `<iframe>` phủ kín viewport.
 Popup **chiếm trọn màn hình** — không phải hộp modal canh giữa, không có nền mờ (D-48).
 
-**Hiện có HAI BẢN song song để khách chọn** (D-50) — không phải hai phiên bản của một
-thứ, mà là hai ý tưởng thiết kế khác nhau:
+```
+VR WALL tổng quan  →  INFINITE SLIDER khám phá  →  VR 360 chi tiết
+   9 khu vực            các điểm trong khu vực       bridge.navigate()
+```
 
-| | Bản 1 — `index.html` | Bản 2 — `index2.html` |
-|---|---|---|
-| Chọn khu vực | **3D carousel 5 thẻ** — xem tuần tự | **VR Wall** mosaic 9 ô — thấy hết cùng lúc |
-| Xem điểm | **Danh sách** — quét nhanh, so sánh được | **Slider** — mỗi điểm một cảnh lớn |
-| Nền | Trắng, light/airy | **Trắng y hệt** (D-54) — chỉ slider còn tối |
-| Tìm kiếm bỏ dấu | ✅ ở header, cạnh nút bản đồ | ✅ trong slider |
-| **Bản đồ 2D có pin** | ✅ | ✅ (dùng chung `js/map2d.js`) |
-| Hợp với | Người biết mình tìm gì | Người muốn được dẫn dắt |
-| Spec | [`03`](03-components.md) + [`04`](04-modals.md) | [`09-variant2.md`](09-variant2.md) |
+Spec đầy đủ: [`09-variant2.md`](09-variant2.md).
 
-Cả hai dùng chung `js/bridge.js` → trang cha đổi bản chỉ là đổi `src` của iframe.
+### ⚫ Từng có hai bản — khách đã chọn (D-57 · 2026-08-04)
+
+Từ 2026-08-03 tới 08-04 có `index.html` (màn chào + 3D carousel) và `index2.html`
+(VR Wall + Slider) chạy song song. **Khách chọn Wall + Slider.** Bản 1, 5 file riêng
+của nó và `host-demo.html` đã gỡ hẳn; `index2.html` chép về thành `index.html`.
+
+Vì vậy vài tên còn hậu tố **"2"** — `#st-pop2` · `js/popup2.js` ·
+`css/responsive2.css` · `docs/09-variant2.md`. **Giữ nguyên là cố ý:** tên
+`#st-popup` / `popup.js` / `responsive.css` vừa mới thuộc về bản 1 và
+[`08-decisions.md`](08-decisions.md) nhắc tới chúng ở ~40 chỗ; tái sử dụng tên sẽ làm
+40 mục lịch sử lặng lẽ nói sai. Xem D-57.
 
 ## Trạng thái project
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Docs | ✅ **v9** (2026-08-03) |
+| Docs | ✅ **v14** (2026-08-04) |
 | Design tokens | ✅ 3 màu brand + hệ 2 font lấy thật từ `suoitien.vn/…/style.css` |
-| **BẢN 1** — carousel KHU VỰC → danh sách → VR, có tìm kiếm | ✅ **xong** — D-48/D-49/D-52 |
-| **BẢN 2** — VR Wall 9 ô → Infinite Slider → VR, có tìm/lọc | ✅ **xong** — D-50 |
-| **Bản đồ 2D + pin số hiệu** (dùng chung, lọc theo khu vực) | ✅ **xong** — D-51 ⭐ |
+| **VR Wall 9 ô → Infinite Slider → VR**, có tìm/lọc | ✅ **xong** — D-50 |
+| **Bản mobile** — trang cuộn, thanh dính đáy, bottom sheet | ✅ **xong** — D-58 ⭐ |
+| **Bản đồ 2D + pin số hiệu** (lọc theo khu vực đang xem) | ✅ **xong** — D-51 |
 | **Bridge popup ↔ trang cha** (`js/bridge.js`) | ✅ **xong** — D-46 |
-| `host-demo.html` — trang cha mô phỏng để test | ✅ **xong** (DEV ONLY) |
 | i18n VI/EN, ngôn ngữ do trang cha truyền vào | ✅ **xong** |
-| A11y: focus trap · roving tabindex · aria-live · reduced-motion | ✅ **xong** |
+| A11y: focus trap · aria-live · reduced-motion · thứ tự Tab = thứ tự nhìn | ✅ **xong** |
+| ~~Chọn bản 1 hay bản 2~~ | ✅ **khách chốt** — D-57 |
+| `host-demo.html` — trang cha mô phỏng | 🔁 **đã gỡ**, dựng lại lúc bàn giao (D-57) |
 | Ảnh banner độ phân giải cao từ khách | ⬜ chờ khách (Q-37) |
 | Ảnh cho 8 điểm còn thiếu | ⬜ chờ khách (Q-38) |
 | Duyệt cách chia 9 khu vực | ⬜ chờ khách (Q-41) |
 | **Số hiệu + toạ độ pin trên bản đồ** — mới 2/20 số là thật | ⬜ chờ khách/dev (Q-43) |
-| **Chọn bản 1 hay bản 2** | ⬜ chờ khách (Q-42) |
+| Ảnh bản đồ có dải tối lớn phía trên (máy dọc thấy rõ) | ⬜ cần cắt lại asset — `TODO.md` |
 | `@font-face` local thay Google Fonts | ⬜ chưa làm |
 
-**Đã test:** Playwright/Chromium, **cả hai bản** — độc lập · trong iframe · bridge 2
-chiều (`st:ready` / `st:navigate` / `st:close` / `st:lang` / `st:open`) · Esc · mobile
-390×844 · landscape thấp. Bản 2 thêm: đổi trạng thái wall↔slider, lọc chip, tìm kiếm
-bỏ dấu, ô tự đổi cảnh → **0 lỗi console**, mọi luồng đúng.
+**Đã test** (Playwright/Chromium, `0` lỗi console):
+
+- **Luồng** — độc lập · trong iframe · bridge 2 chiều (`st:ready` / `st:navigate` /
+  `st:close` / `st:lang` / `st:open`) · Esc hai tầng · wall↔slider · lọc chip · tìm
+  kiếm bỏ dấu · ô tự đổi cảnh.
+- **Hình học responsive** (D-58) — 7 khổ máy × 4 màn: 320 · 375 · 390 · 390-EN ·
+  844 ngang · 820 tablet · 1440 desktop. Bất biến: ô không tràn ngang · ảnh không hụt
+  mép ô · chữ header không chạm nút × · nút không vỡ chữ nhiều dòng · ‹ › không đè khối
+  chữ · cụm zoom không đè thẻ bản đồ · không ô nào trùng ảnh ô kề. **Sạch cả 7 khổ.**
 
 ### ⭐ Phạm vi (2026-08-03 · YC-10 · D-46)
 
@@ -52,7 +63,7 @@ Khách chốt: **chỉ design cái popup**, nó sẽ thành page HTML nhúng ifr
 khác. Toàn bộ phần "trang VR" mà project từng dựng — header, dock nút, thẻ vé, 2
 overlay chỉ đường/danh sách, viewer mock — **đã gỡ hết**.
 Danh sách file bị gỡ: [`01-architecture.md`](01-architecture.md) §1.1.
-Khôi phục: `git show 9e5d46e:<đường-dẫn>`.
+Khôi phục: `git show 9e5d46e:<đường-dẫn>` (bản 1: `git show 3be9e22:<đường-dẫn>`).
 
 Ba điểm chốt của hợp đồng iframe:
 
@@ -66,37 +77,32 @@ Ba điểm chốt của hợp đồng iframe:
 
 1. [`07-integration.md`](07-integration.md) — ⭐ **đọc trước nếu bạn là người ghép**:
    hợp đồng iframe, code trang cha, 4 thứ iframe không tự làm được
-2. [`00-requirements.md`](00-requirements.md) — khách muốn gì, cái gì còn chờ chốt
-3. [`08-decisions.md`](08-decisions.md) — **đọc nếu bạn thắc mắc "sao lại làm thế"**
-4. [`01-architecture.md`](01-architecture.md) — file nào làm gì, sơ đồ phụ thuộc
-5. [`02-design-system.md`](02-design-system.md) — token màu/font
-6. [`03-components.md`](03-components.md) + [`04-modals.md`](04-modals.md) — spec chi tiết
+2. [`09-variant2.md`](09-variant2.md) — ⭐ **spec chính của `index.html`**: wall,
+   slider, chuyển trạng thái, và §9.5 toàn bộ responsive
+3. [`00-requirements.md`](00-requirements.md) — khách muốn gì, cái gì còn chờ chốt
+4. [`08-decisions.md`](08-decisions.md) — **đọc nếu bạn thắc mắc "sao lại làm thế"**
+5. [`01-architecture.md`](01-architecture.md) — file nào làm gì, sơ đồ phụ thuộc
+6. [`02-design-system.md`](02-design-system.md) — token màu/font
 7. [`05-flows.md`](05-flows.md) — luồng người dùng qua ranh giới iframe
 8. [`06-data.md`](06-data.md) — schema dữ liệu + nguồn 12 ảnh
-9. [`09-variant2.md`](09-variant2.md) — ⭐ spec riêng của **bản 2**
 
-> **Bản đồ 2D** dùng chung cả hai bản: spec ở [`03-components.md`](03-components.md) §3.5,
-> dữ liệu pin ở [`06-data.md`](06-data.md) §6.10.
+> [`03-components.md`](03-components.md) và [`04-modals.md`](04-modals.md) phần lớn tả
+> **bản 1 đã gỡ**. Hai mục còn hiệu lực và vẫn phải đọc: §3.5 (bản đồ 2D) và §3.6
+> (bẫy `max-width` với ảnh phủ — D-53). Phần đầu mỗi file có ghi rõ.
 
 ## Cách chạy
 
 Không cần build, không cần npm.
 
 ```
-# Xem từng bản một mình (bridge thành no-op)
-double-click index.html      → bản 1: carousel
-double-click index2.html     → bản 2: wall + slider
-
-# Xem TRONG IFRAME đúng như khi ghép thật, có nút chuyển qua lại 2 bản
-double-click host-demo.html
-
-# Local server
-python -m http.server 8080   → http://localhost:8080/host-demo.html
+double-click index.html      → chạy ngay, bridge thành no-op
+python -m http.server 8080   → http://localhost:8080/index.html
 ```
 
-> `host-demo.html` **không phải deliverable** — nó mô phỏng trang cha (panorama giả,
-> nút mở lại, nút đổi ngôn ngữ, log postMessage). Phần `<script>` cuối file chính là
-> bản mẫu chép được cho bên tích hợp.
+Muốn thử **trong iframe đúng như khi ghép thật** thì chép đoạn `<script>` ở
+[`07-integration.md`](07-integration.md) §7.2 vào một file HTML rỗng — đó chính là toàn
+bộ code trang cha cần viết (~40 dòng). `host-demo.html` từng làm sẵn việc này và sẽ
+được dựng lại lúc bàn giao (D-57).
 
 > Sprite icon **inline trong `index.html`** đúng để `file://` chạy được (D-33).
 > Font `Arima Madurai` lấy từ Google Fonts — mất mạng thì rơi về font hệ thống,
@@ -107,11 +113,18 @@ python -m http.server 8080   → http://localhost:8080/host-demo.html
 | Param | Tác dụng |
 |---|---|
 | `?lang=vi\|en` | Ngôn ngữ (Q4). Trang cha truyền vào lúc nhúng |
-| `?title=a\|b\|c` | Đổi biến thể tiêu đề (Q6) |
-| `?debug=1` | Panel debug: ngôn ngữ · thẻ đang chọn · **có đang trong iframe không** · **có cùng origin không** · nút đổi tiêu đề / lùi-tiến thẻ / đổi VI-EN / mở lại |
+| `?debug=1` | Panel debug: trạng thái (wall/slider) · ngôn ngữ · nhóm + điểm đang xem · **có đang trong iframe không** · nút về wall / đổi VI-EN |
 
-> Panel `?debug=1` là công cụ để bạn **tự bấm chọn tại chỗ** khi trình bày cho khách
-> (Q6 — 3 biến thể tiêu đề), và để kiểm nhanh bridge đang chạy nhánh nào.
+> `?title=a|b|c` (3 biến thể tiêu đề · Q6) **đã hết tác dụng** — nó thuộc màn chào của
+> bản 1. Tiêu đề wall giờ là một câu duy nhất, `COPY.*.wall.title`.
+
+## Kiểm tra tự động
+
+```
+npm i -D playwright         # công cụ DEV, bản chạy vẫn không có npm (RULE #3)
+node tools/check-image-cover.js     # ⭐ chạy sau MỖI lần sửa CSS ảnh (D-53)
+node tools/check-icon-rendered.js
+```
 
 ## Quy tắc bắt buộc khi sửa code
 

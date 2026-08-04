@@ -1,10 +1,13 @@
-> Cập nhật: 2026-08-04 (v5 — dựng lại animation vào màn + sửa `--st-n-800` · D-55)
+> Cập nhật: 2026-08-04 (v6 — D-57 khách chốt bản này, gỡ bản 1; D-58 dựng lại mobile)
 
-# 09 — Bản 2: VR Wall + Infinite Slider
+# 09 — VR Wall + Infinite Slider
 
-Spec của `index2.html`. **Bản 1** (`index.html` — màn chào + 3D carousel) có spec riêng
-ở [`03-components.md`](03-components.md) và [`04-modals.md`](04-modals.md); file này chỉ
-tả phần khác.
+> ⭐ **File này giờ là spec CHÍNH của `index.html`.** Tên file còn chữ "variant2" là
+> dấu vết của thời có hai bản song song (2026-08-03 → 08-04); giữ nguyên tên vì cả
+> `08-decisions.md` lẫn các doc khác đang trỏ tới nó — xem D-57.
+
+Spec của `index.html`. §9.1 dưới đây giữ lại **phép so sánh với bản 1 đã gỡ**: nó ghi
+lý do khách chọn bản này, và mỗi dòng trong bảng là một đánh đổi vẫn còn hiệu lực.
 
 Nguồn ý tưởng: `note.md` §137 *"Phương án đề xuất: Kết hợp VR Wall và Infinite Slider"*.
 Lý do chọn phương án đó (và loại §339): [`08-decisions.md`](08-decisions.md) D-50.
@@ -16,13 +19,13 @@ VR WALL tổng quan  →  INFINITE SLIDER khám phá  →  VR 360 chi tiết
 
 ---
 
-## 9.1 Hai bản khác nhau ở đâu
+## 9.1 ⚫ Khách đã chọn gì, và bỏ lại gì (D-57 · 2026-08-04)
 
-> ⚠️ **Từ D-52 hai bản đã HỘI TỤ về cùng một luồng:** `khu vực → điểm → VR`, cùng 2
-> tầng, cùng có tìm kiếm và bản đồ 2D. Cái còn khác là **cách trình bày** — và đó
-> chính là thứ khách đang chọn giữa.
+Hai bản từng chạy song song để khách so. Từ D-52 chúng **hội tụ về cùng một luồng**
+(`khu vực → điểm → VR`, cùng 2 tầng, cùng tìm kiếm và bản đồ 2D) — cái còn khác chỉ là
+**cách trình bày**, và đó chính là thứ khách chọn giữa. **Khách chọn cột phải.**
 
-| | Bản 1 `index.html` | Bản 2 `index2.html` |
+| | Bản 1 — carousel *(đã gỡ)* | ★ Bản đang dùng |
 |---|---|---|
 | **Chọn khu vực** | 3D carousel — xem **tuần tự**, mỗi lúc 3 thẻ | Mosaic 9 ô — **thấy hết cùng lúc** |
 | **Xem điểm** | **Danh sách** — quét nhanh, so sánh được, 2 dòng/điểm | **Slider** — mỗi điểm một cảnh gần trọn màn |
@@ -35,23 +38,32 @@ VR WALL tổng quan  →  INFINITE SLIDER khám phá  →  VR 360 chi tiết
 | Hợp với | Người **biết mình tìm gì** | Người muốn **được dẫn dắt** |
 
 Không bản nào "tốt hơn" — chúng phục vụ hai kiểu người dùng. Bản 1 cho quét và so
-sánh; bản 2 cho cảm giác quy mô và kể chuyện.
+sánh; bản này cho cảm giác quy mô và kể chuyện. Khách chọn cảm giác quy mô.
 
-### Dùng chung những gì
+**Hai dòng cuối cùng là thứ đã mất đi khi gỡ bản 1**, ghi ra để sau này ai hỏi thì có
+câu trả lời sẵn:
+
+- **8/20 điểm chưa có ảnh** (Q-38) **không xuất hiện ở đâu cả** trong bản này — slider
+  cần ảnh phủ toàn cảnh, không có ô giữ chỗ như danh sách của bản 1. Chúng vẫn nằm
+  trong `D.DESTINATIONS` với UUID panorama thật; thêm 1 dòng vào `D.CARDS` là chúng
+  hiện ra ngay. Xem `docs/TODO.md`.
+- **Không còn màn "quét nhanh, so sánh"**. Bù lại một phần bằng ô tìm kiếm trong slider
+  + 9 chip lọc.
+
+### Cấu trúc file
 
 ```
-CHUNG:  js/data.js · js/i18n.js · js/a11y.js · js/bridge.js · js/map2d.js
-        css/tokens.css · css/base.css · css/map2d.css
-        assets/img/cards/ · assets/map/
-BẢN 1:  js/carousel.js  js/popup.js
-        css/carousel.css  css/popup.css  css/responsive.css
-BẢN 2:  js/wall.js  js/slider.js  js/popup2.js
-        css/wall.css  css/slider.css  css/responsive2.css
+js/data.js · js/i18n.js · js/a11y.js · js/bridge.js · js/map2d.js
+js/wall.js · js/slider.js · js/popup2.js          (nạp cuối)
+
+css/tokens.css · css/base.css
+css/wall.css · css/slider.css · css/map2d.css
+css/responsive2.css                                (nạp cuối — GIỮ TOÀN BỘ @media)
+
+assets/img/cards/*.webp (12) · assets/map/park-2400.webp
 ```
 
-**Dùng chung `bridge.js` là điểm quan trọng nhất:** trang cha đổi bản chỉ là đổi `src`
-của iframe, không sửa một dòng nào. `host-demo.html` có nút **"Bản 1 / Bản 2"** để
-chứng minh ngay tại chỗ. Hợp đồng iframe: [`07-integration.md`](07-integration.md).
+Hợp đồng iframe: [`07-integration.md`](07-integration.md).
 
 ---
 
@@ -71,7 +83,7 @@ chứng minh ngay tại chỗ. Hợp đồng iframe: [`07-integration.md`](07-in
 
 ### 9.2.0 Animation vào màn — "chưa có" mà thật ra là "không thấy" (D-55)
 
-Khách báo bản 2 *"Animation xuất hiện chưa có"*. Kiểm bằng Playwright thì animation
+Khách báo *"Animation xuất hiện chưa có"*. Kiểm bằng Playwright thì animation
 **vẫn chạy đúng** (9 ô, delay `260 + gi×55ms`) — nó chỉ không nhìn ra được:
 
 | Nguyên nhân | Sửa |
@@ -111,7 +123,7 @@ sang `i === 0`: **ảnh đầu của mọi ô tải ngay**, chỉ 2 ảnh dùng 
 mới lazy.
 
 Và chỗ giữ ảnh đổi từ màu trơn sang **gradient brand**
-(`--st-green-100 → --st-gold-200`, cùng công thức với `.st-li-noimg` của bản 1): màu
+(`--st-green-100 → --st-gold-200`): màu
 trơn nằm dưới `.st-wt-veil` vẫn ra một mảng xám chết.
 
 ### 9.2.2 Hai chỗ phải kê lại khi bỏ nền tối (D-54)
@@ -192,7 +204,7 @@ Còn lại, cả 3 đều chạy thật:
 | Nút | Làm gì |
 |---|---|
 | **Tìm địa điểm** | → slider nhóm `all`, focus thẳng vào ô tìm kiếm |
-| ~~Xem trên bản đồ 2D~~ | Mở `#st-map` với cả 20 pin (D-51). **Hiện đang comment out trong `index2.html`** — bật lại bằng cách bỏ dấu comment quanh `[data-open-map="all"]` |
+| ~~Xem trên bản đồ 2D~~ | Đã **gỡ hẳn khỏi `index.html`** (D-57): ở wall chưa chọn khu vực nào nên nó chỉ mở được "toàn bộ 20 pin", trùng vai với nút trong slider mà lại chiếm mất một ô của thanh 2 hàng trên mobile. `popup2.js` vẫn xử lý `[data-open-map="all"]` — thêm lại nút là chạy ngay |
 | **Bắt đầu hành trình** | → slider nhóm `noibat` (5 điểm ai cũng ghé) |
 | **Bỏ qua, vào VR ngay** | `close('button')` → `st:close` |
 
@@ -228,7 +240,8 @@ transform: translateX(calc(var(--o) * var(--sld-w))) scale(calc(1 - var(--oa) * 
 opacity:   calc(1 - var(--oa) * .35);
 ```
 
-Cùng cơ chế `--o` / `--oa` với `carousel.js` (bản 1) — [`03-components.md`](03-components.md) §3.2.
+Cơ chế `--o` (bậc so với cảnh giữa, có dấu) / `--oa` (trị tuyệt đối) — JS chỉ ghi hai
+số, CSS lo toàn bộ hình học. Chính cơ chế này `carousel.js` của bản 1 cũng dùng.
 
 > **Khác một chỗ quan trọng:** `offset()` của slider **không vòng khi `n < 3`**. Nhóm
 > `wild` chỉ có 1 điểm, `water` có 2 — vòng thì panel "trước" và "sau" trỏ vào cùng một
@@ -244,7 +257,7 @@ màn và có mô tả riêng — người dùng cần đọc trước khi quyế
 
 | Cách | Ghi chú |
 |---|---|
-| Quẹt / kéo | Ngưỡng **56px** (cảnh to hơn thẻ bản 1 → ngưỡng lớn hơn) |
+| Quẹt / kéo | Ngưỡng **56px** — cảnh chiếm gần trọn màn nên phải quẹt dứt khoát hơn một cái thẻ nhỏ. `.st-sld-track` đặt `touch-action: pan-y` để không đụng cử chỉ "lùi trang" của iOS (D-58k) |
 | Con lăn chuột | Ngưỡng 12 + khoá **420 ms** — trackpad bắn hàng chục event mỗi lần vuốt, không khoá thì lướt một cái nhảy 8 cảnh |
 | Nút ‹ › | |
 | `←` `→` `Home` `End` | |
@@ -302,22 +315,109 @@ tổng quan".
 
 ---
 
-## 9.5 Responsive (`css/responsive2.css`)
+## 9.5 Responsive (`css/responsive2.css`) — dựng lại 2026-08-04 · D-58
 
-| Breakpoint | Wall | Slider |
+`responsive2.css` giữ **toàn bộ** @media của project, kể cả của bản đồ 2D. Trước D-58
+khối `≤599px` của bản đồ nằm ở cuối `map2d.css` còn vài dòng nữa nằm bên này — sửa một
+chỗ thì chỗ kia lặng lẽ đè lên (responsive2 nạp sau). Giờ chỉ có một chỗ để tìm.
+
+### Mô hình: mobile KHÔNG phải desktop bị bóp nhỏ
+
+| | Desktop (`wall.css`) | ≤1023px (`responsive2.css`) |
 |---|---|---|
-| ≥1600 | Grid `max-width: 1560px` | — |
-| ≤1023 | **2 cột**, ô lớn `2 cột × 2 hàng`, grid cuộn dọc | `--sld-w: 88vw` |
-| ≤599 | 2 cột nhỏ hơn · ẩn mô tả + CTA · thanh công cụ **xếp dọc** | `--sld-w: 90vw` · nút back còn mũi tên · nút VR full width · chip + counter xếp dọc |
-| Landscape thấp | Ẩn eyebrow + subtitle | Ẩn mô tả |
-| `hover: none` | Tắt hiệu ứng "làm tối ô khác" | Cảnh rìa sáng hơn (`.65`) |
+| Ai cuộn | **không ai** — mosaic vừa khít màn | `.st-wall` là scroll container, header trôi đi |
+| Grid | `flex: 1 1 auto` — co giãn vừa màn | `flex: 0 0 auto` — cao bao nhiêu thì cao |
+| Chiều cao ô | `grid-template-rows: 1.38fr 1fr .84fr` | `aspect-ratio` trên từng ô |
+| Ô lớn | 2 cột × 2 hàng trong mosaic 4×3 | thẻ **hero tràn ngang**, `grid-column: 1 / -1` |
+| Thanh công cụ | `static`, 1 hàng, giữa | `position: sticky; bottom: 0`, 2 hàng |
 
-**note.md §55** đề xuất *"2–4 ô lớn hoặc slider dọc"* trên điện thoại → chọn **2 cột**.
-Slider dọc sẽ trùng vai với chính Infinite Slider ở trạng thái 2, thành ra hai slider
-chồng khái niệm.
+Bản cũ cho **chính `.st-wall-grid`** cuộn (`overflow-y: auto`) trong khi `.st-wall`
+đứng yên — cuộn lồng, header chiếm chỗ vĩnh viễn, vùng cuộn thật trên iPhone 390 chỉ
+còn ~430px. Và ô cao cố định `minmax(104px, 1fr)` cắt ảnh 3:2 thành dải ngang dẹt.
+Cộng với thanh công cụ 3 nút xếp dọc ăn ~150px, người dùng thấy khoảng **2,5 ô** trong 9.
 
-**Không có hover trên mobile** → mô tả và CTA của ô sẽ **không bao giờ hiện**. Vì vậy ẩn
-hẳn (`display: none !important`) và cho số điểm hiện sẵn, thay vì để hai dòng chết.
+### Bảng breakpoint
+
+| Breakpoint | Wall | Slider | Bản đồ |
+|---|---|---|---|
+| ≥1600 | Grid `max-width: 1560px` | — | — |
+| **≤1023** | Trang cuộn · 2 cột · hero `16/8.6` · ô khác `4/3` · thanh dính đáy | `--sld-w: 88vw` | — |
+| **≤599** | hero `16/10` · ô khác `1/1` · **header căn TRÁI** · thanh 2 hàng | `--sld-w: 92vw` · back thành nút tròn · `object-position: center 38%` · ‹ › lên `top:30%` · thanh dưới **2 hàng** | **bottom sheet** dính đáy, bo 2 góc trên |
+| **≤379** | Thanh công cụ **xếp dọc**, nút bỏ qua dáng link | Tên điểm 20px | — |
+| Landscape ≤460 cao | **3 cột** · hero `16/5` · ẩn eyebrow + subtitle | ẩn mô tả · ‹ › lên `top:26%` | — |
+| `hover: none` | Tắt "làm tối ô khác" · thêm `:active` cho mọi thứ | Cảnh rìa sáng hơn (`.65`) | `:active` cho pin |
+
+### Vì sao từng con số
+
+**2 cột, không phải slider dọc.** `note.md` §55 đề xuất *"2–4 ô lớn hoặc slider dọc"*.
+Slider dọc sẽ trùng vai với chính Infinite Slider ở trạng thái 2 → hai slider chồng
+khái niệm.
+
+**3 cột ở landscape.** Máy nằm ngang rộng 844px mà vẫn 2 cột thì mỗi ô cao 297px, cả
+lưới dài 1716px = **4,4 màn** phải cuộn cho 9 ô. 3 cột đưa về 1015px = 2,6 màn mà ô vẫn
+rộng 260px.
+
+**Thanh công cụ xếp theo đúng thứ tự DOM** (tìm → hành trình → bỏ qua):
+
+```
+[        Tìm địa điểm         ]   ← grid-column: 1 / -1
+[ Bắt đầu hành trình ][Bỏ qua ]
+```
+
+Thứ tự Tab trùng thứ tự nhìn thấy, không phải bẻ bằng `order` (WCAG 1.3.2). Ô tìm mang
+**dáng input** — chữ căn trái, màu placeholder, cao 46px — chứ không phải nút thứ ba;
+bấm vào vẫn là mở slider rồi focus ô tìm thật, hành vi không đổi.
+
+**≤379px xếp dọc.** Ở 320px hàng 2 chia cho "Bắt đầu hành trình" đúng 128px → chữ vỡ
+**ba dòng**, nút cao 84px. Bản EN còn dài hơn.
+
+**Header căn trái ở ≤599.** Tiêu đề căn giữa cần lề đều hai bên; ở 390px lề đó không
+có, mà bên phải còn nút × — khối chữ lệch tâm trông như bị đẩy.
+
+**`margin-top: auto` + `sticky bottom: 0` trên thanh công cụ.** Sticky lo trường hợp
+nội dung DÀI hơn màn; auto-margin lo trường hợp NGẮN hơn (tablet rộng) — không có nó
+thanh dán ngay dưới ô cuối và chừa một mảng trắng to bên dưới. Thêm `::before` gradient
+26px để ô cuối trôi vào thanh chứ không bị cắt ngang một nhát.
+
+**`object-position: center 38%` cho panel slider.** Khung dọc hẹp cắt ảnh 3:2 rất sâu;
+neo 38% giữ được mái và đường chân trời thay vì chỉ còn khúc giữa.
+
+**‹ › đẩy lên `top: 30%`.** Vùng đó chỉ có ảnh — không đụng tên / mô tả / CTA. Nền đổi
+sang `rgba(6,12,20,.52)` chứ không `rgba(255,255,255,.16)` như desktop: ở desktop nút
+nằm trên nền blur đã tối sẵn, ở đây nó đè lên ảnh mái đỏ/vàng chói.
+
+**Thanh dưới slider từ 3 hàng xuống 2.** Chip / bản đồ / đếm xếp dọc ăn ~120px:
+
+```
+[ chip · chip · chip …        ]   ← grid-column: 1 / -1, cuộn ngang
+[ Xem trên bản đồ  ][   3/12  ]
+```
+
+**`--st-card-h` — đo chứ không đoán.** Cụm nút zoom phải né bottom sheet. Hằng số
+`152px` đúng cho điểm này, hụt 13px cho điểm kia (thẻ cao bao nhiêu là do `blurb` mấy
+dòng) và nút − chui xuống dưới thẻ. `js/map2d.js:showCard()` đo `offsetHeight` rồi ghi
+lên `#st-map`; `hideCard()` gỡ class. Xem D-58(h).
+
+### Không có hover thì gì thay thế
+
+**Mô tả và CTA của ô** sẽ không bao giờ hiện (chúng mở bằng `max-height` khi `:hover`).
+Ô nhỏ: ẩn hẳn. **Thẻ hero: mở sẵn mô tả** (`display: -webkit-box` + clamp 2 dòng) — nó
+là ô duy nhất có chỗ để nói thêm.
+
+**Phản hồi khi chạm.** `:active { transform: scale(.97) }` cho ô và mọi nút. Không có
+nó, chạm vào ô là màn hình đứng im suốt 620ms animation mở cổng — người dùng tưởng máy
+không nhận và chạm thêm lần nữa.
+
+**Parallax tắt trên cảm ứng.** `wall.js` bỏ qua mọi `pointermove` có
+`pointerType !== 'mouse'`: ngón tay cũng bắn sự kiện đó, mà trên cảm ứng không có
+`pointerleave` đáng tin để trả ảnh về → ảnh kẹt lệch vài % sau mỗi lần chạm hụt.
+
+**`touch-action: pan-y` trên `.st-sld-track`.** Thiếu nó, quẹt ngang gần mép màn trên
+iOS kích hoạt cử chỉ "lùi trang" của Safari: **trang cha bị back, popup biến mất**.
+
+**2 ảnh/ô thay vì 3** (`wall.js:imgsPerTile()`). 9 ô × 3 ảnh = 27 file ~2 MB, và vòng
+đổi cảnh lôi bằng hết đám `loading="lazy"` xuống trong 12 giây đầu, giữa lúc người dùng
+đang cuộn.
 
 ---
 
@@ -345,19 +445,42 @@ nhóm (Cung Vàng vừa văn hoá vừa kiến trúc); đó là chủ ý, không
 
 ## 9.7 Đã test
 
-Playwright/Chromium — 9 nhóm kiểm, **0 lỗi console**:
+### Luồng (Playwright/Chromium) — 9 nhóm, **0 lỗi console**
 
 | # | Kiểm |
 |---|---|
-| A | Wall: 9 ô đúng tỉ lệ 1/2/6, 22 ảnh tải hết, ô lớn 690×453, focus vào tiêu đề |
+| A | Wall: 9 ô đúng tỉ lệ 1/2/6, ảnh tải hết, ô lớn 690×453, focus vào tiêu đề |
 | A2 | 7/9 ô tự đổi cảnh sau 6,2 s |
 | B | Wall → slider: state · nhóm `thrill` · 3 cảnh · cảnh giữa 1210px · wall mờ về 0 |
 | B2 | Bấm cảnh rìa → đưa vào giữa, **không** đóng popup |
 | B3 | Chip `culture` → đúng 3 điểm |
 | B4 | Tìm `lau dai` → 2 kết quả (Tuyết + Pháp Thuật) |
 | B5 | Esc ở slider → về wall, ô tìm kiếm được xoá |
-| C | Trong iframe: đổi `src` sang index2, `st:ready`, `st:lang` đổi cả tiêu đề lẫn nhãn ô |
+| C | Trong iframe: `st:ready`, `st:lang` đổi cả tiêu đề lẫn nhãn ô |
 | C3–C4 | Wall → slider → VR: `st:navigate` đúng pano + `st:close`; `st:open` quay về wall |
-| D | Mobile 390: grid 2 cột, thanh công cụ xếp dọc, cảnh giữa 351px |
 
-Đồng thời chạy **hồi quy bản 1** sau khi sửa `data.js` + `i18n.js` → PASS.
+### Hình học responsive (D-58) — 7 khổ × 4 màn, **sạch**
+
+320 · 375 · 390 · 390-EN · 844 ngang · 820 tablet · 1440 desktop.
+Bất biến kiểm tự động, và lỗi mà từng cái bắt được trong lượt này:
+
+| Bất biến | Bắt được gì |
+|---|---|
+| Ô không tràn ngang viewport | — |
+| Ảnh không hụt mép ô | (bẫy D-53, vẫn sạch) |
+| Chữ header không chạm nút × — xét **từng dòng** | Phép đo đầu tiên so mép phải cả KHỐI nên báo nhầm: dòng phụ đề nằm thấp hơn nút 60px vẫn bị tính là đụng |
+| Nút trong thanh công cụ không vỡ chữ nhiều dòng | **320px: "Bắt đầu hành trình" vỡ 3 dòng** → thêm mốc ≤379 |
+| ‹ › không đè khối chữ | **Landscape 844×390: nav ở `top:50%` rơi đúng vào tên điểm** |
+| Cụm zoom không đè thẻ bản đồ | **Hằng số 152px hụt 13px** → đổi sang `--st-card-h` đo thật |
+| Không ô nào mở đầu trùng ảnh với ô kề | **`g.cover` chưa bao giờ được đọc** → ô hero và ô ngay dưới cùng ảnh 'cong' |
+| Mobile không nạp quá 2 ảnh/ô | — |
+| `.st-map-card h3` không còn cỡ chữ body | **`--st-t-h3` không tồn tại** |
+
+| Khổ | Chiều dài cuộn của wall | Ghi chú |
+|---|---|---|
+| 390×844 | 1312px = 1,55 màn | hero 366×229, thanh dính đáy 132px |
+| 375×812 | 1302px | thanh 163px (đã xếp dọc) |
+| 320×690 | 1153px | mọi nút 1 dòng |
+| 844×390 ngang | 1015px = 2,6 màn | 3 cột |
+| 820×1180 | 1839px | 2 cột |
+| 1440×900 | **không cuộn** | mosaic 4×3, thanh `static` — desktop không đổi |

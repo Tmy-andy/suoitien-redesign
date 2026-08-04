@@ -3,21 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Suối Tiên VR360 — Popup v2: VR Wall + Infinite Slider</title>
+<title>Suối Tiên VR360 — Popup chọn điểm bắt đầu</title>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     PHƯƠNG ÁN 2 — VR WALL + INFINITE SLIDER  (note.md §137 · D-50)
+     VR WALL + INFINITE SLIDER — BẢN DUY NHẤT (D-57)
 
          VR WALL tổng quan  →  INFINITE SLIDER khám phá  →  VR 360 chi tiết
 
-     Đây là bản THỨ HAI để khách so sánh, KHÔNG thay thế `index.html`
-     (bản 1 = màn chào + 3D carousel). Hai bản dùng chung `js/bridge.js`
-     nên trang cha chỉ cần đổi `src` của iframe, không sửa dòng code nào.
+     Trang này LÀ CHÍNH CÁI POPUP, chiếm trọn màn hình, nhúng vào trang VR
+     thật bằng một <iframe> phủ kín viewport:
 
-     Nhúng y hệt bản 1 — xem docs/07-integration.md:
-         <iframe src=".../index2.html?lang=vi"
+         <iframe src=".../index.html?lang=vi"
                  style="position:fixed;inset:0;width:100%;height:100%;
                         border:0;background:transparent;z-index:10050"></iframe>
+
+     rồi nghe postMessage `st:navigate` / `st:close`.
+     → Hợp đồng đầy đủ: docs/07-integration.md
+
+     Bản 1 (màn chào + 3D carousel) đã bị GỠ HẲN ngày 2026-08-04 — khách chốt
+     bản này. Vì vậy trong code còn sót hậu tố "2" ở vài tên (`#st-pop2`,
+     `js/popup2.js`, `css/responsive2.css`): giữ nguyên là CỐ Ý, xem D-57.
 
      Mở thẳng file này bằng double-click cũng chạy (bridge thành no-op).
      ══════════════════════════════════════════════════════════════════════ -->
@@ -35,8 +40,10 @@
 </head>
 <body>
 
-<!-- Sprite icon inline — 8 icon (bản 1 dùng 5, bản này thêm i-vr, i-search, i-chevrons-left).
-     `<use href="file.svg#id">` bị CORS chặn khi mở file:// nên phải inline. -->
+<!-- Sprite icon inline — 12 icon, tất cả đều đang được dùng.
+     `<use href="file.svg#id">` bị CORS chặn khi mở file:// nên phải inline.
+     Hệ nét mảnh stroke 1.75, không fill (D-16). Ngoại lệ `i-star`: ở cỡ 12px
+     sao nét mảnh chỉ còn là vệt xám không đọc ra hình. -->
 <svg id="st-icons" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
 <defs>
 <g id="i-close" transform="translate(0.05 0.05)"><path d="M6 6l12 12M18 6L6 18"/></g>
@@ -78,18 +85,15 @@
     <div class="st-wall-grid" id="st-wall-grid"
          role="group" data-i18n-aria="wall.gridLabel"></div>
 
-    <!-- Thanh công cụ (note.md §198). Đã bỏ 2 mục so với note:
-         · "Xem bản đồ"          — bản đồ đã gỡ từ D-44, không có gì để mở
-         · "Khám phá theo chủ đề" — chính là cái wall đang hiện, tự trỏ vào mình -->
+    <!-- Thanh công cụ (note.md §198). Đã bỏ "Khám phá theo chủ đề" — chính là
+         cái wall đang hiện, nút đó tự trỏ vào mình.  
+         Thứ tự DOM (tìm → hành trình → bỏ qua) cũng chính là thứ tự đọc trên
+         mobile: hàng 1 ô tìm, hàng 2 nút chính + nút phụ. Xem css/responsive2. -->
     <nav class="st-wall-bar">
       <button type="button" data-act="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
         <span data-i18n="wall.search"></span>
       </button>
-      <!-- <button type="button" data-open-map="all">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
-        <span data-i18n="map.open"></span>
-      </button> -->
       <button type="button" class="st-primary" data-act="journey">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg>
         <span data-i18n="wall.journey"></span>
@@ -194,9 +198,12 @@
 <div id="st-debug" hidden></div>
 
 
-<!-- ══ JS ══════════════════════════════════════════════════════════════════
-     Dùng lại nguyên `data.js` · `i18n.js` · `a11y.js` · `bridge.js` của bản 1.
-     Riêng phần hiển thị là 3 file mới: wall → slider → popup2 (cuối cùng). -->
+<!-- ══ JS — classic script, không module: biến global, mở file:// chạy được ══
+     Thứ tự phụ thuộc:
+       data → i18n → a11y → bridge → map2d → wall → slider → popup2 (cuối cùng)
+     `wall.js` · `slider.js` · `map2d.js` phải TRƯỚC `popup2.js`: popup2 gọi
+     ST.wall.create() / ST.slider.create() / ST.map2d.create() ngay trong lượt
+     bootstrap. -->
 <script src="js/data.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/a11y.js"></script>

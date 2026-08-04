@@ -1,17 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════════
    slider.js — Infinite Attraction Slider (D-50, note.md §70)
 
-   Trạng thái THỨ HAI của index2.html. Một điểm chiếm gần trọn màn, hai bên hé
+   Trạng thái THỨ HAI của popup. Một điểm chiếm gần trọn màn, hai bên hé
    lộ điểm trước và điểm sau (note.md §85). Nền là chính ảnh đang xem, blur +
    tối lại, phủ kín viewport — thoả cả hai câu "ảnh toàn màn hình" và "hai bên
    hé lộ".
 
-   Khác js/carousel.js (bản index.html) ở chỗ nào:
-     carousel.js  thẻ nhỏ, 3D coverflow, bấm thẻ nào ĐI LUÔN thẻ đó
-     slider.js    một cảnh gần trọn màn, bấm thẻ rìa là ĐƯA VÀO GIỮA,
-                  muốn đi phải bấm nút "Khám phá VR 360°"
-   Cố ý khác: ở đây mỗi cảnh là một "cánh cổng trải nghiệm" có mô tả riêng,
-   người dùng cần đọc trước khi quyết định — không phải lướt chọn nhanh.
+   Bấm cảnh RÌA là ĐƯA NÓ VÀO GIỮA, không phải đi luôn; muốn đi phải bấm
+   "Khám phá VR 360°". Cố ý: mỗi cảnh là một "cánh cổng trải nghiệm" có mô tả
+   riêng, người dùng cần đọc trước khi quyết định — không phải lướt chọn nhanh.
 
    Style: css/slider.css
    ═══════════════════════════════════════════════════════════════════════ */
@@ -81,9 +78,19 @@ window.ST = window.ST || {};
       track.innerHTML = keys.map(function (k, i) {
         var d = D.get(k);
         var img = D.imgOf(k);
-        return '<article class="st-sld-panel" data-i="' + i + '" data-key="' + k + '">' +
-          '<img class="st-sld-img" src="' + esc(img) + '" alt="" ' +
-               (i === 0 ? '' : 'loading="lazy" ') + 'decoding="async">' +
+        /* Điểm CHƯA CÓ ẢNH vẫn phải hiện được (D-59). Trước đây mọi nhóm đều
+           gồm toàn điểm có ảnh nên chuyện này không xảy ra; từ khi danh mục
+           bám theo site thật thì có nhóm ("Ẩm Thực", "Dịch vụ") chưa có tấm
+           nào. `<img src="">` không phải là "không có ảnh" — trình duyệt coi
+           đó là URL rỗng, tải lại chính trang hiện tại rồi vẽ icon ảnh hỏng.
+           Phải KHÔNG dựng thẻ <img> nào cả và thay bằng một lớp gradient. */
+        return '<article class="st-sld-panel' + (img ? '' : ' st-noimg') +
+               '" data-i="' + i + '" data-key="' + k + '">' +
+          (img
+            ? '<img class="st-sld-img" src="' + esc(img) + '" alt="" ' +
+                   (i === 0 ? '' : 'loading="lazy" ') + 'decoding="async">'
+            : '<span class="st-sld-img st-sld-noimg" aria-hidden="true"></span>' +
+              '<span class="st-sld-nophoto"></span>') +
           '<span class="st-sld-shade" aria-hidden="true"></span>' +
           '<div class="st-sld-info">' +
             '<span class="st-sld-cat"></span>' +
@@ -111,6 +118,8 @@ window.ST = window.ST || {};
         p.querySelector('.st-sld-name').textContent  = I.destName(d);
         p.querySelector('.st-sld-blurb').textContent = I.destBlurb(d);
         p.querySelector('.st-sld-go-t').textContent  = I.t('slider.go');
+        var np = p.querySelector('.st-sld-nophoto');
+        if (np) np.textContent = I.t('slider.noPhoto');
         p.querySelector('.st-sld-go').setAttribute('aria-label',
           I.t('slider.go') + ' — ' + I.destName(d));
       });
@@ -133,7 +142,7 @@ window.ST = window.ST || {};
     }
 
     /* ── Hình học ─────────────────────────────────────────────────────────
-       Giống carousel.js: offset đi ĐƯỜNG NGẮN NHẤT trên vòng. Nhưng ở đây
+       Offset đi ĐƯỜNG NGẮN NHẤT trên vòng. Nhưng ở đây
        danh sách ngắn (có nhóm chỉ 1–3 điểm) nên phải chặn: n < 3 thì không
        vòng được, panel prev và next sẽ trỏ vào cùng một cái. */
     function offset(i) {
@@ -163,7 +172,13 @@ window.ST = window.ST || {};
       });
 
       var d = keys.length ? D.get(keys[index]) : null;
-      if (bg && d) bg.style.backgroundImage = 'url("' + D.imgOf(keys[index]) + '")';
+      if (bg && d) {
+        /* Cùng lý do với panel: `url("")` không phải "không có nền" mà là
+           "tải lại trang này rồi dùng làm ảnh nền". Nhóm chưa có ảnh thì gỡ
+           hẳn background-image, để css/slider.css lo bằng gradient tối. */
+        var bgSrc = D.imgOf(keys[index]);
+        bg.style.backgroundImage = bgSrc ? 'url("' + bgSrc + '")' : '';
+      }
       if (countEl) countEl.textContent = keys.length
         ? I.t('slider.counter', { i: index + 1, n: keys.length }) : '';
       if (liveEl && d) liveEl.textContent = I.destName(d) + ' — ' + (index + 1) + '/' + keys.length;
@@ -189,7 +204,7 @@ window.ST = window.ST || {};
 
     /* ── Kéo / quẹt ───────────────────────────────────────────────────────
        KHÔNG dùng setPointerCapture — Chrome sẽ bắn `click` vào phần tử capture
-       chứ không vào panel dưới ngón tay (bẫy đã vấp ở carousel.js). */
+       chứ không vào panel dưới ngón tay — đã vấp đúng bẫy này. */
     var dragX = 0, dragging = false, moved = false;
     function onDown(e) {
       if (e.button > 0) return;

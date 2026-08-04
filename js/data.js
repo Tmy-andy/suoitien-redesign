@@ -16,7 +16,7 @@ window.ST = window.ST || {};
   D.TOTAL_REAL = 158;
 
   /* ── Điểm đến ────────────────────────────────────────────────────────
-     12 điểm có mặt trong carousel + 8 điểm giữ lại để `key` không trỏ hụt khi
+     12 điểm có ảnh + 8 điểm giữ lại để `key` không trỏ hụt khi
      bổ sung ảnh sau (Q-38). `pano` là UUID THẬT → trang cha chỉ cần chuyền
      thẳng vào VRCore.navigateToPano(), không phải map lại gì. */
   D.DESTINATIONS = {
@@ -122,33 +122,119 @@ window.ST = window.ST || {};
     thuyenrong: { name:'Khu Trò Chơi Hồ Lạc Cảnh', nameEn:'Lac Canh Lake Games', type:'chọn 1 trong 2', cat:'game',
       pano:'panorama_F6128E4B_6328_E7D8_41BD_62AF91EFC67C',
       blurb:'Cụm trò chơi ven hồ: thuyền rồng, thuyền bay, đu dây qua hồ.',
-      blurbEn:'Lakeside rides: dragon boat, viking boat and zipline.' }
+      blurbEn:'Lakeside rides: dragon boat, viking boat and zipline.' },
+
+    /* ── 14 điểm THÊM ở YC-17 (D-59) cho 5 danh mục mới ───────────────────
+       Ba danh mục khách vừa yêu cầu (Ẩm Thực · Suối Tiên Farm · Dịch vụ) cùng
+       "Bốn Mùa Lễ Hội" và "Giải Trí - Trẻ Em" **không có một điểm nào** trong 20
+       điểm cũ — tạo danh mục rỗng thì bấm vào ra slider trắng.
+
+       `name` và `pano` ĐỌC THẬT từ `suoitien.trip360.vn/data/catalog.json`
+       (158 điểm) — không bịa một ký tự nào, nên bấm là đi đúng panorama thật.
+       `blurb` + `nameEn` vẫn là MOCK tôi viết, cần người Suối Tiên duyệt.
+       Cả 14 điều CHƯA CÓ ẢNH — slider hiện thẻ gradient thay ảnh (D-59). */
+
+    /* Ẩm thực — 4 nhà hàng thật trong công viên */
+    nhahangbientiendong: { name:'Nhà Hàng Biển Tiên Đồng', nameEn:'Tien Dong Beach Restaurant', type:'ẩm thực', cat:'food',
+      pano:'panorama_46049735_55B3_B63B_41CF_6035E46A3CC2',
+      blurb:'Nhà hàng ngay cạnh biển nhân tạo, phục vụ hải sản và món Việt.',
+      blurbEn:'Right by the man-made sea — seafood and Vietnamese dishes.' },
+
+    nhahanghungvuong: { name:'Nhà Hàng Hùng Vương', nameEn:'Hung Vuong Restaurant', type:'ẩm thực', cat:'food',
+      pano:'panorama_F610592D_6328_ED5D_41C6_F53A39099246',
+      blurb:'Nhà hàng lớn nhất công viên, nhận đoàn và tiệc.',
+      blurbEn:'The park’s largest restaurant — groups and banquets welcome.' },
+
+    nhahangpholau: { name:'Nhà Hàng Phố Lẩu', nameEn:'Hotpot Street Restaurant', type:'ẩm thực', cat:'food',
+      pano:'panorama_F611188A_6318_6B4D_41B9_84E7C2345CD6',
+      blurb:'Phố lẩu nhiều vị, hợp nhóm đông người.',
+      blurbEn:'A whole street of hotpot — made for big groups.' },
+
+    nhahangphudong: { name:'Nhà Hàng Phù Đổng', nameEn:'Phu Dong Restaurant', type:'ẩm thực', cat:'food',
+      pano:'panorama_F6111B3E_6318_2D45_41D8_8E52A7F19566',
+      blurb:'Không gian mở, gần khu trò chơi trẻ em.',
+      blurbEn:'Open-air dining next to the kids’ rides.' },
+
+    /* Suối Tiên Farm */
+    toancanhsuoitienfarm: { name:'Toàn Cảnh Suối Tiên Farm', nameEn:'Suoi Tien Farm Overview', type:'tham quan', cat:'sight',
+      pano:'panorama_F61221ED_6318_1CCA_4199_66609663E2E5',
+      blurb:'Nhìn bao quát cả khu nông trại trước khi vào từng vườn.',
+      blurbEn:'The whole farm at a glance before you walk in.' },
+
+    farmnho: { name:'Farm Nho', nameEn:'Grape Farm', type:'trải nghiệm', cat:'food',
+      pano:'panorama_F612A56F_6328_65D6_41CA_A89C6D6574EE',
+      blurb:'Vườn nho trĩu quả, hái và chụp ảnh tại chỗ.',
+      blurbEn:'Heavy vines you can pick from — and photograph.' },
+
+    farmsungmy: { name:'Farm Sung Mỹ', nameEn:'Fig Farm', type:'trải nghiệm', cat:'food',
+      pano:'panorama_F6122A2D_6328_2F5A_41D2_60A6209A0DD6',
+      blurb:'Vườn sung Mỹ trồng ngay trong công viên.',
+      blurbEn:'A fig orchard grown inside the park.' },
+
+    sieuthisuoitienfarm: { name:'Siêu Thị Suối Tiên Farm', nameEn:'Suoi Tien Farm Market', type:'quà tặng', cat:'food',
+      pano:'panorama_F617713D_6328_3DB0_417B_B4F8E3B642AE',
+      blurb:'Nông sản và đặc sản đóng gói sẵn để mang về.',
+      blurbEn:'Packaged produce and specialties to take home.' },
+
+    /* Bốn mùa lễ hội */
+    longhoahoi: { name:'Long Hoa Hội', nameEn:'Long Hoa Festival Ground', type:'văn hoá', cat:'culture',
+      pano:'panorama_467C76DA_55B5_5669_418C_07295BBC457D',
+      blurb:'Sân lễ hội lớn, nơi diễn ra các chương trình theo mùa.',
+      blurbEn:'The big festival ground where seasonal shows happen.' },
+
+    tulinhhoitu: { name:'Tứ Linh Hội Tụ', nameEn:'Four Sacred Beasts Plaza', type:'văn hoá', cat:'culture',
+      pano:'panorama_F612CC38_6318_2B4C_41D7_EDAEA5102F0C',
+      blurb:'Long – lân – quy – phụng tụ về một quảng trường.',
+      blurbEn:'Dragon, unicorn, turtle and phoenix in one plaza.' },
+
+    suoitienfarmfestival: { name:'Suối Tiên Farm Festival', nameEn:'Suoi Tien Farm Festival', type:'lễ hội', cat:'culture',
+      pano:'panorama_F611D554_6318_65C6_41D4_AE6694754A7D',
+      blurb:'Lễ hội nông sản tổ chức ngay trong khu farm.',
+      blurbEn:'A harvest festival held inside the farm.' },
+
+    /* Giải trí – trẻ em */
+    nguaphicaptreo: { name:'Ngựa Phi & Cáp Treo', nameEn:'Horse Ride & Cable Car', type:'trò chơi', cat:'game',
+      pano:'panorama_F613999E_6318_2D47_41BA_A7D6F7941233',
+      blurb:'Ngựa phi nước đại và cáp treo ngắm toàn khu — hợp trẻ nhỏ.',
+      blurbEn:'A galloping-horse ride and a cable car — great for kids.' },
+
+    /* Dịch vụ */
+    tramxelua: { name:'Trạm Xe Lửa', nameEn:'Park Train Station', type:'di chuyển', cat:'util',
+      pano:'panorama_F613B771_6328_25C8_41C4_E5CD50360025',
+      blurb:'Nơi lên xe lửa tham quan vòng quanh công viên.',
+      blurbEn:'Where you board the train that loops the park.' },
+
+    khudichvutienich: { name:'Khu Dịch Vụ & Tiện Ích', nameEn:'Services & Amenities Area', type:'tiện ích', cat:'util',
+      pano:'panorama_46042B28_55BD_7E2A_41D3_94B0054302EF',
+      blurb:'Quầy vé, gửi đồ, nhà vệ sinh và cửa hàng tiện lợi.',
+      blurbEn:'Ticket desk, lockers, restrooms and a convenience store.' }
   };
 
   /* Gắn key vào chính object cho tiện truyền quanh (bridge cần dest.key) */
   Object.keys(D.DESTINATIONS).forEach(function (k) { D.DESTINATIONS[k].key = k; });
 
-  /* ── Thẻ trong 3D carousel (D-44) ─────────────────────────────────────
-     Thứ tự dưới đây LÀ thứ tự chạy vòng, xếp theo nhịp thị giác (cổng →
-     cung điện → tuyết → thú → nước → …), không theo bảng chữ cái.
+  /* ── Ảnh của từng điểm ────────────────────────────────────────────────
+     Thứ tự dưới đây xếp theo nhịp thị giác (cổng → cung điện → tuyết → thú →
+     nước → …), không theo bảng chữ cái. Nó KHÔNG còn là thứ tự chạy vòng của
+     một carousel nào nữa (bản 1 đã gỡ, D-57) — bây giờ thứ tự hiển thị do
+     `keys` của từng nhóm trong D.GROUPS quyết định.
 
-     img  = ảnh banner THẬT tải từ suoitien.vn, đã cắt 3:2 (bề ngang 500–1200px
-            tuỳ nguồn, KHÔNG phóng to — docs/06-data.md §6.8) và
-            chuyển webp. URL gốc từng ảnh: docs/06-data.md §6.8.
-            Ảnh nằm TRONG repo, không hotlink (RULE #3: không dependency ngoài).
-     must = true → badge vàng "nên xem" (hint nhẹ, không xếp hạng · Q9).
+     img = ảnh banner THẬT tải từ suoitien.vn, đã cắt 3:2 (bề ngang 500–1200px
+           tuỳ nguồn, KHÔNG phóng to — docs/06-data.md §6.8) và chuyển webp.
+           URL gốc từng ảnh: docs/06-data.md §6.8.
+           Ảnh nằm TRONG repo, không hotlink (RULE #3: không dependency ngoài).
 
-     Tỉ lệ 3:2 là ràng buộc: css/carousel.css đặt `aspect-ratio: 3/2` cho thẻ và
-     chia --st-card-maxw cho 1.5 để ra chiều cao. Đổi tỉ lệ ảnh thì phải sửa cả
-     hai chỗ đó. */
+     Tỉ lệ nguồn 3:2 giờ chỉ còn là mặc định dễ chịu chứ không phải ràng buộc:
+     ô wall và panel slider đều `object-fit: cover` với khung tự do. Chỗ nhạy
+     nhất là cột dọc hẹp trên mobile — xem `object-position` ở responsive2.css. */
   D.CARDS = [
     { key:'cong',     img:'assets/img/cards/cong.webp' },
     { key:'cungvang', img:'assets/img/cards/cungvang.webp' },
-    { key:'tuyet',    img:'assets/img/cards/tuyet.webp',   must:true },
+    { key:'tuyet',    img:'assets/img/cards/tuyet.webp' },
     { key:'casau',    img:'assets/img/cards/casau.webp' },
-    { key:'bien',     img:'assets/img/cards/bien.webp',    must:true },
+    { key:'bien',     img:'assets/img/cards/bien.webp' },
     { key:'kylan',    img:'assets/img/cards/kylan.webp' },
-    { key:'phuthuy',  img:'assets/img/cards/phuthuy.webp', must:true },
+    { key:'phuthuy',  img:'assets/img/cards/phuthuy.webp' },
     { key:'amcung',   img:'assets/img/cards/amcung.webp' },
     { key:'tulinh',   img:'assets/img/cards/tulinh.webp' },
     { key:'diabay',   img:'assets/img/cards/diabay.webp' },
@@ -214,73 +300,102 @@ window.ST = window.ST || {};
     thuyenrong:{ no:'29',  x:78.1, y:55.8 }
   };
 
-  /* ══ D.GROUPS — 9 ô của VR Wall (chỉ index2.html dùng · D-50) ══════════
-     Bố cục mosaic đúng như note.md §192: 1 ô lớn · 2 ô trung · 6 ô nhỏ.
+  /* ══ D.GROUPS — 11 ô của VR Wall, cũng là 11 chip lọc của slider ══════
+     ⭐ Từ 2026-08-04 (YC-17 · D-59) đây là **danh mục THẬT của Suối Tiên**, đọc
+     từ menu `suoitien.vn` và từ overlay "Điểm đến" của `suoitien.trip360.vn`
+     (ảnh khách gửi). Trước đó là 9 nhóm TÔI TỰ ĐẶT theo `cat` — xem D-59.
 
-     size  'lg' | 'md' | 'sm' — quyết định ô chiếm mấy cell trong grid 4×3
-     cover key của ảnh dùng làm nền tĩnh
-     keys  danh sách destination của nhóm; ô tự đổi cảnh giữa các ảnh này,
-           và bấm ô là mở slider với đúng bộ này
+     Thứ tự dưới đây = thứ tự trong ảnh khách gửi, KHÔNG được xếp lại cho đẹp:
+     như vậy người dùng đi từ trang VR sang popup vẫn thấy cùng một danh sách,
+     cùng một thứ tự. Ba mục cuối (Ẩm Thực · Suối Tiên Farm · Dịch vụ) là khách
+     yêu cầu thêm, đều có thật trong menu `suoitien.vn`.
 
-     ⚠️ MOCK: cách chia nhóm là tôi tự đặt theo `cat` + cảm nhận, CHƯA có
-     phân loại chính thức của Suối Tiên. Hai nhóm `wild` và `food` chỉ có 1
-     điểm vì mới có 12 ảnh — có ảnh cho 8 điểm còn lại (Q-38) là đầy ngay.
-     Một điểm được phép nằm ở nhiều nhóm (Cung Vàng vừa là văn hoá vừa là
-     kiến trúc) — đó là chủ ý, không phải lỗi dữ liệu. */
+     size  'lg' | 'md' | 'sm' — ô chiếm mấy cell trong mosaic 5×3 (xem wall.css)
+     cover key của ảnh làm nền tĩnh. **Có thể bỏ trống** — ô sẽ hiện gradient
+           brand thay vì ảnh; đó là cách thành thật nhất để nói "khu vực này chưa
+           có ảnh", thêm nữa hai ô dùng chung một tấm ảnh thì nhìn ra ngay là lỗi
+     keys  destination của nhóm; ô tự đổi cảnh giữa các ảnh này, bấm ô là mở
+           slider với đúng bộ này
+
+     ⚠️ **Bố cục mosaic desktop ăn đúng 15 cell**: lg(2×2=4) + md(2×1=2) + 9×sm(9).
+     Thêm/bớt một nhóm là vỡ phép tính đó và hàng cuối hở một ô — phải kèm theo
+     sửa `grid-template-*` ở `css/wall.css`. Đã ghi ở đó.
+
+     ⚠️ MOCK: **việc chia điểm nào vào danh mục nào** vẫn là tôi đối chiếu menu
+     `suoitien.vn` bằng mắt (mỗi danh mục là một trang con có liệt kê điểm). Tên
+     danh mục và `pano` thì THẬT. Cần người Suối Tiên duyệt lại (Q-41).
+     Một điểm được phép nằm ở nhiều nhóm (Kỳ Lân Cung vừa là lịch sử vừa là tâm
+     linh vừa là tham quan) — đúng như trên site thật. */
   D.GROUPS = [
     { key:'all', size:'lg', cover:'cong',
-      vi:'Khám phá toàn Suối Tiên', en:'Explore all of Suoi Tien',
+      vi:'Toàn Cảnh Suối Tiên', en:'All of Suoi Tien',
       subVi:'Hơn 150 điểm trong một hành trình',
       subEn:'150+ spots in one journey',
       keys:['cong','cungvang','tuyet','casau','bien','kylan','phuthuy','amcung','tulinh','diabay','vongxoay','farm'] },
 
-    { key:'noibat', size:'md', cover:'cungvang',
-      vi:'Điểm đến nổi bật', en:'Must-see spots',
-      subVi:'Những nơi ai đến Suối Tiên cũng ghé',
-      subEn:'The ones nobody skips',
-      keys:['cong','cungvang','tuyet','casau','bien'] },
+    { key:'lichsu', size:'md', cover:'cungvang',
+      vi:'Văn Hóa Lịch Sử Dân Tộc', en:'National History & Culture',
+      subVi:'Công trình kể lại truyền thuyết Việt',
+      subEn:'Monuments retelling Vietnamese legends',
+      keys:['cong','cungvang','kylan','amcung'] },
 
-    { key:'thrill', size:'md', cover:'vongxoay',
-      vi:'Cảm giác mạnh', en:'Thrill rides',
-      subVi:'Dành cho người thích tim đập nhanh',
-      subEn:'For the fast-heartbeat crowd',
-      keys:['vongxoay','diabay','phuthuy'] },
+    { key:'tamlinh', size:'sm', cover:'amcung',
+      vi:'Văn Hóa Tâm Linh', en:'Spiritual Culture',
+      subVi:'Âm Cung, Kỳ Lân Cung, Long Hoa Hội',
+      subEn:'The Underworld, Unicorn Palace, Long Hoa',
+      keys:['amcung','kylan','longhoahoi','tulinhhoitu'] },
 
-    { key:'culture', size:'sm', cover:'amcung',
-      vi:'Văn hoá & tâm linh', en:'Culture & spirit',
-      subVi:'Truyền thuyết Việt kể bằng kiến trúc',
-      subEn:'Vietnamese legends told in architecture',
-      keys:['amcung','kylan','cong'] },
-
-    { key:'kientruc', size:'sm', cover:'tuyet',
-      vi:'Kỳ quan kiến trúc', en:'Architectural wonders',
-      subVi:'Cung điện, lâu đài, xứ tuyết',
-      subEn:'Palaces, castles, a snow realm',
-      keys:['tuyet','cungvang','kylan','phuthuy'] },
-
-    { key:'family', size:'sm', cover:'tulinh',
-      vi:'Gia đình & trẻ em', en:'Family & kids',
-      subVi:'Nhẹ nhàng, đi cả nhà được',
-      subEn:'Gentle enough for everyone',
-      keys:['tulinh','bien','farm'] },
-
-    { key:'water', size:'sm', cover:'bien',
-      vi:'Công viên nước', en:'Water park',
+    { key:'bien', size:'sm', cover:'bien',
+      vi:'Biển Tiên Đồng Ngọc Nữ', en:'Tien Dong – Ngoc Nu Beach',
       subVi:'Biển nhân tạo lớn nhất Việt Nam',
       subEn:'Vietnam’s largest man-made sea',
-      keys:['bien','tulinh'] },
+      keys:['bien','nhahangbientiendong'] },
 
-    { key:'wild', size:'sm', cover:'casau',
-      vi:'Thế giới hoang dã', en:'Into the wild',
-      subVi:'Hơn 1.500 con cá sấu',
-      subEn:'Over 1,500 crocodiles',
-      keys:['casau'] },
+    { key:'lehoi', size:'sm', cover:'tuyet',
+      vi:'Bốn Mùa Lễ Hội', en:'Four Seasons of Festivals',
+      subVi:'Mùa nào cũng có lễ hội riêng',
+      subEn:'Every season has its own festival',
+      keys:['tuyet','longhoahoi','suoitienfarmfestival','tulinhhoitu'] },
 
-    { key:'food', size:'sm', cover:'farm',
-      vi:'Ẩm thực & quà tặng', en:'Food & gifts',
-      subVi:'Nông sản và đặc sản mang về',
-      subEn:'Farm produce and souvenirs',
-      keys:['farm'] }
+    { key:'khampha', size:'sm', cover:'phuthuy',
+      vi:'Tham Quan & Khám Phá', en:'Sightseeing & Discovery',
+      subVi:'Cung điện, lâu đài, hang động, thú hoang',
+      subEn:'Palaces, castles, caves and wildlife',
+      keys:['cungvang','tuyet','casau','phuthuy','kylan','amcung','tulinh','coixay'] },
+
+    { key:'camgiacmanh', size:'sm', cover:'vongxoay',
+      vi:'Trò Chơi Cảm Giác Mạnh', en:'Thrill Rides',
+      subVi:'Dành cho người thích tim đập nhanh',
+      subEn:'For the fast-heartbeat crowd',
+      keys:['vongxoay','diabay','tauluon','thuyenrong'] },
+
+    { key:'treem', size:'sm', cover:'tulinh',
+      vi:'Giải Trí - Trẻ Em', en:'Family & Kids',
+      subVi:'Nhẹ nhàng, đi cả nhà được',
+      subEn:'Gentle enough for everyone',
+      keys:['tulinh','bien','massage','nguaphicaptreo','vrgame'] },
+
+    /* Ba nhóm dưới đây khách yêu cầu thêm (YC-17). Hai trong số đó KHÔNG CÓ
+       `cover`: kho ảnh hiện có 12 tấm, không tấm nào là nhà hàng hay khu tiện ích.
+       Mượn tạm ảnh `farm` cho cả ba thì ba ô cạnh nhau trông y hệt — tệ hơn hẳn
+       một ô gradient thành thật. Khách gửi ảnh (Q-38) là điền `cover` vào là xong. */
+    { key:'amthuc', size:'sm',
+      vi:'Ẩm Thực', en:'Food & Dining',
+      subVi:'Bốn nhà hàng lớn trong công viên',
+      subEn:'Four large restaurants inside the park',
+      keys:['nhahangbientiendong','nhahanghungvuong','nhahangpholau','nhahangphudong'] },
+
+    { key:'farm', size:'sm', cover:'farm',
+      vi:'Suối Tiên Farm', en:'Suoi Tien Farm',
+      subVi:'Farm nho, sung Mỹ và đặc sản mang về',
+      subEn:'Grape and fig farms, produce to take home',
+      keys:['farm','toancanhsuoitienfarm','farmnho','farmsungmy','sieuthisuoitienfarm','suoitienfarmfestival'] },
+
+    { key:'dichvu', size:'sm',
+      vi:'Dịch vụ', en:'Services & Facilities',
+      subVi:'Xe lửa, taxi điện, khu tiện ích',
+      subEn:'Park train, shuttle and amenities',
+      keys:['xelua','taxi','tramxelua','khudichvutienich'] }
   ];
 
   D.group = function (key) {
@@ -305,20 +420,17 @@ window.ST = window.ST || {};
     return c ? c.img : '';
   };
 
-  /* Bỏ dấu tiếng Việt — cho ô tìm kiếm của slider (index2). Gõ "lau dai" phải
-     ra "Lâu Đài Tuyết". */
+  /* Bỏ dấu tiếng Việt — cho ô tìm kiếm của slider. Gõ "lau dai" phải ra
+     "Lâu Đài Tuyết". */
   D.deaccent = function (s) {
     return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
   };
 
-  /* `must` sống trên CARDS chứ không trên DESTINATIONS (nó là thuộc tính của
-     việc TRƯNG BÀY, không phải của địa điểm) — nhưng danh sách điểm cũng cần
-     đọc nó để gắn badge ★, nên bọc lại thành helper thay vì lặp filter. */
-  D.mustOf = function (key) {
-    var c = D.CARDS.filter(function (x) { return x.key === key; })[0];
-    return !!(c && c.must);
-  };
+  /* ⚫ `D.mustOf()` + cờ `must:true` trên CARDS đã bị gỡ ngày 2026-08-04 (D-57).
+     Chúng phục vụ badge ★ "Nên xem" của bản 1; ở bản này khái niệm đó đã có
+     chỗ ở đàng hoàng hơn là nhóm `noibat` trong D.GROUPS. Giữ lại một cờ dữ
+     liệu không ai đọc thì lần sau có người sẽ tưởng nó đang có tác dụng. */
 
   D.catLabel = function (dest, lang) {
     var c = D.CATEGORIES.filter(function (x) { return x.key === ((dest && dest.cat) || ''); })[0];

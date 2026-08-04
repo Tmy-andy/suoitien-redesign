@@ -1,10 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   wall.css — VR Wall: mosaic 9 ô cảnh động (D-50)
-   Cặp với js/wall.js. Chỉ index2.html dùng.
+   wall.css — VR Wall: mosaic 9 ô cảnh động (D-50). Cặp với js/wall.js.
+   Ở đây là bố cục DESKTOP (mosaic 4×3). Mobile dựng theo mô hình khác hẳn
+   (trang cuộn 2 cột + thanh công cụ dính đáy) — xem css/responsive2.css.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* ── Khung chung của index2 ─────────────────────────────────────────────
-   Giống #st-popup của bản 1: chiếm trọn màn, nền đặc, chỉ fade opacity.
+/* ── Khung chung của popup ──────────────────────────────────────────────
+   Chiếm trọn màn, nền đặc, chỉ fade opacity.
    KHÔNG animate transform trên #st-pop2 — nó là tổ tiên của .st-sld-track
    (mang perspective ngầm qua các lớp con) và của lớp cổng FLIP. */
 #st-pop2 {
@@ -69,9 +70,8 @@
   flex-direction: column;
   padding: calc(var(--st-sat) + var(--st-s-8)) var(--st-s-6)
            calc(var(--st-sab) + var(--st-s-5));
-  /* TRẮNG PHẲNG, giống hệt bản 1 (D-54). Trước đây là nền tối + 2 vệt radial
-     brand ("phòng chiếu" để 9 ô ảnh bật lên) — khách yêu cầu bỏ vệt xanh dưới
-     dải 3 màu và cho hai bản cùng một nền trắng.
+  /* TRẮNG PHẲNG (D-54). Trước đây là nền tối + 2 vệt radial brand ("phòng
+     chiếu" để 9 ô ảnh bật lên) — khách yêu cầu bỏ vệt xanh dưới dải 3 màu.
      Bù lại phần "ảnh phải nổi": ô có viền + bóng rõ hơn, xem .st-wall-tile. */
   background: var(--st-bg);
   transition: opacity var(--st-dur-base) var(--st-ease),
@@ -137,24 +137,38 @@
 @keyframes st-p2-pop { from { opacity: 0; transform: scale(.5); } }
 
 /* ── Mosaic ───────────────────────────────────────────────────────────────
-   Grid 4×3 = 12 cell cho 9 ô: 1 ô lớn chiếm 2×2, 2 ô trung ở hàng 1 (hàng
-   này cao hơn nên chúng "trung"), 6 ô nhỏ. Đúng note.md §192.
-   Hàng 1 cao 1.22fr để ô lớn và 2 ô trung nổi hẳn so với hàng 3. */
+   Grid 5×3 = 15 cell cho 11 ô (D-59): 1 ô lớn 2×2 · 1 ô trung 2×1 · 9 ô nhỏ.
+   4 + 2 + 9 = 15, KHÍT. Trước D-59 là 4×3 = 12 cell cho 9 ô.
+
+   ⚠️ NGÂN SÁCH CELL LÀ RÀNG BUỘC, không phải trùng hợp. Thêm/bớt một nhóm
+   trong `D.GROUPS` mà không sửa `grid-template-*` ở đây thì hàng cuối hở một
+   ô — và trên desktop mosaic KHÔNG cuộn nên cái lỗ đó nằm chình ình giữa màn.
+   Bảng đối chiếu nếu số nhóm đổi:
+       10 nhóm → 4 cột × 3 hàng, lg(4) + md(2) + 8 sm(8) = 14 … còn dư 2, phải
+                 cho thêm 1 md nữa: lg + 2 md + 7 sm = 4+4+7 = 15 ✗ → dùng
+                 4×4 = 16 với lg + 2 md + 8 sm ✓
+       11 nhóm → 5×3 (hiện tại)
+       12 nhóm → 5×3 với lg(4) + 10 sm(10) = 14 ✗ → 4×4 = 16: lg + 2md + 9sm ✓
+   Nói cách khác: đổi số nhóm là phải ngồi tính lại, không có công thức tự động.
+
+   Thứ tự đặt ô do THỨ TỰ trong D.GROUPS + auto-placement lo, không đặt tay
+   từng ô. Với 11 nhóm hiện tại (lg ở vị trí 1, md ở vị trí 2) nó rơi vào:
+       hàng 1:  [ lg  lg ][ md  md ][ sm ]
+       hàng 2:  [ lg  lg ][ sm ][ sm ][ sm ]
+       hàng 3:  [ sm ][ sm ][ sm ][ sm ][ sm ] */
 .st-wall-grid {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  /* 1.38 / 1 / .84 — chênh lệch phải ĐỦ RÕ, nếu không "ô trung" và "ô nhỏ"
-     trông bằng nhau và mosaic mất hẳn phân cấp (đã thử 1.22/1/.92: nhìn ra
-     3 hàng đều nhau). */
-  grid-template-rows: 1.38fr 1fr .84fr;
+  grid-template-columns: repeat(5, 1fr);
+  /* 1.24 / 1 / .92 — chênh lệch phải ĐỦ RÕ, nếu không 3 hàng trông đều nhau
+     và mosaic mất hẳn phân cấp. Nhẹ hơn mức 1.38/1/.84 của bố cục 4 cột cũ:
+     5 cột làm ô nhỏ hẹp hơn, hàng 3 mà thấp nữa thì tên khu vực vỡ 3 dòng. */
+  grid-template-rows: 1.24fr 1fr .92fr;
   gap: var(--st-s-3);
 }
 .st-s-lg { grid-column: 1 / span 2; grid-row: 1 / span 2; }
-
-/* Ô còn lại tự chảy theo thứ tự trong D.GROUPS — không cần đặt tay từng ô,
-   chỉ cần giữ đúng thứ tự lg → md → md → 6×sm. */
+.st-s-md { grid-column: span 2; }
 
 .st-wall-tile {
   position: relative;
@@ -169,7 +183,7 @@
      Token đã được bổ sung, nhưng ô wall vẫn KHÔNG dùng nó: trên nền trắng, chỗ
      giữ ảnh phải sáng hơn ảnh chứ không tối hơn.
      Dùng gradient brand chứ không xám trơn — `.st-wt-veil` phủ đè lên, xám trơn
-     dưới lớp veil vẫn ra một mảng xám chết. Cùng cách với `.st-li-noimg`. */
+     dưới lớp veil vẫn ra một mảng xám chết. */
   background: linear-gradient(140deg, var(--st-green-100), var(--st-gold-200));
   text-align: left;
   isolation: isolate;
@@ -182,20 +196,21 @@
 }
 #st-pop2.st-open .st-wall-tile {
   animation: st-wt-in 680ms var(--st-ease-out) backwards;
-  /* 9 ô × 76ms = ô cuối vào ở mốc 900ms. Đủ chậm để đọc ra thứ tự "ô lớn
-     trước, ô nhỏ sau", chưa đủ chậm để phải ngồi đợi. */
-  animation-delay: calc(200ms + var(--gi) * 76ms);
+  /* 62ms/ô × 10 khoảng = ô cuối vào ở mốc ~820ms. Từng là 76ms cho 9 ô (mốc
+     900ms); 11 ô mà giữ 76ms thì ô cuối lùi tới 960ms và cuối chuỗi bắt đầu
+     đọc ra là "trang tải chậm" chứ không phải "trang đang mở ra". */
+  animation-delay: calc(200ms + var(--gi) * 62ms);
 }
 @keyframes st-wt-in { from { opacity: 0; transform: translateY(46px) scale(.86); } }
 
-/* Ken Burns cho ảnh trong ô — cùng nhịp với thẻ carousel bản 1. Đây là thứ
-   biến "9 ô vừa hiện ra" thành "9 khung cảnh đang mở ra". */
+/* Ken Burns cho ảnh trong ô. Đây là thứ biến "9 ô vừa hiện ra" thành
+   "9 khung cảnh đang mở ra". */
 #st-pop2.st-open .st-wt-img.st-on {
   animation: st-wt-kenburns 1300ms var(--st-ease-out) 260ms backwards;
 }
 @keyframes st-wt-kenburns { from { transform: scale(1.18); } }
 
-#st-pop2.st-open .st-wall-bar { animation: st-p2-up 560ms 940ms var(--st-ease-out) backwards; }
+#st-pop2.st-open .st-wall-bar { animation: st-p2-up 560ms 860ms var(--st-ease-out) backwards; }
 
 /* Rê vào 1 ô → các ô khác tối xuống (note.md §36) */
 .st-wall-grid:hover .st-wall-tile:not(:hover),
@@ -210,6 +225,20 @@
               0 14px 34px rgba(18,19,18,.26);
 }
 .st-wall-tile:focus-visible { outline: none; }
+
+/* Ô của nhóm CHƯA CÓ ẢNH NÀO (D-59). Cùng gradient với `.st-sld-noimg` bên
+   slider, để hai màn nói cùng một câu. Bỏ luôn `.st-wt-veil` phủ tối: veil
+   sinh ra để tách chữ khỏi ảnh, ở đây nền đã là gradient brand đủ tối rồi,
+   phủ thêm chỉ làm ô đen kịt và mất hẳn màu nhận diện. */
+.st-noimg {
+  /* Xanh dải trầm, KHÔNG chen vàng. Bản đầu đi từ green-700 sang gold-500 —
+     cạnh 9 ô ảnh thật, hai ô đó sáng chói hơn cả ảnh và kéo hết mắt về đúng hai
+     khu vực ÍT nội dung nhất. Placeholder phải lùi về sau, không phải nổi lên. */
+  background:
+    radial-gradient(120% 90% at 78% 12%, rgba(255,255,255,.14), transparent 60%),
+    linear-gradient(152deg, var(--st-green-800), var(--st-green-700) 54%, var(--st-green-400));
+}
+.st-noimg .st-wt-veil { background: linear-gradient(180deg, rgba(6,12,20,0) 40%, rgba(6,12,20,.42) 100%); }
 
 /* ── Ảnh trong ô ────────────────────────────────────────────────────────── */
 .st-wt-media { position: absolute; inset: 0; overflow: hidden; }
@@ -301,10 +330,26 @@
 .st-wall-tile:hover .st-wt-cta,
 .st-wall-tile:focus-within .st-wt-cta { max-height: 22px; margin-top: 9px; opacity: 1; }
 
-/* Ô nhỏ: chữ phải nhỏ lại, và bỏ hẳn dòng mô tả — không đủ chỗ */
-.st-s-sm .st-wt-name { font-size: 16px; }
+/* Ô nhỏ: chữ phải nhỏ lại, và bỏ hẳn dòng mô tả — không đủ chỗ.
+   Kẹp 2 dòng: từ D-59 tên là danh mục thật của site, có tên dài hẳn ("Trò Chơi
+   Cảm Giác Mạnh", "Văn Hóa Lịch Sử Dân Tộc") và cột chỉ còn ~186px ở 1024px —
+   không kẹp thì 3 dòng đẩy badge số điểm ra khỏi ô. */
+.st-s-sm .st-wt-name {
+  font-size: clamp(14px, 1.12vw, 16px);
+  /* ⚠️ 1.36 chứ không 1.24. `-webkit-line-clamp` + `overflow: hidden` cắt đúng
+     theo chiều cao line-box, mà chữ Việt có DẤU CHỒNG DẤU (Ẩ Ằ Ễ Ộ Ữ) vươn cao
+     hơn hẳn chữ hoa thường. Ở 1.24 thì "Ẩm Thực" render ra "Am Thực" — mất
+     đúng cái dấu hỏi trên mũ, và mất im lặng: không tràn, không cảnh báo, chỉ
+     sai chính tả. Mọi chỗ có line-clamp trong project phải giữ ≥1.35. */
+  line-height: 1.36;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .st-s-sm .st-wt-body { padding: var(--st-s-3); }
 .st-s-sm .st-wt-sub { display: none; }
+.st-s-md .st-wt-name { font-size: clamp(17px, 1.5vw, 22px); }
 .st-s-lg .st-wt-name { font-size: clamp(22px, 2vw, 30px); }
 .st-s-lg .st-wt-body { padding: var(--st-s-6); }
 

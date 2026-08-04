@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   slider.css — Infinite Attraction Slider (D-50)
-   Cặp với js/slider.js. Chỉ index2.html dùng.
+   slider.css — Infinite Attraction Slider (D-50). Cặp với js/slider.js.
+   Trạng thái 2 của popup. Tinh chỉnh mobile ở css/responsive2.css.
    ═══════════════════════════════════════════════════════════════════════ */
 
 .st-sld {
@@ -118,7 +118,15 @@
   flex: 1 1 auto;
   min-height: 0;
 }
-.st-sld-track { position: absolute; inset: 0; }
+.st-sld-track {
+  position: absolute;
+  inset: 0;
+  /* Quẹt NGANG là của slider, không phải của trình duyệt. Thiếu dòng này thì
+     trên iOS quẹt ngang gần mép màn kích hoạt cử chỉ "lùi trang" của Safari:
+     trang cha bị back, popup biến mất giữa chừng. `pan-y` vẫn để dọc lại cho
+     trình duyệt — ở slider không có gì cuộn dọc nên không mất gì. */
+  touch-action: pan-y;
+}
 
 .st-sld-panel {
   position: absolute;
@@ -152,6 +160,37 @@
   transition: transform 900ms var(--st-ease-out);
 }
 .st-sld-panel.st-active .st-sld-img { transform: scale(1.06); }
+
+/* Điểm CHƯA CÓ ẢNH (D-59) — gradient brand thay cho `<img>`.
+   KHÔNG dùng xám trơn: `.st-sld-shade` phủ đè lên, xám dưới lớp shade ra một
+   mảng chết trông y như ảnh tải hỏng. Cùng công thức với ô wall chưa có ảnh,
+   để hai màn đọc ra là "chưa có ảnh" chứ không phải "hai lỗi khác nhau". */
+.st-sld-noimg {
+  background:
+    radial-gradient(120% 90% at 78% 12%, rgba(255,255,255,.14), transparent 60%),
+    linear-gradient(152deg, var(--st-green-800), var(--st-green-700) 54%, var(--st-green-400));
+  transform: none;
+}
+.st-sld-panel.st-active .st-sld-noimg { transform: none; }
+
+/* Nhãn "chưa có ảnh". Đặt Ở TRÊN, không ở dưới cùng khối chữ: dưới đó là
+   vùng người dùng đọc để QUYẾT ĐỊNH đi hay không, chèn một lời xin lỗi vào đó
+   làm loãng đúng chỗ quan trọng nhất. Ở trên nó chỉ là một ghi chú. */
+.st-sld-nophoto {
+  position: absolute;
+  top: var(--st-s-4);
+  left: var(--st-s-4);
+  z-index: 2;
+  padding: 6px 12px;
+  border-radius: var(--st-r-pill);
+  background: rgba(6,12,20,.34);
+  color: rgba(255,255,255,.86);
+  font: var(--st-t-xs);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+/* Cảnh rìa chỉ còn cái tên — nhãn này cũng đi theo luật đó */
+.st-sld-panel:not(.st-active) .st-sld-nophoto { display: none; }
 
 .st-sld-shade {
   position: absolute;

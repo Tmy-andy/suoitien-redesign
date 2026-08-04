@@ -1,9 +1,9 @@
-> Cập nhật: 2026-08-03 (v8 — thêm §6.10: bản đồ 2D + pin · D-51)
+> Cập nhật: 2026-08-04 (v9 — D-57 gỡ `must` + `D.mustOf`, gỡ 21 khoá i18n của bản 1)
 
 # 06 — Data
 
 > ⚠️ **`js/data.js` đã thu nhỏ mạnh ngày 2026-08-03 (D-46).** Còn 4 thứ:
-> `DESTINATIONS` (20 điểm) · `CARDS` (12 thẻ carousel) · **`GROUPS` (9 khu vực — §6.9)**
+> `DESTINATIONS` (20 điểm) · `CARDS` (12 ảnh) · **`GROUPS` (9 khu vực — §6.9)**
 > · **`MAP` + `MAP_META` (bản đồ 2D và 20 pin — §6.10)** · `CATEGORIES` (5 nhóm), cộng
 > 5 helper `get()` / `group()` / `catLabel()` / `imgOf()` / `deaccent()`.
 >
@@ -158,7 +158,12 @@ ST.data.USE_LIVE_CATALOG = false;
 ST.data.TOTAL_REAL = 158;   // dùng cho label "4/158", "hơn 150 điểm"
 ```
 
-### `ST.data.CARDS` — array, thứ tự = thứ tự chạy vòng của carousel ⭐ (D-44)
+### `ST.data.CARDS` — array ảnh của từng điểm (D-44)
+
+> ⚫ **Cờ `must: true` đã gỡ cùng `D.mustOf()` ngày 2026-08-04 (D-57).** Chúng phục vụ
+> badge ★ "Nên xem" của bản 1; khái niệm đó giờ sống trong nhóm `noibat` của
+> `D.GROUPS` (§6.9). Snippet dưới đây **còn ở dạng cũ** để đọc được các quyết định
+> trước đó — code thật chỉ còn `{ key, img }`.
 
 Thay `HOTSPOTS` của bản trước. Nguồn gốc từng ảnh: §6.8.
 
@@ -183,20 +188,33 @@ CARDS = [
 |---|---|---|
 | `key` | string | Trỏ vào `DESTINATIONS` — tên, nhóm, blurb, `pano` đều lấy từ đó |
 | `img` | string | Đường dẫn tương đối tới ảnh **tỉ lệ 3:2**, webp. Bề ngang **không đồng nhất** (500–1200px) — bằng đúng bề ngang thật của nguồn, xem §6.8 |
-| `must` | boolean | `true` → badge vàng `★ Nên xem` (Q9, hint nhẹ) |
+| ~~`must`~~ | boolean | ⚫ **ĐÃ GỠ (D-57)** — từng là badge vàng `★ Nên xem` (Q9). Thay bằng nhóm `noibat` |
 
 **Thứ tự** xếp theo nhịp thị giác (cổng → cung điện → tuyết → thú → nước → …), **không**
-theo bảng chữ cái và **không** theo vị trí địa lý — carousel không còn là bản đồ nữa.
+theo bảng chữ cái và **không** theo vị trí địa lý. Từ D-57 thứ tự này **không còn là
+thứ tự hiển thị** của bất kỳ đâu — thứ tự hiển thị do `keys` của từng nhóm quyết định.
 
-**Tỉ lệ 3:2 là ràng buộc hai chiều:** `css/carousel.css` đặt `aspect-ratio: 3 / 2` cho
+**Tỉ lệ 3:2 giờ chỉ còn là mặc định dễ chịu, không còn là ràng buộc** (D-57): ô wall và
+panel slider đều `object-fit: cover` với khung tự do. Chỗ nhạy nhất là cột dọc hẹp trên
+mobile — xem `object-position: center 38%` ở `css/responsive2.css` (D-58f).
+
+<details><summary>Ràng buộc cũ của bản 1 (đã gỡ)</summary>
+
+`css/carousel.css` đặt `aspect-ratio: 3 / 2` cho
 `.st-cr-card` và chia `--st-card-maxw` cho `1.5` để ra chiều cao (D-54). Thay ảnh tỉ lệ
 khác mà quên sửa **cả hai** chỗ đó thì ảnh sẽ bị `object-fit: cover` cắt mất phần quan
 trọng.
 
+</details>
+
 > **Vì sao 12 mà không phải cả 20 destination:** chỉ 12 điểm tìm được ảnh banner đủ
 > đẹp trên `suoitien.vn`. `xelua` · `taxi` · `tauluon` · `massage` · `coixay` ·
-> `vrgame` · `thuyenrong` · `thuyenbay` không có trang riêng với ảnh hero dùng được —
-> chúng vẫn nằm trong `DESTINATIONS` và vẫn tìm thấy qua M3 (danh sách điểm đến).
+> `vrgame` · `thuyenrong` · `thuyenbay` không có trang riêng với ảnh hero dùng được.
+>
+> ⚠️ **Từ D-57 chúng không xuất hiện ở đâu trong popup nữa.** Trước đó danh sách
+> điểm của bản 1 có ô giữ chỗ (`.st-li-noimg`) cho chúng; slider thì cần ảnh phủ toàn
+> cảnh, không có cách giữ chỗ tương đương. Chúng vẫn nằm trong `DESTINATIONS` với UUID
+> panorama thật — thêm 1 dòng vào `CARDS` là hiện ra ngay.
 
 ### `ST.data.NAV_MENU` — array (✅ **84 mục THẬT**, 3 cấp, href thật)
 
@@ -400,7 +418,7 @@ COPY = {
     nav:      { /* label EN cho 84 mục — chỉ những mục cần dịch */ },
     topbar:   { addr, hotline, email, lang },
     welcome:  { eyebrow, titles:{a,b,c}, subtitle, legend, skip, goHint,
-                mustBadge, deckLabel, prev, next },   // 4 khoá cuối: carousel (D-44)
+                mustBadge, deckLabel, prev, next },   // ⚫ CẢ KHỐI `popup` ĐÃ GỠ · D-57
     dock:     { route, places, reopen, vr, gyro, sound, fullscreen, more },
     popover:  { help, share, rotate, lang },
     share:    { title, copyBtn, copied, manualCopy, qrNote },
@@ -570,7 +588,7 @@ Grep `// MOCK:` trong `js/` sẽ ra hết. Danh sách đầy đủ:
 | ~~Logo placeholder SVG~~ | PNG thật, verify 200 OK |
 | ~~Nội dung dropdown mock~~ | 75 mục con thật, 3 cấp |
 | ~~10 `type` làm chip filter~~ | 6 nhóm thật từ UI (D-28) |
-| ~~Bản đồ SVG tự vẽ~~ | 12 ảnh banner THẬT của công viên trong 3D carousel (D-44, §6.8) |
+| ~~Bản đồ SVG tự vẽ~~ | 12 ảnh banner THẬT của công viên (D-44, §6.8) |
 | ~~Chỉ tiếng Việt~~ | `COPY.vi` + `COPY.en` (Q4) |
 
 ---
@@ -695,7 +713,7 @@ bước cuối chỉ đụng đúng 3 hàm đó.
 
 ---
 
-## 6.8 Ảnh banner của 3D carousel ⭐ MỚI (D-44, 2026-08-03)
+## 6.8 Ảnh banner của 12 điểm — nguồn gốc từng tấm (D-44, 2026-08-03)
 
 Khách chốt: *"Lấy ảnh từ nguồn này https://suoitien.vn/"*. 12 ảnh dưới đây tải về từ
 site chính, **không hotlink** (RULE #3 — prototype phải xem được khi không có mạng, và
@@ -774,13 +792,13 @@ giữa → **chỉ khách mới có bản gốc (Q-37 🔴)**.
 | Xác nhận quyền dùng 12 ảnh này trong tour VR | Ảnh lấy từ site của chính khách nên gần như chắc chắn OK, nhưng cần khách nói rõ |
 | 🔴 **Xin bản gốc của `cong` · `casau` · `tulinh`** | Site chỉ có 600×600 (và 500×499). Ba tấm này đang phải phóng to khi hiện ở thẻ giữa — đây chính là "ảnh vỡ" khách thấy (D-55). Chín tấm còn lại đã lấy được bản 975–1200px từ trang chi tiết |
 | Xin bản gốc ≥1640px cho cả bộ | Thẻ giữa 820 CSS px → **1640 px thật** trên màn 2×. Nguồn tốt nhất hiện có là 1200px, vẫn thiếu 1,37× |
-| Bổ sung ảnh cho 8 điểm còn thiếu | Xem ghi chú ở `ST.data.CARDS` §6.2 — đủ 20 ảnh thì carousel phủ hết bộ highlight |
+| Bổ sung ảnh cho 8 điểm còn thiếu | Xem ghi chú ở `ST.data.CARDS` §6.2. **Từ D-57 việc này gấp hơn:** slider cần ảnh, không có ô giữ chỗ như danh sách của bản 1 — 8 điểm này hiện **không xuất hiện ở đâu cả** |
 
 ---
 
-## 6.9 `ST.data.GROUPS` — 9 khu vực của BẢN 2 ⭐ MỚI (D-50)
+## 6.9 `ST.data.GROUPS` — 9 khu vực (D-50)
 
-Chỉ `index2.html` dùng. Mỗi phần tử là một **ô trong VR Wall**, đồng thời là một **bộ
+Mỗi phần tử là một **ô trong VR Wall**, đồng thời là một **bộ
 lọc của Infinite Slider**.
 
 ```js

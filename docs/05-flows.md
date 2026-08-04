@@ -1,9 +1,15 @@
-> Cập nhật: 2026-08-03 (v8 — bản 1 thêm tầng danh sách; §5.10 bản đồ · D-51/D-52)
+> Cập nhật: 2026-08-04 (v9 — D-57 gỡ bản 1: §5.9 thành luồng chính; §5.6 + §5.8
+> viết lại cho `popup2.js`; §5.6 thêm phần JS có đọc matchMedia · D-58)
 
 # 05 — Flows & Logic
 
-> §5.1–5.8 tả **bản 1** (`index.html`). Luồng của **bản 2** (`index2.html` — 2 tầng)
-> ở §5.9; chi tiết đầy đủ: [`09-variant2.md`](09-variant2.md).
+> ⚫ **Sơ đồ ở §5.1 vẫn vẽ bản 1 đã gỡ (D-57).** Phần **qua ranh giới iframe** —
+> `st:ready` → `st:navigate` → `st:close`, và hai nhánh VRCore/postMessage — **không
+> đổi một dòng nào**; chỉ khác phần bên trong popup.
+> **Luồng đầy đủ của bản đang dùng: §5.9.**
+>
+> §5.2 · §5.3 · §5.4 · §5.5 · §5.7 · §5.10 vẫn đúng nguyên văn.
+> §5.6 và §5.8 đã viết lại cho `popup2.js`.
 
 ## 5.1 Luồng chính — từ lúc trang cha nhúng iframe đến lúc đổi cảnh
 
@@ -127,20 +133,31 @@ một:
 
 ## 5.6 Responsive — JS lo gì, CSS lo gì
 
+**Nguyên tắc: CSS lo bố cục, JS chỉ lo thứ CSS không biết.** Toàn bộ @media nằm ở
+`css/responsive2.css` — một file, kể cả @media của bản đồ (D-58).
+
 | Thứ | Ai lo | Cách |
 |---|---|---|
-| Thẻ carousel nhỏ lại | `responsive.css` | ghi đè biến `--st-card-*` |
-| Footer đảo chiều + nút skip thành pill | `responsive.css` | `flex-direction: column-reverse` |
-| Ẩn eyebrow + subtitle ở landscape thấp | `responsive.css` | `display: none` |
-| Số thẻ hiện | **`js/popup.js`** | `visible: 2` → 5 thẻ (D-55), truyền vào `carousel.create()` — thứ duy nhất về bố cục do JS quyết. Việc ẩn bậc ±2 dưới 1280px thì do **CSS**, không phải JS |
+| Wall từ mosaic 4×3 → trang cuộn 2 cột → 3 cột (landscape) | `responsive2.css` | đổi `grid-template-columns` + `aspect-ratio` |
+| Thanh công cụ từ 1 hàng `static` → 2 hàng `sticky` → xếp dọc (≤379) | `responsive2.css` | `display: grid` + `position: sticky` |
+| Cảnh slider rộng ra, chữ nhỏ lại, ‹ › đổi chỗ | `responsive2.css` | `--sld-w` / `--sld-x` + `top` của `.st-sld-nav` |
+| Thẻ bản đồ thành bottom sheet | `responsive2.css` | `left/right/bottom: 0` + bo 2 góc trên |
+| **Số ảnh nạp mỗi ô wall** (2 trên mobile, 3 trên desktop) | **`js/wall.js`** | `imgsPerTile()` — `matchMedia('(max-width: 599px)')` |
+| **Chiều cao thực của bottom sheet** để cụm zoom né | **`js/map2d.js`** | đo `offsetHeight` → ghi `--st-card-h` |
+| **Tắt parallax trên cảm ứng** | **`js/wall.js`** | lọc `e.pointerType !== 'mouse'` |
 
-**`js/popup.js` không có một dòng `matchMedia` nào.** Đây là kết quả trực tiếp của
-D-44: bản đồ cũ buộc JS phải đổi `viewBox` và đổi bộ toạ độ hotspot theo breakpoint,
-còn carousel thì mọi khác biệt mobile đều diễn đạt được bằng CSS thuần.
+Ba dòng cuối là **ba trường hợp CSS không làm được**, không phải ba chỗ tuỳ tiện:
+
+- CSS không quyết định được **có tải một `<img>` hay không** — `display: none` vẫn tải.
+- CSS không đọc được **chiều cao của một phần tử khác**.
+- CSS không phân biệt được **nguồn của một sự kiện con trỏ**. `@media (hover: none)` nói
+  về THIẾT BỊ, không nói về từng sự kiện — máy lai (laptop cảm ứng) có cả hai.
 
 > Media query đo **kích thước iframe**, không phải trang cha. Iframe được nhúng phủ
 > kín viewport nên hai con số thường bằng nhau — nhưng nếu bên tích hợp cho iframe
 > kích thước khác thì breakpoint đi theo iframe.
+
+---
 
 ## 5.7 Xử lý lỗi & trường hợp biên
 
@@ -155,34 +172,42 @@ còn carousel thì mọi khác biệt mobile đều diễn đạt được bằn
 | Tab bị ẩn | `document.hidden` → autoplay tạm dừng, không đốt CPU vẽ transform dưới nền |
 | Bấm thẻ 2 lần thật nhanh | Guard `closing` → lần thứ 2 return ngay |
 
-## 5.8 Bootstrap `popup.js` — thứ tự đầy đủ
+## 5.8 Bootstrap `popup2.js` — thứ tự đầy đủ
 
 ```
 DOMContentLoaded (hoặc chạy ngay nếu document đã sẵn sàng)
-  1. lấy tham chiếu DOM: #st-popup, .st-popup-inner, #st-popup-deck, #st-popup-title
-  2. i18n.init(?lang)            ← trước mọi thứ sinh chữ
-  3. đọc ?title=a|b|c
-  4. carousel.create()            ← sinh 12 thẻ vào DOM
-  5. applyTitle() + i18n.apply() + labelAll()
-  6. bind [data-st-close] (1 listener trên document)
-  7. bridge.on('lang') · bridge.on('open') · i18n.onChange(applyLang)
-  8. rAF → .st-open · carousel.start() · focus tiêu đề · trap + Esc
-  9. bridge.ready({ w, h })  ← đo .st-popup-inner SAU khi đã có nội dung
- 10. ?debug=1 → initDebug()
+  1. lấy tham chiếu DOM: #st-pop2 · #st-wall · #st-sld · #st-wall-grid
+  2. i18n.init(?lang)             ← trước mọi thứ sinh chữ
+  3. wall.create(grid, {onPick})      ← sinh 9 ô + ảnh vào DOM
+  4. slider.create(sldEl, {onGo,onBack})
+  5. map2d.create(#st-map, {onGo})
+  6. i18n.apply()                 ← quét [data-i18n|-aria|-ph] toàn trang
+  7. bind [data-act] trên #st-wall (tìm / hành trình / bỏ qua)
+  8. bind [data-st-close] + [data-open-map] (1 listener trên document)
+  9. bridge.on('lang') · bridge.on('open') · i18n.onChange(applyLang)
+ 10. rAF → .st-open · wall.start() · focus #st-wall-title · trap + Esc
+ 11. bridge.ready({ w, h })
+ 12. ?debug=1 → initDebug()
 ```
 
-Bước 4 phải trước bước 5: `labelAll()` quét `.st-cr-card` trong DOM, chưa có thẻ thì
-không gán được `aria-label`.
+**Bước 3–5 phải trước bước 6.** `i18n.apply()` quét `[data-i18n]` có sẵn trong DOM;
+chữ của ô wall và của panel slider thì **không** đi đường đó — chúng do
+`wall.applyLang()` / `slider.applyPanelText()` đặt trực tiếp lúc `.create()`, vì chúng
+cần cả `I.t()` lẫn dữ liệu nhóm.
 
-Bước 8 dùng `requestAnimationFrame` chứ không gắn `.st-open` ngay: gắn trong cùng
+**Bước 10 dùng `requestAnimationFrame`** chứ không gắn `.st-open` ngay: gắn trong cùng
 frame với lúc chèn DOM thì trình duyệt gộp hai trạng thái làm một và transition không
 chạy — popup hiện ra cứng đơ.
 
+**Đổi ngôn ngữ không dựng lại `<img>`.** `applyLang()` gọi `wall.applyLang()` +
+`slider.applyLang()` — cả hai chỉ ghi `textContent`, không đụng `innerHTML`. Dựng lại
+thì trình duyệt coi là `<img>` mới và 9 ô nháy trắng một nhịp.
+
 ---
 
-## 5.9 Luồng của BẢN 2 — `index2.html` (D-50)
+## 5.9 ⭐ LUỒNG CHÍNH — `index.html` (D-50 · chốt ở D-57)
 
-Bản 2 thêm **một tầng** giữa "mở popup" và "đi VR":
+Có **một tầng** giữa "mở popup" và "đi VR": chọn khu vực trước, chọn điểm sau.
 
 ```mermaid
 sequenceDiagram
@@ -194,7 +219,7 @@ sequenceDiagram
     participant S as slider.js
     participant B as bridge.js
 
-    H->>H: iframe src=index2.html?lang=vi
+    H->>H: iframe src=index.html?lang=vi
     P->>W: wall.create(D.GROUPS) — 9 ô
     P->>S: slider.create() — dựng sẵn, còn ẩn
     P->>P: rAF → .st-open, focus tiêu đề, trap + Esc
@@ -219,7 +244,7 @@ sequenceDiagram
     B->>H: st:close { reason:'navigate' }
 ```
 
-### Khác bản 1 ở đâu
+### ⚫ Khác bản 1 (đã gỡ) ở đâu — giữ lại để hiểu vì sao chọn bản này
 
 | | Bản 1 | Bản 2 |
 |---|---|---|
@@ -247,7 +272,7 @@ vòng trong 9 ô của wall trong khi mắt đang nhìn slider.
 
 ---
 
-## 5.10 Bản đồ 2D — luồng dùng chung cả 2 bản (D-51)
+## 5.10 Bản đồ 2D — mở được từ cả hai trạng thái (D-51)
 
 ```
 Bản 1                                  Bản 2
@@ -282,7 +307,7 @@ Esc            → chỉ đóng bản đồ, KHÔNG đóng popup
 | Đang ở | Esc làm gì |
 |---|---|
 | Bản đồ mở | Đóng bản đồ |
-| Danh sách / slider | Về carousel / wall |
+| Slider | Về wall |
 | Carousel / wall | `close('esc')` → `st:close` |
 
 Cùng nguyên tắc ở cả hai bản: **đi ngược đúng đường đã vào**.

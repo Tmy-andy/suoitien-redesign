@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   popup2.js — bootstrap + máy trạng thái của index2.html (D-50)
+   popup2.js — bootstrap + máy trạng thái của index.html (D-50)
 
    Luồng: VR WALL (tổng quan) → INFINITE SLIDER (khám phá) → VR 360 (chi tiết)
    note.md §223.

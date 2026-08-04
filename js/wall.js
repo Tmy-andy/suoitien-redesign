@@ -1,10 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════
    wall.js — VR Wall: mosaic 9 ô cảnh động (D-50, note.md §141)
 
-   Trạng thái ĐẦU của index2.html. Mỗi ô là một KHU VỰC (D.GROUPS), không
-   phải một điểm — bấm ô là mở Infinite Slider với đúng bộ điểm của khu vực
-   đó. Đây là chỗ khác cốt lõi so với index.html: ở đó thẻ = 1 điểm, bấm là
-   đi luôn; ở đây ô = 1 nhóm, bấm là đi sâu thêm một tầng.
+   Trạng thái ĐẦU của popup. Mỗi ô là một KHU VỰC (D.GROUPS), không phải một
+   điểm — bấm ô là mở Infinite Slider với đúng bộ điểm của khu vực đó.
 
    Component ĐỘC LẬP: không biết gì về slider, chỉ gọi ngược `onPick(group, tile)`.
    Style: css/wall.css
@@ -20,6 +18,15 @@ window.ST = window.ST || {};
      nếu không cả 9 ô chớp cùng lúc trông như trang bị lỗi. */
   var SWAP_MS = 4000;
   var SWAP_STAGGER = 520;
+
+  /* Số ảnh xếp chồng trong MỘT ô. Desktop 3, điện thoại 2 (D-58).
+     9 ô × 3 ảnh = 27 file ~2 MB, và trên mobile chúng KHÔNG nằm chờ vô hại:
+     vòng đổi cảnh sẽ lôi bằng hết đám `loading="lazy"` xuống trong 12 giây
+     đầu, giữa lúc người dùng đang cuộn. Ô ở mobile lại nhỏ hơn hẳn nên "khu
+     vực này có nhiều cảnh" đọc được với 2 ảnh cũng đủ. */
+  function imgsPerTile() {
+    return (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? 2 : 3;
+  }
 
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
@@ -41,12 +48,26 @@ window.ST = window.ST || {};
     var timers = [];
     var running = false;
 
+    /* Ảnh của một ô: `g.cover` ĐỨNG ĐẦU, rồi mới tới các key còn lại.
+       Trước D-58 hàm build() lấy thẳng `g.keys.slice(0,3)` và bỏ quên hẳn
+       trường `cover` — mà `cover` sinh ra chính là để tránh chuyện hai ô cạnh
+       nhau mở đầu bằng cùng một tấm: nhóm `all` và nhóm `noibat` đều có
+       'cong' ở đầu `keys`, nên ô hero và ô ngay dưới nó hiện y hệt nhau. Trên
+       mobile hai ô đó nằm sát nhau theo chiều dọc nên nhìn ra ngay. */
+    function coverFirst(g, n) {
+      var out = g.cover ? [g.cover] : [];
+      g.keys.forEach(function (k) { if (out.indexOf(k) < 0) out.push(k); });
+      return out.slice(0, n);
+    }
+
     /* ── Dựng DOM ─────────────────────────────────────────────────────────
-       Ảnh xếp chồng trong .st-wt-media, chỉ ảnh có .st-on là hiện. Tối đa 3
-       ảnh/ô: đủ để thấy khu vực có nhiều cảnh, mà không biến 9 ô thành 36 lớp. */
+       Ảnh xếp chồng trong .st-wt-media, chỉ ảnh có .st-on là hiện. Tối đa 2–3
+       ảnh/ô (xem imgsPerTile): đủ để thấy khu vực có nhiều cảnh, mà không biến
+       9 ô thành 27 lớp. */
     function build() {
+      var per = imgsPerTile();
       grid.innerHTML = D.GROUPS.map(function (g, gi) {
-        var imgs = g.keys.slice(0, 3).map(function (k, i) {
+        var imgs = coverFirst(g, per).map(function (k, i) {
           var src = D.imgOf(k);
           if (!src) return '';
           /* `loading="lazy"` CHỈ cho ảnh thứ 2–3 (ảnh để đổi cảnh sau vài giây).
@@ -59,7 +80,13 @@ window.ST = window.ST || {};
                  '" alt="" ' + (i === 0 ? '' : 'loading="lazy" ') + 'decoding="async">';
         }).join('');
 
-        return '<button type="button" class="st-wall-tile st-s-' + g.size + '"' +
+        /* Nhóm chưa có tấm ảnh nào (D-59) — đánh dấu để css/wall.css đổi sang
+           gradient TỐI. Gradient sáng mặc định của ô là chỗ giữ ảnh trong lúc
+           tải, nó nằm DƯỚI `.st-wt-veil` nên vẫn đọc được chữ; nhưng khi nó là
+           trạng thái CUỐI CÙNG thì nửa trên ô sáng nhợt, trông như ảnh tải
+           hỏng chứ không ra "khu vực này chưa có ảnh". */
+        return '<button type="button" class="st-wall-tile st-s-' + g.size +
+               (imgs ? '' : ' st-noimg') + '"' +
                ' data-g="' + g.key + '" style="--gi:' + gi + '">' +
                  '<span class="st-wt-media">' + imgs + '</span>' +
                  '<span class="st-wt-veil" aria-hidden="true"></span>' +
@@ -87,10 +114,10 @@ window.ST = window.ST || {};
         var sub  = I.lang === 'en' ? g.subEn : g.subVi;
         t.querySelector('.st-wt-name').textContent  = name;
         t.querySelector('.st-wt-sub').textContent   = sub;
-        t.querySelector('.st-wt-count').textContent = I.t('wall.count', { n: g.keys.length });
+        t.querySelector('.st-wt-count').textContent = I.tn('wall.count', g.keys.length);
         t.querySelector('.st-wt-cta-t').textContent = I.t('wall.openGroup');
         t.setAttribute('aria-label', name + ' — ' + sub + '. ' +
-                       I.t('wall.count', { n: g.keys.length }) + '. ' + I.t('wall.openGroup') + '.');
+                       I.tn('wall.count', g.keys.length) + '. ' + I.t('wall.openGroup') + '.');
       });
     }
 
@@ -138,6 +165,11 @@ window.ST = window.ST || {};
     function bindParallax(t) {
       t.addEventListener('pointermove', function (e) {
         if (reduced()) return;
+        /* CHỈ chuột. Ngón tay cũng bắn `pointermove` khi chạm/quẹt, mà trên
+           cảm ứng không có `pointerleave` đáng tin để trả ảnh về — ảnh sẽ
+           kẹt lệch vài % sau mỗi lần chạm hụt. Mà "nhìn quanh panorama" vốn
+           là cử chỉ của con trỏ, chạm không đọc ra nghĩa đó. */
+        if (e.pointerType && e.pointerType !== 'mouse') return;
         var r = t.getBoundingClientRect();
         var x = (e.clientX - r.left) / r.width - .5;
         var y = (e.clientY - r.top) / r.height - .5;

@@ -17,33 +17,14 @@ window.ST = window.ST || {};
     vi: {
       close: 'Đóng',
 
-      popup: {
-        eyebrow: 'TOUR 360°',
-        /* 3 biến thể tiêu đề (Q6) — đổi bằng ?title=a|b|c hoặc panel ?debug=1 */
-        titles: {
-          a: 'Bạn muốn ghé thăm nơi nào trước?',
-          b: 'Bạn quan tâm địa điểm nào nhất?',
-          c: 'Bắt đầu chuyến tham quan từ đâu nhé?'
-        },
-        subtitle: 'Khám phá hơn 150 điểm của Công viên Văn hóa Suối Tiên bằng ảnh 360° chân thực — bấm vào một tấm ảnh để bắt đầu.',
-        legend:   'Điểm nên xem trước',
-        mustBadge:'Nên xem',
-        skip:     'Để tôi tự khám phá',
-        goHint:   'Bấm để đến đây',
-
-        /* 3D carousel */
-        deckLabel: 'Ảnh các điểm nổi bật — quẹt trái/phải hoặc dùng phím mũi tên để xem tiếp',
-        prev:      'Ảnh trước',
-        next:      'Ảnh kế tiếp'
-      },
-
-      /* ══ Bản đồ 2D — DÙNG CHUNG cả 2 bản (D-51) ═════════════════════════ */
+      /* ══ Bản đồ 2D (D-51) — mở được từ cả wall lẫn slider ═══════════════ */
       map: {
         open:     'Xem trên bản đồ 2D',
         openArea: 'Xem khu vực này trên bản đồ',
         titleAll: 'Toàn bộ điểm đến',
         sub:      'BẢN ĐỒ SUỐI TIÊN',
-        count:    '{n} điểm trên bản đồ',
+        count:     '{n} điểm trên bản đồ',
+        count_one: '1 điểm trên bản đồ',
         pinHint:  'bấm để xem chi tiết',
         go:       'Xem ảnh 360°',
         zoomIn:   'Phóng to',
@@ -52,28 +33,15 @@ window.ST = window.ST || {};
         hint:     'Kéo để di chuyển · cuộn để phóng to · bấm số để xem điểm'
       },
 
-      /* ══ index.html — thẻ là KHU VỰC, bấm ra danh sách (D-52) ══════════ */
-      list: {
-        back:      'Tất cả khu vực',
-        openArea:  'Xem danh sách',
-        count:     '{n} điểm',
-        go:        'Xem ảnh 360°',
-        searchPh:  'Tìm điểm đến…',
-        searchLbl: 'Tìm điểm đến',
-        clear:     'Xoá ô tìm kiếm',
-        results:   'Kết quả tìm kiếm',
-        empty:     'Không tìm thấy điểm nào khớp',
-        noPhoto:   'Chưa có ảnh'
-      },
-
-      /* ══ index2.html — VR Wall + Infinite Slider (D-50) ══════════════════ */
+      /* ══ Trạng thái 1 — VR Wall (D-50) ═════════════════════════════════ */
       wall: {
         eyebrow:  'SUỐI TIÊN 360',
         title:    'Khám phá thế giới Suối Tiên',
         subtitle: 'Hàng trăm cảnh quan, trò chơi và công trình văn hoá đang chờ bạn. Chọn một khu vực để bắt đầu.',
         gridLabel:'Các khu vực của Suối Tiên',
         openGroup:'Xem khu vực này',
-        count:    '{n} điểm',
+        count:     '{n} điểm',
+        count_one: '1 điểm',
         /* thanh công cụ dưới cùng */
         search:   'Tìm địa điểm',
         journey:  'Bắt đầu hành trình',
@@ -90,37 +58,23 @@ window.ST = window.ST || {};
         searchPh:    'Gõ tên điểm đến…',
         clear:       'Xoá ô tìm kiếm',
         empty:       'Không tìm thấy điểm nào khớp',
-        counter:     '{i} / {n}'
+        counter:     '{i} / {n}',
+        /* Panel của điểm chưa có ảnh xem trước. Phải nói rõ là thiếu ẢNH chứ
+           không phải thiếu panorama — bấm "Khám phá VR 360°" vẫn đi đúng cảnh thật. */
+        noPhoto:     'Chưa có ảnh xem trước — vẫn vào VR 360° được'
       }
     },
 
     en: {
       close: 'Close',
 
-      popup: {
-        eyebrow: '360° TOUR',
-        titles: {
-          a: 'Where would you like to visit first?',
-          b: 'Which spot interests you most?',
-          c: 'Where should we start the tour?'
-        },
-        subtitle: 'Explore 150+ spots of Suoi Tien Cultural Park in true 360° — tap a photo to begin.',
-        legend:   'Must-see spots',
-        mustBadge:'Must-see',
-        skip:     'Let me explore on my own',
-        goHint:   'Tap to go here',
-
-        deckLabel: 'Photos of featured spots — swipe left/right or use the arrow keys',
-        prev:      'Previous photo',
-        next:      'Next photo'
-      },
-
       map: {
         open:     'View on the 2D map',
         openArea: 'See this area on the map',
         titleAll: 'All destinations',
         sub:      'SUOI TIEN PARK MAP',
-        count:    '{n} spots on the map',
+        count:     '{n} spots on the map',
+        count_one: '1 spot on the map',
         pinHint:  'tap for details',
         go:       'View in 360°',
         zoomIn:   'Zoom in',
@@ -129,26 +83,14 @@ window.ST = window.ST || {};
         hint:     'Drag to move · scroll to zoom · tap a number for details'
       },
 
-      list: {
-        back:      'All areas',
-        openArea:  'See the list',
-        count:     '{n} spots',
-        go:        'View in 360°',
-        searchPh:  'Find a spot…',
-        searchLbl: 'Find a spot',
-        clear:     'Clear search',
-        results:   'Search results',
-        empty:     'No matching spot',
-        noPhoto:   'No photo yet'
-      },
-
       wall: {
         eyebrow:  'SUOI TIEN 360',
         title:    'Explore the world of Suoi Tien',
         subtitle: 'Hundreds of landscapes, rides and cultural landmarks are waiting. Pick an area to begin.',
         gridLabel:'Areas of Suoi Tien',
         openGroup:'Open this area',
-        count:    '{n} spots',
+        count:     '{n} spots',
+        count_one: '1 spot',
         search:   'Find a spot',
         journey:  'Start the journey',
         skip:     'Skip, go straight to VR'
@@ -164,7 +106,8 @@ window.ST = window.ST || {};
         searchPh:    'Type a spot name…',
         clear:       'Clear search',
         empty:       'No matching spot',
-        counter:     '{i} / {n}'
+        counter:     '{i} / {n}',
+        noPhoto:     'No preview photo yet — VR 360° still works'
       }
     }
   };
@@ -192,7 +135,9 @@ window.ST = window.ST || {};
       document.documentElement.setAttribute('lang', I.lang);
     },
 
-    /** t('popup.titles') → chuỗi/object theo ngôn ngữ hiện tại. vars: {name:'x'} */
+    /** t('wall.title') → chuỗi theo ngôn ngữ hiện tại. vars: {n: 5} thay `{n}`.
+        Khoá thiếu ở `en` thì rơi về `vi`, thiếu cả hai thì trả chính cái khoá —
+        một chuỗi kỳ cục trên màn dễ thấy hơn hẳn một ô trống. */
     t: function (key, vars) {
       var v = read(COPY[I.lang], key);
       if (v === undefined) v = read(COPY.vi, key);
@@ -203,6 +148,20 @@ window.ST = window.ST || {};
         });
       }
       return v;
+    },
+
+    /** Như t() nhưng n === 1 thì thử khoá `<key>_one` trước.
+        Tiếng Việt không chia số nhiều nên `_one` của vi trùng bản thường —
+        vẫn khai đủ để đừng ai phải nhớ "khoá này chỉ có bên en". Thiếu `_one`
+        thì tự rơi về khoá gốc, không vỡ. */
+    tn: function (key, n, vars) {
+      vars = vars || {};
+      vars.n = n;
+      if (n === 1) {
+        var one = read(COPY[I.lang], key + '_one');
+        if (one !== undefined) return I.t(key + '_one', vars);
+      }
+      return I.t(key, vars);
     },
 
     set: function (lang) {
@@ -235,7 +194,7 @@ window.ST = window.ST || {};
         el.setAttribute('aria-label', I.t(el.getAttribute('data-i18n-aria')));
       }
 
-      /* placeholder của ô tìm kiếm (index2) */
+      /* placeholder của ô tìm kiếm trong slider */
       nodes = root.querySelectorAll('[data-i18n-ph]');
       for (i = 0; i < nodes.length; i++) {
         el = nodes[i];

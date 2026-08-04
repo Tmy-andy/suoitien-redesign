@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-04 (v12 — §2.6 thêm `--st-ease-flow` + dàn nhịp vào màn · D-55)
+> Cập nhật: 2026-08-04 (v13 — D-57 gỡ `--st-ease-flow`; D-58 thêm `--st-t-h3`,
+> viết lại §2.8 breakpoint)
 
 # 02 — Design System
 
@@ -298,15 +299,24 @@ thì đọc được. Xem [`08-decisions.md`](08-decisions.md) D-26.
 
 | Token | size / line-height / weight | Font | Dùng cho |
 |---|---|---|---|
-| `--st-t-display` | `clamp(26px, 4vw, 42px)` / 1.15 / 700 | display | Tiêu đề modal welcome |
-| `--st-t-h1` | `clamp(22px, 3vw, 30px)` / 1.2 / 700 | display | Tiêu đề overlay |
-| `--st-t-h2` | `20px` / 1.3 / 700 | display | Tiêu đề section |
-| `--st-t-nav` | `15px` / 1 / 700 · `uppercase` · `ls .02em` | display | Item navbar (khớp site: bold + uppercase) |
+| `--st-t-display` | `clamp(25px, 3.6vw, 41px)` / 1.14 / 700 | display | Tiêu đề wall, tên điểm trong slider |
+| ~~`--st-t-h1`~~ | | | ⚫ không còn trong `tokens.css` — overlay đã gỡ từ D-46 |
+| `--st-t-h2` | `20px` / 1.3 / 700 | display | Tên ô wall, tiêu đề bản đồ |
+| `--st-t-h3` | `17px` / 1.32 / 700 | display | Tên điểm trong thẻ bản đồ 2D |
+| ~~`--st-t-nav`~~ | | | ⚫ không còn — navbar đã gỡ từ D-46 |
 | `--st-t-btn` | `15px` / 1 / 700 | display | Label nút chính |
-| `--st-t-h3` | `16px` / 1.35 / 700 | ui | Tên điểm trong list |
 | `--st-t-body` | `15px` / 1.55 / 400 | ui | Text thường |
-| `--st-t-sm` | `13px` / 1.5 / 500 | ui | Text phụ, type |
-| `--st-t-xs` | `11px` / 1.4 / 700 · `uppercase` · `ls .05em` | ui | Badge, chip, eyebrow |
+| `--st-t-sm` | `13px` / 1.5 / 500 | ui | Text phụ, chip, bộ đếm |
+| `--st-t-xs` | `11px` / 1.4 / 700 | ui | Badge, eyebrow (`uppercase` + `letter-spacing` khai tại chỗ dùng) |
+
+> ⚠️ **`--st-t-h3` từng được khai ở BẢNG NÀY mà KHÔNG có trong `tokens.css`** — đúng
+> họ với `--st-n-800` (D-55(g)). `css/map2d.css` gọi `font: var(--st-t-h3)`; shorthand
+> `font` có một var không tồn tại thì **cả khai báo hỏng**, lặng lẽ rơi về font thừa kế.
+> Tên điểm trong thẻ bản đồ hiện bằng đúng cỡ chữ body suốt từ D-51 mà không ai đoán ra
+> là bug. Đã thêm ở D-58 — và lần này **bằng font display**, khớp `--st-t-h2` ngay trên nó.
+>
+> **Bài học lặp lại lần hai:** bảng token trong docs mà đi trước `tokens.css` thì nó
+> không phải tài liệu nữa, nó là bẫy. Sửa token là phải mở **cả hai** file cùng lượt.
 
 **Cấm weight 100/200/300** — chữ Việt nhiều dấu, weight mỏng làm dấu biến mất trên
 màn hình thường. Min = 400. (Site chính có nạp weight 100–300 nhưng ta không dùng.)
@@ -441,30 +451,37 @@ Kỹ thuật lấy từ [`../design-seanote.txt`](../design-seanote.txt) §4.
 | `--st-ease` | `cubic-bezier(.4, 0, .2, 1)` | Mặc định |
 | `--st-ease-out` | `cubic-bezier(.16, 1, .3, 1)` | Modal xuất hiện |
 | `--st-ease-spring` | `cubic-bezier(.34, 1.56, .64, 1)` | Nút morph, chấm carousel giãn thành gạch, nút × pop vào |
-| `--st-ease-flow` | `cubic-bezier(.32, .04, .12, 1)` | ⭐ **Chỉ** cho quãng đường dài của thẻ carousel (D-55) |
+| ~~`--st-ease-flow`~~ | `cubic-bezier(.32, .04, .12, 1)` | ⚫ **ĐÃ GỠ (D-57)** — xem dưới |
 
-### `--st-ease-out` sai chỗ nào, và vì sao phải thêm `--st-ease-flow`
+### ⚫ `--st-ease-flow` — vì sao từng có, và vì sao gỡ (D-55 → D-57)
 
 `--st-ease-out` là expo-out: **80% quãng đường xong trong 25% thời gian**. Ở quãng
 ngắn (một nút nảy lên, một panel trượt 20px) đó là "nhanh nhẹn". Nhưng thẻ carousel đi
 một quãng dài bằng **cả bề ngang của chính nó** — ở quãng đó cùng đường cong ấy đọc ra
-là *giật rồi trôi*: mắt thấy thẻ biến mất khỏi chỗ cũ rồi bò nốt đoạn cuối.
+là *giật rồi trôi*. `--st-ease-flow` vào chậm, ra chậm, nhanh ở giữa.
 
-`--st-ease-flow` vào chậm, ra chậm, nhanh ở giữa → mắt bám được cả hành trình. Dùng
-đúng một chỗ; đừng lấy nó làm easing mặc định (ở quãng ngắn nó đọc ra là *nặng nề*).
+**Gỡ ở D-57** cùng buổi gỡ carousel: không còn thứ nào trong project đi quãng dài đó.
+Panel slider trượt gần trọn màn nhưng dùng `--st-ease-out` 620ms và **đọc đúng** — vì
+nó trượt kèm `opacity` và `scale`, mắt bám theo hai kênh kia chứ không chỉ bám vị trí.
 
-### Dàn nhịp VÀO MÀN (D-55)
+> **Nguyên tắc rút ra cho việc dọn token:** thang (màu, spacing, radius, typography)
+> **giữ đủ bậc kể cả bậc chưa ai dùng** — thang thiếu bậc đã đẻ ra hai bug im lặng
+> (`--st-n-800` ở D-55, `--st-t-h3` ở D-58). Còn một đường cong / giá trị đặt **riêng
+> cho một component** thì chết theo component đó.
 
-Cả hai bản dùng chung một khung nhịp — mở bản nào cũng phải ra cùng một "tay nghề":
+### Dàn nhịp VÀO MÀN (D-55 · số mobile bổ sung ở D-58)
 
-| Mốc | Bản 1 (`index.html`) | Bản 2 (`index2.html`) |
+| Mốc | Desktop | ≤599px |
 |---|---|---|
-| 0 | `.st-brandline` kéo ngang từ mép trái (`scaleX 0→1`, 620ms) | như bản 1 |
-| 100–310ms | eyebrow → title → sub → hàng tìm, lệch 70ms | eyebrow → title → sub |
-| 120–200ms | `.st-cr-stage` bay lên 38px + `scale(.9)` | ô wall so le 46px + `scale(.86)`, cách nhau 76ms |
-| 180–260ms | ảnh thẻ Ken Burns `1.16 → 1` | ảnh ô Ken Burns `1.18 → 1` |
-| 240ms+ | thẻ hiện so le **từ giữa ra** (`--st-oa × 130ms`) | — |
-| 620–940ms | nút ‹ › · chấm · footer | nút × · thanh công cụ |
+| 0 | `.st-brandline` kéo ngang từ mép trái (`scaleX 0→1`, 620ms) | như desktop |
+| 100–240ms | eyebrow → title → sub, lệch 70ms | như desktop |
+| 200ms+ | ô wall so le **46px + `scale(.86)`**, cách nhau **76ms** (ô cuối vào ở 900ms) | **24px + `scale(.94)`**, cách nhau **46ms**, 520ms (`st-wt-in-sm`) |
+| 260ms+ | ảnh ô Ken Burns `1.18 → 1` | như desktop |
+| cuối | nút × (620ms) · thanh công cụ (940ms) | thanh công cụ **520ms** |
+
+**Vì sao mobile rút ngắn:** quãng 46px và stagger 76ms được tính cho mosaic trải ngang
+cả màn desktop, nơi mắt đi từ trái sang phải. Ở mobile ô xếp dọc và **ô thứ 6 trở đi
+đã nằm dưới màn** — chạy hết chuỗi mất 900ms cho những ô không ai nhìn thấy.
 
 Ba quy tắc rút ra:
 
@@ -663,16 +680,31 @@ không phân biệt được. Lúc đó đo **cấu trúc**: in lưới phân lo
 bề rộng từng dải. Ra kết quả quyết định: thập đỏ `4` và trắng `6` ở **cả hai chiều**
 (nét *đẳng hướng*, không phải cờ 2:1 bị bóp), và **không có chéo đỏ nào** — xem D-37.
 
-## 2.8 Breakpoint
+## 2.8 Breakpoint (viết lại ở D-58)
+
+Toàn bộ @media nằm ở **`css/responsive2.css`** — một file duy nhất, kể cả @media của
+bản đồ 2D. Chi tiết từng luật: [`09-variant2.md`](09-variant2.md) §9.5.
 
 | Tên | Điều kiện | Thay đổi chính |
 |---|---|---|
-| Mobile | `≤ 599px` | Thẻ carousel `min(78vw,340px)` · footer đảo `column-reverse`, nút skip thành pill 48px · nút × thu còn 40px |
-| Tablet | `600–1023px` | Topbar rút gọn · navbar 5 mục + "Thêm" · dock đầy đủ |
-| Desktop | `1024–1439px` | Đầy đủ |
-| Wide | `≥ 1440px` | Modal welcome `max-width: 1120px` |
+| **Rất hẹp** | `≤ 379px` | Thanh công cụ wall xếp dọc, nút "bỏ qua" dáng link |
+| **Mobile** | `≤ 599px` | Header căn **trái** · hero `16/10` + ô vuông `1/1` · thanh công cụ 2 hàng · slider `92vw` · bản đồ thành **bottom sheet** |
+| **Tablet + mobile ngang** | `≤ 1023px` | Wall thành **trang cuộn** 2 cột, thanh công cụ `sticky bottom` |
+| Desktop | `1024–1599px` | Mosaic 4×3 đầy đủ, không cuộn |
+| Wide | `≥ 1600px` | Grid `max-width: 1560px` cho khỏi kéo dãn |
+| Landscape thấp | `max-height: 460px` + ngang | Wall **3 cột**, ẩn eyebrow + subtitle, ‹ › lên `top:26%` |
+| Chạm | `hover: none` | Tắt "làm tối ô khác" và hover-transform · thêm `:active` cho mọi thứ bấm được |
 
-Dùng `svh`/`dvh` thay `vh` (site VR thật đã dùng `100svh` — giữ nhất quán).
+**Hai trục, không phải một.** `max-width` quyết định **bố cục**; `hover: none` quyết
+định **tương tác**. Một laptop cảm ứng 1440px cần `:active` nhưng không cần bố cục
+mobile; gộp hai trục làm một là sai cả hai hướng.
+
+**Phần JS có đọc `matchMedia`** — ba chỗ, đều là việc CSS không làm được
+([`05-flows.md`](05-flows.md) §5.6): số `<img>` nạp mỗi ô · chiều cao thật của bottom
+sheet · nguồn của một sự kiện con trỏ.
+
+Popup `position: fixed; inset: 0` nên bám đúng viewport, không dính bẫy `100vh` của
+thanh công cụ trình duyệt di động — không cần `svh`/`dvh` ở đây.
 
 ## 2.9 Nền của popup toàn màn (D-48)
 

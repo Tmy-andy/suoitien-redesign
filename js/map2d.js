@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════
    map2d.js — Bản đồ 2D + pin điểm đến (D-51)
 
-   DÙNG CHUNG cho cả index.html và index2.html. Nhận một danh sách key, chỉ
+   Mở được từ cả hai trạng thái của popup. Nhận một danh sách key, chỉ
    vẽ pin của những điểm đó — nên "Xem khu vực này trên bản đồ" và "Xem tất
    cả" là cùng một hàm, khác mỗi tham số.
 
@@ -160,7 +160,7 @@ window.ST = window.ST || {};
       }).join('');
 
       var n = pinsEl.querySelectorAll('.st-map-pin').length;
-      if (countEl) countEl.textContent = I.t('map.count', { n: n });
+      if (countEl) countEl.textContent = I.tn('map.count', n);
     }
 
     /* Thẻ nhỏ khi bấm 1 pin. Không dùng tooltip hover: trên cảm ứng không có
@@ -187,6 +187,15 @@ window.ST = window.ST || {};
         '<button type="button" class="st-map-card-x" data-card-close aria-label="' +
           esc(I.t('close')) + '">' + icon('i-close') + '</button>';
       cardEl.hidden = false;
+      /* Trên mobile thẻ là bottom sheet dính đáy, đè đúng chỗ cụm nút zoom.
+         CSS không hỏi được "thẻ có đang mở không" nên đánh dấu ở đây.
+
+         Và phải đo CHIỀU CAO THẬT chứ không hằng số: thẻ cao bao nhiêu là do
+         `blurb` dài mấy dòng và tên có xuống dòng hay không — đặt đại 152px
+         thì đúng cho điểm này, hụt 13px cho điểm kia và nút − chui xuống dưới
+         thẻ. css/responsive2.css đọc `--st-card-h`. */
+      root.classList.add('st-card');
+      root.style.setProperty('--st-card-h', cardEl.offsetHeight + 'px');
 
       /* Kéo pin vào giữa khung nếu nó đang nằm khuất sau thẻ */
       var r = view.getBoundingClientRect();
@@ -197,6 +206,7 @@ window.ST = window.ST || {};
 
     function hideCard() {
       cardEl.hidden = true;
+      root.classList.remove('st-card');
       selected = null;
       Array.prototype.forEach.call(pinsEl.children, function (p) { p.classList.remove('st-on'); });
     }

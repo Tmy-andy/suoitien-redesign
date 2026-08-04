@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-04 (v10 — §4.4 dựng lại nhịp vào màn · D-55)
+> Cập nhật: 2026-08-04 (v11 — D-57: file này tả bản 1 đã gỡ; xem 09-variant2 §9.4)
 
 # 04 — Popup
 
@@ -8,8 +8,15 @@ popup** — engine, ma trận va chạm và stack Esc nhiều tầng đều khô
 
 Lịch sử của M2–M7 giữ ở [`08-decisions.md`](08-decisions.md) D-09v2 / D-43 / D-46.
 
-> ⚠️ **File này tả BẢN 1** (`index.html`). Bản 2 (`index2.html`) có **hai** trạng thái
-> — VR Wall và Infinite Slider — spec riêng ở [`09-variant2.md`](09-variant2.md) §9.4.
+> ⚫ **File này tả BẢN 1, ĐÃ GỠ (D-57 · 2026-08-04).** `#st-popup` và ba trạng thái
+> deck/list/map không còn trong code.
+>
+> **Vòng đời của popup đang dùng:** [`09-variant2.md`](09-variant2.md) §9.4
+> (wall ↔ slider, FLIP mở cổng, Esc hai tầng, `st:open` luôn về wall).
+>
+> Giữ file này vì ba thứ trong nó **vẫn đúng** cho bản đang dùng và không được chép
+> lại ở đâu khác: §4.1 (vì sao vẫn `role="dialog" aria-modal`) · §4.3 (bấm là đi thẳng,
+> không hỏi lại — Q10 = a) · §4.5 (nguyên tắc ARIA).
 
 ---
 

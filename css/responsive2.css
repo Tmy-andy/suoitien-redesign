@@ -1,11 +1,24 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   responsive2.css — @media của index2.html (VR Wall + Slider). NẠP CUỐI.
-   Bản 1 (index.html) dùng responsive.css — hai file tách hẳn để sửa bản này
-   không có cách nào làm vỡ bản kia.
+   responsive2.css — @media của index.html (VR Wall + Slider). NẠP CUỐI.
 
-   note.md §55: "Trên điện thoại cần chuyển sang dạng 2–4 ô lớn hoặc slider dọc."
-   → chọn 2 cột. Slider dọc sẽ trùng vai với chính Infinite Slider ở trạng
-     thái 2, thành ra có hai slider chồng khái niệm.
+   Tên còn hậu tố "2" là dấu vết của thời có hai bản song song; bản 1 đã gỡ
+   ngày 2026-08-04, tên giữ nguyên là CỐ Ý — xem D-57.
+
+   ── Vì sao mobile được dựng lại hẳn (D-58) ────────────────────────────────
+   Bản mobile cũ là bản desktop bị bóp nhỏ: mosaic 4×3 ép còn 2 cột rồi cho
+   CHÍNH CÁI GRID cuộn (`overflow-y:auto` trên .st-wall-grid), thanh công cụ
+   xếp 3 nút dọc ăn hết ~150px đáy màn, ô cao cố định `minmax(104px,1fr)` nên
+   ảnh 3:2 bị cắt thành dải ngang dẹt. Ba thứ đó cộng lại: trên iPhone 390px
+   phần nhìn thấy chỉ còn ~2,5 ô.
+
+   Bản mới đảo lại mô hình:
+     · CẢ MÀN cuộn (`.st-wall` là scroll container), không phải cuộn lồng
+       trong một ô — header trôi đi, đúng thói quen đọc trên điện thoại.
+     · Ô có `aspect-ratio` chứ không chiều cao cố định → ảnh giữ đúng khung,
+       không bị dẹt.
+     · Ô lớn thành THẺ HERO tràn ngang, 8 ô còn lại 2 cột — phân cấp mosaic
+       vẫn còn, không phải "9 ô bằng nhau".
+     · Thanh công cụ dính đáy (`position:sticky`) 2 hàng thay vì 3.
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ══ ≥1600px — màn rộng: giữ mosaic không bị kéo dãn quá ════════════════ */
@@ -14,102 +27,378 @@
   .st-wall-bar { gap: var(--st-s-3); }
 }
 
-/* ══ ≤1023px — tablet: mosaic 4×3 → 2 cột ══════════════════════════════
+/* ══ ≤1023px — tablet & mobile: wall thành TRANG CUỘN 2 cột ═════════════
    Ở bề ngang này, 4 cột làm 6 ô nhỏ chỉ còn ~170px — chữ không đọc nổi.
-   Ô lớn vẫn chiếm 2 cột × 2 hàng để giữ được điểm nhấn. */
+   Mốc 1023 gánh cả tablet lẫn điện thoại nằm ngang; ≤599 bên dưới chỉ tinh
+   chỉnh tiếp chứ không đổi mô hình. */
 @media (max-width: 1023px) {
-  .st-wall { padding-left: var(--st-s-4); padding-right: var(--st-s-4); }
-  .st-wall-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: none;
-    grid-auto-rows: minmax(120px, 1fr);
+
+  /* Scroll container là CHÍNH .st-wall. `padding-bottom: 0` vì vùng an toàn
+     đáy máy đã được thanh công cụ dính đáy tự gánh — để cả hai nơi cùng đệm
+     thì dưới nút còn một dải trắng thừa bằng cả home-bar. */
+  .st-wall {
+    padding: calc(var(--st-sat) + var(--st-s-6)) var(--st-s-5) 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
-  .st-s-lg { grid-column: 1 / span 2; grid-row: auto / span 2; }
-  .st-s-sm .st-wt-name { font-size: 15px; }
+
+  .st-wall-head { margin-bottom: var(--st-s-5); }
+
+  .st-wall-grid {
+    /* `flex: 0 0 auto` — grid cao bao nhiêu thì cao, phần vượt màn để .st-wall
+       cuộn. Để `1 1 auto` như desktop thì flexbox ép grid vừa khít màn và mọi
+       aspect-ratio bên dưới thành vô nghĩa. */
+    flex: 0 0 auto;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: auto;
+    gap: var(--st-s-3);
+  }
+
+  /* Ô lớn tràn ngang thành thẻ hero. Bỏ `span 2` hàng: chiều cao giờ do
+     aspect-ratio quyết, span hàng sẽ đá nhau với nó.
+     Ô trung cũng về 1 cột: ở 2 cột mà nó `span 2` thì nó thành hero thứ hai,
+     và 10 ô còn lại thành 9 → hàng cuối hở một ô. */
+  .st-s-lg { grid-column: 1 / -1; grid-row: auto; aspect-ratio: 16 / 8.6; }
+  .st-s-md { grid-column: auto; }
+  .st-s-md, .st-s-sm { aspect-ratio: 4 / 3; }
+
+  .st-s-sm .st-wt-name, .st-s-md .st-wt-name { font-size: 17px; }
+
+  /* ── Thanh công cụ dính đáy ──────────────────────────────────────────
+     `margin-top: auto` cho trường hợp nội dung NGẮN hơn màn (tablet rộng):
+     không có nó thanh công cụ dán ngay dưới ô cuối, chừa một mảng trắng to
+     bên dưới. Khi nội dung dài thì auto tự về 0 và `sticky` tiếp quản. */
+  .st-wall-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin: auto calc(var(--st-s-5) * -1) 0;
+    padding: var(--st-s-4) var(--st-s-5) calc(var(--st-sab) + var(--st-s-4));
+    background: var(--st-bg);
+  }
+  /* Ô cuối phải trôi vào thanh công cụ chứ không bị cắt ngang một nhát —
+     nếu không, mép trên thanh đọc ra là một đường kẻ trắng vô duyên. */
+  .st-wall-bar::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 100%;
+    height: 26px;
+    background: linear-gradient(180deg, rgba(255,255,255,0), var(--st-bg));
+    pointer-events: none;
+  }
 
   .st-sld { --sld-w: 88vw; --sld-x: 6vw; }
   .st-sld-top { padding-right: calc(var(--st-s-4) + 56px); padding-left: var(--st-s-4); }
   .st-sld-bot { padding-left: var(--st-s-4); padding-right: var(--st-s-4); }
 }
 
-/* ══ ≤599px — mobile ════════════════════════════════════════════════════ */
+/* ══ ≤599px — điện thoại ════════════════════════════════════════════════ */
 @media (max-width: 599px) {
-  .st-wall {
-    padding: calc(var(--st-sat) + var(--st-s-10)) var(--st-s-3)
-             calc(var(--st-sab) + var(--st-s-3));
-  }
-  .st-wall-head { margin-bottom: var(--st-s-4); }
-  #st-wall-sub { font-size: 14px; }
-  .st-wall-grid { gap: var(--st-s-2); grid-auto-rows: minmax(104px, 1fr); }
 
-  /* Không có hover trên mobile → mô tả và CTA sẽ không bao giờ hiện.
-     Cho số điểm hiện sẵn, bỏ hẳn 2 dòng kia. */
-  .st-wt-sub, .st-wt-cta { display: none !important; }
+  /* ── Wall: khung & header ──────────────────────────────────────────── */
+  .st-wall { padding: calc(var(--st-sat) + var(--st-s-6)) var(--st-s-3) 0; }
+
+  /* Căn TRÁI, không căn giữa. Tiêu đề căn giữa cần lề đều hai bên mới đẹp;
+     ở 390px lề đó không có, mà bên phải lại còn nút × chiếm chỗ — kết quả là
+     một khối chữ lệch tâm trông như bị đẩy. Căn trái vừa hết lỗi đó, vừa
+     đúng nhịp đọc của một trang điện thoại. */
+  .st-wall-head {
+    max-width: none;
+    margin: 0 0 var(--st-s-4);
+    padding-right: 52px;              /* chừa chỗ cho nút × */
+    text-align: left;
+  }
+  .st-wall-head .st-eyebrow {
+    margin-bottom: 10px;
+    padding: 4px 11px;
+    font-size: 10px;
+    letter-spacing: .14em;
+  }
+  #st-wall-title { font-size: clamp(23px, 6.6vw, 30px); line-height: 1.2; }
+  #st-wall-sub {
+    font-size: 13.5px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Wall: ô ────────────────────────────────────────────────────────── */
+  .st-wall-grid { gap: var(--st-s-2); }
+  .st-s-lg { aspect-ratio: 16 / 10; }
+  .st-s-md, .st-s-sm { aspect-ratio: 1 / 1; }
+  .st-wall-tile { border-radius: var(--st-r-md); }
+  .st-s-lg { border-radius: var(--st-r-lg); }
+
   .st-wt-body { padding: var(--st-s-3); }
   .st-s-lg .st-wt-body { padding: var(--st-s-4); }
-  .st-s-lg .st-wt-name { font-size: 21px; }
+  .st-wt-count { margin-bottom: 5px; padding: 2px 8px; font-size: 10px; }
 
-  /* Thanh công cụ xếp dọc — 3 pill nằm ngang ở 390px sẽ vỡ chữ */
-  .st-wall-bar { flex-direction: column; align-items: stretch; gap: 6px; margin-top: var(--st-s-4); }
+  /* Tên dài ("Văn Hóa Lịch Sử Dân Tộc") ở ô vuông 179px ra tới 3–4 dòng và
+     đẩy badge ra khỏi ô — kẹp 2 dòng. Từ D-59 tên là danh mục THẬT của site
+     nên chúng dài hơn hẳn bộ tên tự đặt trước đó. */
+  .st-s-md .st-wt-name, .st-s-sm .st-wt-name {
+    font-size: 14.5px;
+    line-height: 1.36;   /* ≥1.35 — dấu chồng dấu (Ẩ Ằ Ễ) bị line-clamp cắt, xem wall.css */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .st-s-lg .st-wt-name { font-size: 22px; }
+
+  /* Không có hover trên mobile → hai dòng này sẽ KHÔNG BAO GIỜ mở ra nếu cứ
+     để nguyên cơ chế `max-height: 0`. Ô nhỏ thì bỏ hẳn (không đủ chỗ), riêng
+     thẻ hero mở sẵn phần mô tả — nó là thứ duy nhất có chỗ để nói thêm. */
+  .st-wt-cta { display: none !important; }
+  .st-s-md .st-wt-sub, .st-s-sm .st-wt-sub { display: none !important; }
+  .st-s-lg .st-wt-sub {
+    display: -webkit-box;
+    max-height: none;
+    opacity: 1;
+    margin-top: 4px;
+    font-size: 13px;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Ô nhỏ chỉ cao 179px mà veil gốc chỉ đậm hẳn ở 100% — chữ nằm trên vùng
+     mới ~.5 alpha. Kéo dốc lên cho tên đọc được trên ảnh sáng. */
+  .st-s-md .st-wt-veil, .st-s-sm .st-wt-veil {
+    background: linear-gradient(180deg,
+                rgba(6,12,20,.06) 0%,
+                rgba(6,12,20,.42) 40%,
+                rgba(6,12,20,.88) 100%);
+  }
+
+  /* Vào màn: quãng 46px + stagger 76ms là tính cho mosaic ngang màn desktop.
+     Ở đây ô xếp dọc, ô thứ 6 trở đi đã nằm dưới màn — chạy hết chuỗi mất
+     900ms cho những ô không ai nhìn thấy. Rút ngắn cả quãng lẫn nhịp. */
+  #st-pop2.st-open .st-wall-tile {
+    animation-name: st-wt-in-sm;
+    animation-duration: 520ms;
+    animation-delay: calc(140ms + var(--gi) * 46ms);
+  }
+  @keyframes st-wt-in-sm { from { opacity: 0; transform: translateY(24px) scale(.94); } }
+  #st-pop2.st-open .st-wall-bar { animation-delay: 520ms; }
+
+  /* ── Wall: thanh công cụ 2 hàng ──────────────────────────────────────
+     Hàng 1: ô tìm (tràn ngang) · Hàng 2: nút chính + nút bỏ qua.
+     Xếp đúng theo THỨ TỰ DOM (tìm → hành trình → bỏ qua) nên thứ tự Tab
+     trùng thứ tự nhìn thấy — không phải dùng `order` để bẻ. */
+  .st-wall-bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--st-s-2);
+    align-items: stretch;
+    margin: auto calc(var(--st-s-3) * -1) 0;
+    padding: var(--st-s-4) var(--st-s-3) calc(var(--st-sab) + var(--st-s-3));
+  }
   .st-wall-bar button { justify-content: center; }
+
+  /* Cho nó ĐỌC RA là ô tìm kiếm chứ không phải cái nút thứ ba: chữ căn trái,
+     màu nhạt như placeholder, cao bằng một input. Bấm vào vẫn là mở slider
+     rồi focus ô tìm thật — hành vi không đổi, chỉ đổi cách nó tự giới thiệu. */
+  .st-wall-bar [data-act="search"] {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    min-height: 46px;
+    padding: 11px 16px;
+    background: var(--st-n-100);
+    color: var(--st-n-500);
+    font: var(--st-t-body);
+    box-shadow: inset 0 0 0 1px var(--st-n-200);
+  }
+  .st-wall-bar [data-act="search"] svg { color: var(--st-n-400); }
+
+  .st-wall-bar .st-primary {
+    min-height: 50px;
+    box-shadow: 0 6px 18px rgba(18,129,37,.32);
+  }
+  .st-wall-bar .st-ghost { padding: 11px 15px; }
+  .st-wall-bar .st-ghost svg { display: none; }   /* 390px: chữ + mũi tên là thừa */
 
   .st-p2-close {
     width: 40px; height: 40px;
-    top: calc(var(--st-sat) + var(--st-s-3));
+    top: calc(var(--st-sat) + var(--st-s-4));
     right: var(--st-s-3);
+    box-shadow: inset 0 0 0 1px var(--st-n-200);
   }
   .st-p2-close svg { width: 18px; height: 18px; }
 
   /* ── Slider ─────────────────────────────────────────────────────────── */
-  .st-sld { --sld-w: 90vw; --sld-x: 5vw; }
+  .st-sld { --sld-w: 92vw; --sld-x: 4vw; }
+
   .st-sld-top {
-    padding: calc(var(--st-sat) + var(--st-s-3)) calc(var(--st-s-3) + 50px)
+    padding: calc(var(--st-sat) + var(--st-s-3)) calc(var(--st-s-3) + 48px)
              var(--st-s-2) var(--st-s-3);
     gap: var(--st-s-2);
   }
-  .st-sld-back { padding: 9px 12px; font-size: 13px; }
-  .st-sld-back span { display: none; }        /* chỉ còn mũi tên, nhường chỗ ô tìm */
-  .st-sld-search input { width: 100%; height: 40px; }
-  .st-sld-search { flex: 1 1 auto; }
+  /* Nút quay lại thành nút tròn chỉ còn mũi tên — nhường trọn chỗ cho ô tìm,
+     và khớp hình dáng với nút × đối diện nó bên kia thanh. */
+  .st-sld-back {
+    flex: none;
+    width: 42px; height: 42px;
+    min-height: 0;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--st-r-circle);
+  }
+  .st-sld-back span { display: none; }
+  .st-sld-search { flex: 1 1 auto; margin-left: 0; }
+  .st-sld-search input { width: 100%; height: 42px; }
 
-  /* Nút ‹ › đè lên mép cảnh — ở 390px không còn chỗ đặt ra ngoài */
-  .st-sld-nav { width: 40px; height: 40px; }
+  .st-sld-panel { border-radius: var(--st-r-lg); }
+  /* Khung dọc hẹp cắt ảnh 3:2 rất sâu; neo 38% giữ được phần trên của cảnh
+     (mái, đỉnh công trình, đường chân trời) thay vì chỉ còn khúc giữa. */
+  .st-sld-img { object-position: center 38%; }
+  .st-sld-shade {
+    background: linear-gradient(180deg,
+                rgba(6,12,20,0) 22%,
+                rgba(6,12,20,.52) 54%,
+                rgba(6,12,20,.94) 100%);
+  }
+
+  /* Nút ‹ › đè lên ảnh — ở 390px không còn chỗ đặt ra ngoài. Đẩy lên 30%
+     chiều cao: vùng đó chỉ có ảnh, không đụng tên/mô tả/nút CTA bên dưới. */
+  .st-sld-nav {
+    top: 30%;
+    width: 40px; height: 40px;
+    /* Nền tối chứ không phải `rgba(255,255,255,.16)` như desktop: ở desktop
+       nút nằm ngoài ảnh, trên nền blur đã tối sẵn. Ở đây nó nằm ĐÈ LÊN ảnh,
+       mà ảnh Suối Tiên toàn mái đỏ/vàng chói — trắng 16% trên đó biến mất. */
+    background: rgba(6,12,20,.52);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);
+  }
   .st-sld-nav svg { width: 19px; height: 19px; }
-  .st-sld-prev { left: 2px; }
-  .st-sld-next { right: 2px; }
+  .st-sld-prev { left: var(--st-s-2); }
+  .st-sld-next { right: var(--st-s-2); }
 
-  .st-sld-info { padding: var(--st-s-4); }
-  .st-sld-name { font-size: 22px; }
-  .st-sld-blurb { font-size: 13.5px; }
-  .st-sld-go { min-height: 46px; margin-top: var(--st-s-3); width: 100%; justify-content: center; }
+  .st-sld-info { padding: var(--st-s-4) var(--st-s-4) var(--st-s-5); max-width: none; }
+  .st-sld-cat { margin-bottom: 6px; padding: 3px 9px; }
+  .st-sld-name { font-size: clamp(21px, 6vw, 27px); }
+  .st-sld-blurb {
+    font-size: 13.5px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .st-sld-go {
+    width: 100%;
+    min-height: 48px;
+    margin-top: var(--st-s-3);
+    justify-content: center;
+  }
 
+  /* Thanh dưới 2 hàng thay vì 3 (chip / bản đồ / đếm xếp dọc = 3 dòng ăn hết
+     ~120px). Hàng 1 dải chip cuộn ngang, hàng 2 nút bản đồ + bộ đếm.
+     Theo đúng thứ tự DOM, không cần `order`. */
   .st-sld-bot {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
     gap: var(--st-s-2);
     padding: var(--st-s-2) var(--st-s-3) calc(var(--st-sab) + var(--st-s-3));
   }
-  .st-sld-counter { margin-left: 0; text-align: center; }
-  .st-sld-map { margin-left: 0; justify-content: center; }
+  .st-sld-chips { grid-column: 1 / -1; }
+  .st-sld-map { margin-left: 0; justify-content: center; min-height: 40px; }
+  .st-sld-counter { margin-left: 0; }
 
-  /* Thanh công cụ wall xếp dọc rồi → nút bản đồ tự xuống hàng, không cần gì thêm */
+  /* ── Bản đồ 2D thành bottom sheet ────────────────────────────────────
+     Thẻ nổi giữa màn (`min(92vw,420px)` + bo 4 góc) là dáng của desktop. Ở
+     390px nó gần chạm hai mép rồi, hai khe hở 12px hai bên chỉ còn đọc ra là
+     lỗi canh lề. Cho dính hẳn đáy, bo 2 góc trên — đúng dáng bottom sheet mà
+     người dùng điện thoại đã quen. */
+  .st-map-top { padding: calc(var(--st-sat) + var(--st-s-3)) var(--st-s-3) var(--st-s-2); gap: var(--st-s-2); }
+  .st-map-title { font-size: 16px; }
+  .st-map-count { display: none; }        /* nhường chỗ cho tên khu vực */
+  .st-map-x { width: 40px; height: 40px; }
+
+  .st-map-card {
+    left: 0; right: 0; bottom: 0;
+    width: auto;
+    transform: none;
+    border-radius: var(--st-r-lg) var(--st-r-lg) 0 0;
+    padding-bottom: var(--st-sab);
+    animation-name: st-map-sheet-in;
+  }
+  @keyframes st-map-sheet-in { from { opacity: 0; transform: translateY(24px); } }
+  .st-map-card-img { width: 96px; }
+  .st-map-card-body { padding: var(--st-s-3); }
+
+  .st-map-tools { right: var(--st-s-3); bottom: calc(var(--st-sab) + var(--st-s-4)); }
+  .st-map-tools button { width: 40px; height: 40px; }
+  /* Thẻ chi tiết mở ra thì nó chiếm nguyên dải đáy — nút zoom phải nhường
+     chỗ, nếu không nó nằm đè lên đúng chỗ nút "Xem ảnh 360°".
+     `--st-card-h` do js/map2d.js đo và ghi mỗi lần mở thẻ; giá trị dự phòng
+     chỉ dùng cho khoảnh khắc trước khi JS kịp chạy. */
+  #st-map.st-card .st-map-tools { bottom: calc(var(--st-card-h, 172px) + var(--st-s-3)); }
+  .st-map-hint { display: none; }
 
   #st-debug { width: calc(100vw - var(--st-s-6)); }
 }
 
-/* ══ Landscape thấp ═════════════════════════════════════════════════════ */
+/* ══ ≤379px — máy rất hẹp (iPhone SE 320, mini 375) ═════════════════════
+   Ở 320px, hàng 2 của thanh công cụ chia cho "Bắt đầu hành trình" đúng 128px
+   → chữ vỡ làm BA dòng và cái nút cao 84px. Bản EN còn dài hơn ("Skip, go
+   straight to VR"). Dưới mốc này xếp dọc hẳn: cao hơn ~11px so với bản 2 cột
+   vỡ chữ, nhưng chữ nào ra chữ nấy. */
+@media (max-width: 379px) {
+  .st-wall-bar {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-top: var(--st-s-3);
+  }
+  .st-wall-bar [data-act="search"] { min-height: 44px; }
+  .st-wall-bar .st-primary { min-height: 48px; }
+  /* Nút bỏ qua tụt xuống hàng riêng → cho nó dáng LINK, không phải nút thứ ba
+     to bằng nút chính. Nó vốn làm đúng việc mà nút × góc trên đã làm. */
+  .st-wall-bar .st-ghost {
+    min-height: 34px;
+    padding: 6px 12px;
+    font: var(--st-t-sm);
+    font-weight: 600;
+  }
+
+  .st-sld-name { font-size: 20px; }
+  .st-sld-bot { grid-template-columns: 1fr auto; }
+  .st-sld-map span { font-size: 12px; }
+}
+
+/* ══ Landscape thấp ═════════════════════════════════════════════════════
+   Điện thoại nằm ngang (844×390) rơi vào nhánh ≤1023 chứ không phải ≤599 —
+   wall đã là trang cuộn nên chỉ cần cắt bớt phần đầu cho đỡ ngốn chiều cao. */
 @media (max-height: 460px) and (orientation: landscape) {
   .st-wall { padding-top: calc(var(--st-sat) + var(--st-s-4)); }
   .st-wall-head { margin-bottom: var(--st-s-3); }
   #st-wall-sub, .st-wall-head .st-eyebrow { display: none; }
-  .st-wall-bar { margin-top: var(--st-s-3); }
+  .st-wall-bar { padding-bottom: calc(var(--st-sab) + var(--st-s-3)); }
+
+  /* 3 CỘT chứ không 2. Máy nằm ngang rộng 844px mà vẫn 2 cột thì mỗi ô cao
+     297px — cả lưới dài quá 4 màn. 3 cột đưa về ~2,8 màn mà ô vẫn rộng 260px,
+     thừa chỗ cho tên. */
+  .st-wall-grid { grid-template-columns: repeat(3, 1fr); }
+  .st-s-lg { aspect-ratio: 16 / 5; }
+  .st-s-md, .st-s-sm { aspect-ratio: 4 / 3; }
+  /* 10 ô thường / 3 cột = 3 hàng đủ + 1 ô lẻ. Cho ô lẻ đó trải hết hàng cuối:
+     nó thành một dải kết thúc có chủ ý, thay vì một ô đứng chơ vơ cạnh hai ô
+     trống. Chỉ đúng khi (số nhóm − 1) chia 3 dư 1 — hiện là 10 ô. Đổi số nhóm
+     thì kiểm lại, xem ngân sách cell ở css/wall.css. */
+  .st-wall-grid > .st-wall-tile:last-child { grid-column: 1 / -1; aspect-ratio: 16 / 4; }
 
   .st-sld-top { padding-top: calc(var(--st-sat) + var(--st-s-3)); padding-bottom: 6px; }
   .st-sld-bot { padding-top: 6px; padding-bottom: calc(var(--st-sab) + var(--st-s-3)); }
   .st-sld-blurb { display: none; }
   .st-sld-go { min-height: 42px; margin-top: var(--st-s-2); }
+  /* Cảnh nằm ngang chỉ cao ~274px và khối chữ ăn 40% dưới → nút ‹ › ở 50%
+     rơi đúng vào tên điểm. 26% là giữa phần CHỈ CÓ ẢNH. */
+  .st-sld-nav { top: 26%; width: 40px; height: 40px; }
+  .st-sld-nav svg { width: 19px; height: 19px; }
 }
 
 /* ══ Con trỏ thô (touch) ════════════════════════════════════════════════ */
@@ -121,5 +410,25 @@
   .st-wall-grid:focus-within .st-wall-tile:not(:focus-within) { filter: none; }
   .st-wall-tile:hover { transform: none; }
   .st-p2-close:hover { transform: none; }
+  .st-map-x:hover { transform: none; }
   .st-sld-panel:not(.st-active) { filter: brightness(.65); }
+
+  /* Bù lại toàn bộ phản hồi mà :hover đang gánh trên desktop. Không có nó,
+     chạm vào ô ảnh là màn hình đứng im suốt 620ms animation mở cổng — người
+     dùng tưởng máy không nhận và chạm thêm lần nữa. */
+  .st-wall-tile:active { transform: scale(.97); transition-duration: var(--st-dur-fast); }
+  .st-wall-bar button:active,
+  .st-sld-go:active,
+  .st-sld-back:active,
+  .st-sld-map:active,
+  .st-sld-nav:active,
+  .st-sld-chip:active,
+  .st-map-go:active,
+  .st-p2-close:active { transform: scale(.95); }
+  .st-sld-nav:active { transform: translateY(-50%) scale(.9); }
+  .st-map-pin:active { z-index: 4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-map-card { animation: none; }
 }

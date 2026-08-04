@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-03 (v8 — thêm assets/map vào danh sách deploy · D-51)
+> Cập nhật: 2026-08-04 (v9 — D-57: còn MỘT bản, `host-demo.html` đã gỡ)
 
 # 07 — Tích hợp: hợp đồng giữa popup và trang cha
 
@@ -6,12 +6,17 @@ Popup là **một trang HTML độc lập** (`index.html`) được nhúng vào 
 `<iframe>`. Đây là file quan trọng nhất của bộ docs: nó là toàn bộ những gì bên tích
 hợp cần đọc.
 
-**Muốn chép được ngay?** Mở [`host-demo.html`](../host-demo.html) — phần `<script>`
-cuối file chính là code trang cha, đã chạy được, ~40 dòng.
+**Muốn chép được ngay?** → **§7.2 dưới đây là toàn bộ code trang cha cần viết**, đã
+chạy được, ~40 dòng. Chép vào một file HTML rỗng là thử được ngay.
 
-> ⭐ **Hợp đồng này dùng chung cho CẢ HAI bản** (`index.html` và `index2.html` — D-50).
-> Đổi bản chỉ là đổi `src` của iframe; không có message nào khác nhau, không phải sửa
-> một dòng nào ở trang cha. `host-demo.html` có nút **"Bản 1 / Bản 2"** để tự kiểm.
+> `host-demo.html` — bản chạy sẵn của chính đoạn đó, có thêm panorama giả và log
+> postMessage — **đã gỡ ở D-57**, sẽ dựng lại lúc bàn giao. Lấy tạm:
+> `git show 3be9e22:host-demo.html > host-demo.html`. **Nó không phải deliverable.**
+
+> ⭐ **Hợp đồng này không đổi khi đổi thiết kế bên trong popup.** Nó từng được dùng
+> chung cho hai bản song song (D-50) và chọn một bản (D-57) **không phải sửa gì** ở
+> trang cha — đó chính là bằng chứng cho giá trị của cái seam này.
+> Thực tế khi gỡ bản 1: **không một dòng nào trong §7.2 phải đổi.**
 
 ---
 
@@ -26,7 +31,7 @@ cuối file chính là code trang cha, đã chạy được, ~40 dòng.
 │   │  z-index: 10050 · background: transparent                     │ │
 │   │                                                                │ │
 │   │      index.html  =  #st-popup  — CHIẾM TRỌN MÀN               │ │
-│   │      (header + 3D carousel + footer, nền trắng đặc)           │ │
+│   │      (VR Wall 9 ô → Infinite Slider, nền trắng đặc)          │ │
 │   │                                                                │ │
 │   └────────────────────────────────────────────────────────────────┘ │
 │                          ▲                    │                      │
@@ -185,7 +190,7 @@ tôi tự khám phá") · `'esc'` · `'debug'`.
 | type | Payload | Tác dụng |
 |---|---|---|
 | `st:lang` | `{ lang: 'vi' \| 'en' }` | Đổi ngôn ngữ nóng, không reload |
-| `st:open` | — | Mở lại popup mà **không** tải lại iframe: reset carousel về thẻ 1, chạy lại animation vào màn |
+| `st:open` | — | Mở lại popup mà **không** tải lại iframe: **luôn quay về wall** (mở lại mà rơi thẳng vào slider của nhóm lần trước thì người dùng mất ngữ cảnh), chạy lại animation vào màn |
 
 Gửi bằng `frame.contentWindow.postMessage({ type: 'st:lang', lang: 'en' }, '*')`.
 
@@ -220,25 +225,23 @@ Popup là tĩnh hoàn toàn, đặt ở đâu cũng chạy:
 
 ```
 /popup/
-  index.html                  ← bản 1 (carousel khu vực → danh sách)
-  index2.html                 ← bản 2 (wall → slider)
-  css/*.css
-  js/*.js
-  assets/img/cards/*.webp     12 ảnh thẻ   (~930 KB)
-  assets/map/park-2400.webp   bản đồ 2D    (391 KB)
+  index.html                  ← popup (wall → slider)
+  css/tokens.css  base.css  wall.css  slider.css  map2d.css  responsive2.css
+  js/data.js  i18n.js  a11y.js  bridge.js  map2d.js  wall.js  slider.js  popup2.js
+  assets/img/cards/*.webp     12 ảnh điểm đến  (~930 KB)
+  assets/map/park-2400.webp   bản đồ 2D       (391 KB)
 ```
 
-Tổng asset ~1,3 MB. **Đừng deploy** `Ban Do Suoi Tien/` (39 MB ảnh gốc) và
-`host-demo.html`.
+Đúng **15 file code + 13 file ảnh**, tổng asset ~1,3 MB. Thứ tự nạp CSS và JS là **ràng
+buộc**, không phải quy ước — [`01-architecture.md`](01-architecture.md) §1.3.
 
-Khi khách đã chốt một bản (Q-42), **xoá bản kia** cùng 3 file css + 3 file js riêng
-của nó — danh sách ở [`01-architecture.md`](01-architecture.md) §1.1.
+**Đừng deploy:** `Ban Do Suoi Tien/` (39 MB ảnh gốc) · `docs/` · `tools/` · `note.md`.
+Khách đã chốt một bản (D-57) nên không còn `index2.html` để loại.
 
 **Cùng origin với trang VR thì tốt hơn** — đường 1 hoạt động, đỡ một vòng
 postMessage, và siết `e.origin` dễ hơn. Nhưng không bắt buộc.
 
 Không cần build, không npm install, không server-side.
-`host-demo.html` **đừng deploy** — nó chỉ là trang cha mô phỏng để test.
 
 ---
 
@@ -258,8 +261,9 @@ Không cần build, không npm install, không server-side.
 
 **Bên popup**
 
-- [ ] Thay 12 ảnh bằng bản gốc độ phân giải cao của khách (Q-37), giữ đúng tỉ lệ
-      **3:2** — lệch tỉ lệ thì phải sửa `--st-card-h` trong `css/carousel.css`
+- [ ] Thay 12 ảnh bằng bản gốc độ phân giải cao của khách (Q-37). Tỉ lệ không còn là
+      ràng buộc (D-57) — nhưng **đừng phóng to lúc dựng asset** (D-55)
+- [ ] Kiểm trên máy thật ở **320px** và **landscape**, không chỉ ở 390px (D-58)
 - [ ] Bổ sung ảnh cho 8 điểm còn thiếu nếu khách gửi (Q-38 · [`06-data.md`](06-data.md) §6.2)
 - [ ] ⚠️ **Thay số hiệu + toạ độ pin bằng dữ liệu thật** từ `map/map_places.json`
       (`code` + toạ độ pixel) — hiện mới 2/20 số là thật, còn lại ước lượng bằng mắt.
