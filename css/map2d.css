@@ -1,0 +1,295 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   map2d.css — Bản đồ 2D + pin (D-51). Cặp với js/map2d.js.
+   DÙNG CHUNG cho index.html và index2.html.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#st-map {
+  position: fixed;
+  inset: 0;
+  z-index: var(--st-z-map);
+  display: flex;
+  flex-direction: column;
+  background: var(--st-n-900);
+  opacity: 0;
+  transition: opacity var(--st-dur-base) var(--st-ease-out);
+}
+#st-map.st-open { opacity: 1; }
+#st-map[hidden] { display: none; }
+
+/* ── Thanh trên ───────────────────────────────────────────────────────── */
+.st-map-top {
+  flex: none;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-3);
+  padding: calc(var(--st-sat) + var(--st-s-4)) var(--st-s-5) var(--st-s-3);
+  background: linear-gradient(180deg, rgba(6,12,20,.9) 0%, rgba(6,12,20,0) 100%);
+}
+.st-map-head { min-width: 0; }
+.st-map-title {
+  display: block;
+  font: var(--st-t-h2);
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.st-map-sub {
+  display: block;
+  font: var(--st-t-xs);
+  letter-spacing: .1em;
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+}
+.st-map-count {
+  flex: none;
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.82);
+  font: var(--st-t-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.st-map-x {
+  flex: none;
+  width: 46px; height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease);
+}
+.st-map-x:hover { background: rgba(255,255,255,.28); transform: rotate(90deg); }
+.st-map-x svg { width: 20px; height: 20px; }
+
+/* ── Khung xem ────────────────────────────────────────────────────────────
+   `overflow: hidden` ở đây là thứ giữ cho bản đồ không tràn ra ngoài; còn
+   việc KHÔNG LỘ MẢNG TRỐNG do js/map2d.js lo bằng cách chặn zoom tối thiểu
+   ở đúng tỉ lệ cover. Hai cơ chế khác nhau, cần cả hai. */
+.st-map-view {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;          /* kéo/zoom là của bản đồ, không phải của trang */
+  /* PHẢI trùng đúng màu đã flatten ảnh bản đồ (`#0f172a` = --st-n-900).
+     Ảnh có vùng trong suốt vì công viên là hình bất quy tắc; flatten lên đúng
+     màu này rồi đặt nền khung y hệt thì không còn đường nối nào — đó mới là
+     cách thật sự "không lộ mảng trống", `cover` một mình không đủ. */
+  background: var(--st-n-900);
+}
+.st-map-view.st-grabbing { cursor: grabbing; }
+
+.st-map-canvas {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform-origin: center center;
+  will-change: transform;
+  /* KHÔNG transition: người dùng đang kéo, mọi độ trễ đều thành "dính tay".
+     Nút +/− và "Toàn cảnh" nhảy tức thì — chấp nhận được, đổi lại kéo mượt. */
+}
+.st-map-img {
+  width: 100%;
+  height: 100%;
+  /* Ảnh bản đồ PHẢI `contain` ở ĐÂY — .st-map-canvas đã được đặt đúng bằng
+     kích thước thật của ảnh (D.MAP.w × h) nên không có gì để cắt. Việc "cover"
+     xảy ra ở tầng trên: tỉ lệ zoom tối thiểu = cover (js/map2d.js:fit). */
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Pin ──────────────────────────────────────────────────────────────────
+   Nằm TRONG lớp bị scale để bám đúng toạ độ %, nhưng tự thu ngược `1/k` để
+   số hiệu giữ nguyên cỡ đọc được ở mọi mức zoom. */
+.st-map-pins { position: absolute; inset: 0; }
+.st-map-pin {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 9px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-n-600);
+  color: #fff;
+  box-shadow: 0 0 0 3px #fff, 0 3px 10px rgba(0,0,0,.45);
+  /* --k = tỉ lệ zoom của bản đồ, --pin = hệ số cỡ pin. Cả hai do js/map2d.js
+     ghi lên .st-map-canvas mỗi lần apply(). Chia cho --k để pin không bị bản
+     đồ phóng theo; nhân --pin để pin nhỏ lại khi bản đồ đang thu nhỏ. */
+  transform: translate(-50%,-50%) scale(calc(var(--pin, 1) / var(--k, 1)));
+  transform-origin: center center;
+  transition: transform var(--st-dur-fast) var(--st-ease),
+              box-shadow var(--st-dur-fast) var(--st-ease);
+}
+.st-map-no {
+  font: 700 15px/1 var(--st-font-ui);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+}
+/* ⚠️ KHÔNG đổi `background` khi hover/chọn. Pin nhóm `culture` có nền vàng +
+   CHỮ TỐI; đổi nền sang tối thì thành chữ tối trên nền tối và số hiệu biến
+   mất. Đã vấp đúng lỗi này. Nhấn mạnh bằng viền + phóng to, giữ nguyên cặp
+   nền/chữ của từng nhóm. */
+.st-map-pin:hover {
+  z-index: 4;
+  transform: translate(-50%,-50%) scale(calc(var(--pin, 1) * 1.12 / var(--k, 1)));
+}
+.st-map-pin.st-on {
+  z-index: 5;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--st-gold-300), 0 6px 18px rgba(0,0,0,.5);
+  transform: translate(-50%,-50%) scale(calc(var(--pin, 1) * 1.18 / var(--k, 1)));
+}
+.st-map-pin:focus-visible { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--st-gold-400); }
+
+/* Màu theo nhóm — cùng bảng với chip trên thẻ, để người dùng nối được pin
+   trên bản đồ với thẻ vừa xem. */
+.st-c-game    { background: var(--st-red-500); }
+.st-c-sight   { background: var(--st-green-600); }
+.st-c-culture { background: var(--st-gold-500); color: var(--st-n-900); }
+.st-c-food    { background: var(--st-orange-500, #ff7b01); }
+.st-c-util    { background: var(--st-n-600); }
+
+/* ── Thẻ chi tiết khi bấm pin ─────────────────────────────────────────── */
+.st-map-card {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--st-sab) + var(--st-s-5));
+  z-index: 6;
+  width: min(92vw, 420px);
+  transform: translateX(-50%);
+  display: flex;
+  overflow: hidden;
+  border-radius: var(--st-r-lg);
+  background: #fff;
+  box-shadow: var(--st-sh-xl);
+  animation: st-map-card-in var(--st-dur-base) var(--st-ease-out);
+}
+.st-map-card[hidden] { display: none; }
+@keyframes st-map-card-in { from { opacity: 0; transform: translateX(-50%) translateY(14px); } }
+
+.st-map-card-img { flex: none; width: 116px; align-self: stretch; }
+.st-map-card-body { flex: 1 1 auto; min-width: 0; padding: var(--st-s-3) var(--st-s-4); }
+.st-map-card-no {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 8px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-n-900);
+  color: #fff;
+  font: var(--st-t-xs);
+}
+.st-map-card-cat {
+  font: var(--st-t-xs);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--st-n-500);
+}
+.st-map-card h3 { font: var(--st-t-h3); color: var(--st-n-900); margin: 5px 0 3px; }
+.st-map-card p {
+  font: var(--st-t-sm);
+  color: var(--st-n-500);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.st-map-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  margin-top: var(--st-s-2);
+  padding: 9px 15px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-green-600);
+  color: #fff;
+  font: var(--st-t-btn);
+  font-size: 13.5px;
+  transition: background var(--st-dur-fast) var(--st-ease);
+}
+.st-map-go:hover { background: var(--st-green-500); }
+.st-map-go svg { width: 15px; height: 15px; }
+.st-map-card-x {
+  position: absolute;
+  top: 7px; right: 7px;
+  width: 28px; height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: rgba(255,255,255,.86);
+  color: var(--st-n-600);
+}
+.st-map-card-x svg { width: 14px; height: 14px; }
+
+/* ── Nút zoom ─────────────────────────────────────────────────────────── */
+.st-map-tools {
+  position: absolute;
+  right: var(--st-s-4);
+  bottom: calc(var(--st-sab) + var(--st-s-5));
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.st-map-tools button {
+  width: 44px; height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-md);
+  background: rgba(255,255,255,.92);
+  color: var(--st-n-700);
+  box-shadow: var(--st-sh-md);
+  transition: background var(--st-dur-fast) var(--st-ease), color var(--st-dur-fast) var(--st-ease);
+}
+.st-map-tools button:hover { background: #fff; color: var(--st-green-600); }
+.st-map-tools button svg { width: 19px; height: 19px; }
+/* "Toàn cảnh" LUÔN hiện: bản đồ mở ra ở mức phủ kín (cover), trên máy dọc
+   chỉ thấy ~23% bề ngang — nút này là đường thoát duy nhất để xem trọn công
+   viên, giấu nó đi thì người dùng kẹt. */
+.st-map-tools .st-map-fit { display: grid; }
+
+.st-map-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--st-sab) + var(--st-s-3));
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 7px 14px;
+  border-radius: var(--st-r-pill);
+  background: rgba(6,12,20,.62);
+  color: rgba(255,255,255,.8);
+  font: var(--st-t-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+/* Gợi ý biến mất khi người dùng đã hiểu (đã zoom) hoặc khi thẻ đang che chỗ */
+#st-map.st-zoomed .st-map-hint { opacity: 0; }
+
+@media (max-width: 599px) {
+  .st-map-top { padding: calc(var(--st-sat) + var(--st-s-3)) var(--st-s-3) var(--st-s-2); gap: var(--st-s-2); }
+  .st-map-title { font-size: 16px; }
+  .st-map-count { display: none; }        /* nhường chỗ cho tên khu vực */
+  .st-map-x { width: 40px; height: 40px; }
+  .st-map-card { width: calc(100vw - var(--st-s-6)); }
+  .st-map-card-img { width: 92px; }
+  .st-map-tools { right: var(--st-s-3); bottom: calc(var(--st-sab) + var(--st-s-16)); }
+  .st-map-tools button { width: 40px; height: 40px; }
+  .st-map-hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #st-map, .st-map-card { transition: none; animation: none; }
+}

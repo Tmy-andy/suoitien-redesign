@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEMO — trang cha nhúng popup Suối Tiên VR360</title>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     ⚠️ FILE NÀY KHÔNG PHẢI DELIVERABLE.
+
+     Nó mô phỏng trang VR thật (trip360) để thử popup trong đúng điều kiện
+     iframe: nền phía sau, bridge 2 chiều, nút mở lại, đổi ngôn ngữ.
+     Deliverable là `index.html` + `css/` + `js/` + `assets/`.
+
+     Đồng thời nó là BẢN MẪU CHÉP ĐƯỢC cho bên tích hợp: phần <script> dưới
+     cùng chính là toàn bộ những gì trang cha phải viết (~40 dòng).
+     Xem docs/07-integration.md
+     ══════════════════════════════════════════════════════════════════════ -->
+
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; font: 400 15px/1.5 system-ui, sans-serif; }
+
+  /* Nền giả lập panorama 360° của 3DVista — chỉ để thấy scrim có ăn không */
+  #fake-vr {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 55% at 50% 8%,  #cfeeff 0%, #8fd4f0 45%, #5bb7dc 100%),
+      linear-gradient(180deg, #5bb7dc 0%, #7cc47f 52%, #3f8f4e 100%);
+  }
+  #fake-vr::after {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 90px),
+      radial-gradient(circle at 22% 62%, rgba(255,255,255,.28) 0 60px, transparent 61px),
+      radial-gradient(circle at 74% 70%, rgba(255,255,255,.22) 0 90px, transparent 91px);
+  }
+  #fake-vr span {
+    position: absolute; left: 50%; top: 44%;
+    transform: translate(-50%,-50%);
+    font: 700 clamp(20px,4vw,44px)/1.2 system-ui, sans-serif;
+    color: rgba(255,255,255,.72);
+    letter-spacing: .06em;
+    text-shadow: 0 2px 20px rgba(0,0,0,.25);
+    white-space: nowrap;
+  }
+
+  /* Thanh điều khiển của "trang cha" */
+  #host-bar {
+    position: fixed; left: 50%; bottom: 20px;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex; gap: 8px; align-items: center;
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 8px 28px rgba(0,0,0,.22);
+  }
+  #host-bar button {
+    border: 0; cursor: pointer;
+    padding: 9px 15px;
+    border-radius: 999px;
+    background: #128125; color: #fff;
+    font: 600 14px/1 system-ui, sans-serif;
+  }
+  #host-bar button.ghost { background: #f1f5f9; color: #334155; }
+  #host-bar code { font: 500 12px/1 ui-monospace, monospace; color: #64748b; }
+
+  /* Nhật ký message — để thấy bridge bắn ra cái gì */
+  #host-log {
+    position: fixed; right: 12px; top: 12px;
+    z-index: 100;
+    width: 340px; max-height: 46vh; overflow: auto;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(15,23,42,.92); color: #cbd5e1;
+    font: 500 11.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+    box-shadow: 0 8px 28px rgba(0,0,0,.3);
+  }
+  #host-log h4 { margin: 0 0 6px; font: 700 11px/1.4 ui-monospace, monospace;
+                 color: #fff; letter-spacing: .08em; text-transform: uppercase; }
+  #host-log div { padding: 2px 0; border-top: 1px solid rgba(255,255,255,.1); }
+  #host-log b { color: #4ade80; font-weight: 600; }
+
+  /* ══ ĐÂY LÀ PHẦN BÊN TÍCH HỢP PHẢI CHÉP ══════════════════════════════
+     Iframe phủ kín viewport. Chỉ 5 dòng.
+
+     `background: transparent` vẫn bắt buộc dù popup có nền đặc: lúc vào/ra nó
+     fade opacity, và đúng những frame đó phải nhìn xuyên qua thấy panorama.
+     Bỏ dòng này thì popup "bật" ra từ một tấm màn trắng. */
+  #st-popup-frame {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    border: 0;
+    background: transparent;
+    z-index: 10050;                 /* > 10009 mà floorplan.css đang chiếm */
+  }
+  #st-popup-frame[hidden] { display: none; }
+</style>
+</head>
+<body>
+
+<div id="fake-vr"><span>[ panorama 360° giả lập ]</span></div>
+
+<div id="host-bar">
+  <button id="btn-open">Mở popup</button>
+  <button id="btn-variant" class="ghost">Bản 1 · Carousel</button>
+  <button id="btn-lang" class="ghost">Đổi VI / EN</button>
+  <code id="cur-lang">lang=vi</code>
+</div>
+
+<div id="host-log"><h4>postMessage nhận được</h4></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   TOÀN BỘ CODE TRANG CHA CẦN — chép từ đây xuống.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* Hai bản popup dùng CHUNG hợp đồng bridge — đổi bản chỉ là đổi `src`,
+     không phải sửa một dòng nào của trang cha. Đó chính là điều đang được
+     chứng minh ở đây. Khi deploy thì chốt một file và bỏ nút "Bản 1 / Bản 2".
+       index.html  — màn chào + 3D carousel      (D-44 / D-48 / D-49)
+       index2.html — VR Wall + Infinite Slider   (D-50, note.md §137)         */
+  var VARIANTS = [
+    { src: 'index.html',  label: 'Bản 1 · Carousel' },
+    { src: 'index2.html', label: 'Bản 2 · Wall + Slider' }
+  ];
+  var variant = 0;
+  var POPUP_SRC = VARIANTS[variant].src;   // đổi thành URL thật khi deploy
+  var lang = 'vi';
+  var frame = null;
+
+  function openPopup() {
+    if (frame) {                       // đã có sẵn → chỉ hiện lại, không tải lại
+      frame.hidden = false;
+      frame.contentWindow.postMessage({ type: 'st:open' }, '*');
+      return;
+    }
+    frame = document.createElement('iframe');
+    frame.id = 'st-popup-frame';
+    frame.title = 'Chọn điểm bắt đầu tour 360°';
+    frame.src = POPUP_SRC + '?lang=' + lang;
+    document.body.appendChild(frame);
+
+    /* Khoá cuộn của TRANG CHA — popup không với tới được document này. */
+    document.documentElement.style.overflow = 'hidden';
+  }
+
+  function closePopup() {
+    if (!frame) return;
+    frame.hidden = true;                        // giữ lại để mở nhanh lần sau
+    document.documentElement.style.overflow = '';
+  }
+
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || typeof d.type !== 'string' || d.type.indexOf('st:') !== 0) return;
+    log(d);
+
+    if (d.type === 'st:navigate') {
+      /* d.direct === true nghĩa là popup đã tự gọi VRCore rồi (cùng origin),
+         ở đây chỉ cần ghi analytics. Nếu false thì trang cha phải tự đi. */
+      if (!d.direct && window.VRCore) {
+        VRCore.navigateToPano(window.tour, d.pano);
+      }
+      /* Popup sẽ tự gửi tiếp `st:close` sau khi chạy xong animation đóng. */
+    }
+
+    if (d.type === 'st:close') closePopup();
+  });
+
+  /* Esc khi focus đang Ở TRANG CHA — popup không nghe được vì nó là document
+     khác. Trang cha phải tự bắt. */
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'Escape' || e.key === 'Esc') && frame && !frame.hidden) closePopup();
+  });
+
+  /* ── phần dưới chỉ phục vụ demo ─────────────────────────────────────── */
+  document.getElementById('btn-open').addEventListener('click', openPopup);
+  document.getElementById('btn-lang').addEventListener('click', function () {
+    lang = lang === 'vi' ? 'en' : 'vi';
+    document.getElementById('cur-lang').textContent = 'lang=' + lang;
+    if (frame) frame.contentWindow.postMessage({ type: 'st:lang', lang: lang }, '*');
+  });
+
+  /* Đổi bản: phải TẠO LẠI iframe vì `src` khác nhau — postMessage không đổi
+     được document đang chạy trong đó. */
+  document.getElementById('btn-variant').addEventListener('click', function () {
+    variant = (variant + 1) % VARIANTS.length;
+    POPUP_SRC = VARIANTS[variant].src;
+    this.textContent = VARIANTS[variant].label;
+    if (frame) { frame.remove(); frame = null; }
+    openPopup();
+  });
+
+  function log(d) {
+    var box = document.getElementById('host-log');
+    var row = document.createElement('div');
+    var extra = JSON.stringify(d);
+    row.innerHTML = '<b>' + d.type + '</b> ' + extra.replace(/^\{[^,]*,?/, '{');
+    box.appendChild(row);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  openPopup();                                  // demo: mở luôn khi vào trang
+})();
+</script>
+</body>
+</html>

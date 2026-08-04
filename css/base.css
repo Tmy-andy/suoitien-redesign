@@ -4,17 +4,22 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* ⚠️ `background: transparent` là BẮT BUỘC, không phải chuyện thẩm mỹ.
+   Iframe lấy nền từ document con; để trắng thì trang cha bị một tấm màn
+   trắng phủ kín viewport thay vì thấy nền mờ + nội dung của mình phía sau.
+   Trang cha cũng phải đặt `background: transparent` trên chính thẻ <iframe>.
+   Xem docs/07-integration.md §7.2. */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;                 /* trang VR không cuộn */
-  background: var(--st-n-900);
+  overflow: hidden;                 /* popup không cuộn; cuộn của trang cha do cha lo */
+  background: transparent;
 }
 
 body {
   font: var(--st-t-body);
-  color: var(--st-n-800);
+  color: var(--st-n-700);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -23,13 +28,15 @@ body {
 
 h1, h2, h3, p, ul, ol, figure { margin: 0; padding: 0; }
 ul, ol { list-style: none; }
-img { max-width: 100%; display: block; }
 
-button, input, select, textarea {
-  font: inherit;
-  color: inherit;
-  margin: 0;
-}
+/* `object-fit: cover` là MẶC ĐỊNH cho mọi ảnh trong project.
+   Ảnh nguồn có đủ tỉ lệ (3:2 cho thẻ, 1.99 cho bản đồ) còn khung chứa thì
+   đổi theo breakpoint — `contain` sẽ để lộ mảng trống hai bên hoặc trên dưới.
+   Chỗ nào thật sự cần thấy trọn ảnh thì phải khai `object-fit: contain` tường
+   minh, và phải có lý do ghi kèm. */
+img { max-width: 100%; display: block; object-fit: cover; }
+
+button, input, select, textarea { font: inherit; color: inherit; margin: 0; }
 button {
   background: none;
   border: 0;
@@ -41,8 +48,7 @@ a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transpar
 
 svg { display: block; }
 /* Toàn bộ icon 1 hệ: stroke 1.75, không fill (D-16).
-   CHỈ nhắm <use> — không nhắm `svg > g`, nếu không sẽ ghi đè fill của
-   bản đồ SVG (CSS thắng presentation attribute). */
+   CHỈ nhắm <use> — icon đặc (`i-star`) tự khai fill/stroke inline để thắng. */
 svg use {
   fill: none;
   stroke: currentColor;
@@ -58,16 +64,9 @@ svg use {
   box-shadow: var(--st-sh-focus);
   border-radius: var(--st-r-sm);
 }
-/* Heading nhận focus bằng script (tabindex="-1") để screen reader đọc tiêu đề
-   — không phải thao tác của người dùng nên KHÔNG vẽ ring. */
-h1[tabindex="-1"]:focus-visible,
-h2[tabindex="-1"]:focus-visible { box-shadow: none; }
-/* Trên nền tối (navbar xanh, topbar vàng) ring xanh chìm → dùng ring trắng */
-#st-navbar :focus-visible,
-#st-topbar :focus-visible,
-.st-nav-dd :focus-visible {
-  box-shadow: 0 0 0 3px rgba(255,255,255,.72);
-}
+/* Tiêu đề nhận focus bằng script (tabindex="-1") để screen reader đọc nó
+   trước — không phải thao tác của người dùng nên KHÔNG vẽ ring. */
+h1[tabindex="-1"]:focus-visible { box-shadow: none; }
 
 /* ── Tiện ích ─────────────────────────────────────────────────────────── */
 .st-sr-only {
@@ -78,39 +77,7 @@ h2[tabindex="-1"]:focus-visible { box-shadow: none; }
   white-space: nowrap; border: 0;
 }
 
-html.st-locked, html.st-locked body { overflow: hidden; }
-
 [hidden] { display: none !important; }
-
-/* ── Nút dùng chung ───────────────────────────────────────────────────── */
-.st-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--st-s-2);
-  min-height: 44px;
-  padding: 11px 18px;
-  border-radius: var(--st-r-pill);
-  font: var(--st-t-btn);
-  white-space: nowrap;
-  transition: background var(--st-dur-fast) var(--st-ease),
-              color      var(--st-dur-fast) var(--st-ease),
-              transform  var(--st-dur-fast) var(--st-ease),
-              filter     var(--st-dur-fast) var(--st-ease);
-}
-.st-btn svg { width: 18px; height: 18px; flex: none; }
-.st-btn:hover { transform: translateY(-1px); }
-.st-btn:active { transform: translateY(0); }
-
-.st-btn-primary   { background: var(--st-green-600); color: #fff; }
-.st-btn-primary:hover  { background: var(--st-green-500); }
-.st-btn-primary:active { background: var(--st-green-700); }
-
-.st-btn-secondary {
-  background: var(--st-surface);
-  color: var(--st-green-600);
-  box-shadow: inset 0 0 0 1.5px var(--st-green-600);
-}
-.st-btn-secondary:hover { background: var(--st-green-50); }
 
 .st-linkbtn {
   display: inline-flex;
@@ -130,26 +97,44 @@ html.st-locked, html.st-locked body { overflow: hidden; }
   top: 0; left: 0; right: 0;
   height: 4px;
   border-radius: var(--st-r-xl) var(--st-r-xl) 0 0;
+  /* Cả 2 bản đều kéo dải này từ TRÁI sang khi mở (`st-brand-sweep`), nên gốc
+     biến đổi phải khai ở đây — nếu để trong popup.css/wall.css thì bản nào
+     quên là dải nở ra từ giữa, đọc thành một thứ khác hẳn. */
+  transform-origin: left center;
   background: linear-gradient(90deg,
     var(--st-green-600) 0%, var(--st-green-600) 34%,
     var(--st-gold-500) 34%, var(--st-gold-500) 67%,
     var(--st-red-500) 67%, var(--st-red-500) 100%);
 }
 
-.st-note { font: var(--st-t-sm); color: var(--st-n-500); }
-
-/* ── Chip ─────────────────────────────────────────────────────────────── */
-.st-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 9px;
-  border-radius: var(--st-r-pill);
-  background: var(--st-green-50);
-  color: var(--st-green-800);
-  font: var(--st-t-xs);
-  text-transform: uppercase;
-  letter-spacing: .05em;
+/* ── Panel debug (?debug=1) ───────────────────────────────────────────── */
+#st-debug {
+  position: fixed;
+  left: var(--st-s-3);
+  top: calc(var(--st-sat) + var(--st-s-3));
+  z-index: var(--st-z-debug);
+  width: 226px;
+  padding: var(--st-s-3);
+  border-radius: var(--st-r-md);
+  background: rgba(15,23,42,.94);
+  color: #cbd5e1;
+  font: 500 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  box-shadow: var(--st-sh-lg);
 }
+#st-debug h4 { font: 700 11px/1.4 ui-monospace, monospace; color: #fff; letter-spacing: .08em; margin-bottom: 6px; text-transform: uppercase; }
+#st-debug .st-dbg-row { display: flex; justify-content: space-between; gap: 8px; }
+#st-debug .st-dbg-row b { color: #fff; font-weight: 600; }
+#st-debug .st-dbg-grp { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.14); }
+#st-debug button {
+  padding: 5px 9px;
+  margin: 3px 3px 0 0;
+  border-radius: 6px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font: 600 11px/1 ui-monospace, monospace;
+}
+#st-debug button:hover { background: rgba(255,255,255,.24); }
+#st-debug button.st-on { background: var(--st-green-500); }
 
 /* ── Tôn trọng prefers-reduced-motion (bắt buộc) ──────────────────────── */
 @media (prefers-reduced-motion: reduce) {

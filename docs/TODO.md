@@ -1,8 +1,22 @@
-> Cập nhật: 2026-08-01 (v9 — clone overlay M2/M3 · D-43)
+> Cập nhật: 2026-08-04 (v15 — nền trắng 2 bản + carousel to hơn · D-54)
 
 # TODO
 
 Ký hiệu: `[ ]` chưa làm · `[~]` đang làm · `[x]` xong (kèm ngày) · `[!]` bị chặn · `[-]` bỏ
+
+---
+
+## ⚠️ ĐỌC TRƯỚC — phần lớn file này thuộc về bản CŨ
+
+Ngày **2026-08-03** project pivot: từ "prototype re-design cả trang VR" thành
+**"một cái popup nhúng iframe"** (YC-10 · D-46), rồi popup chuyển sang **toàn màn**
+với carousel 3 thẻ (YC-11 · D-48/D-49).
+
+Mọi mục nói về header, navbar, dock, thẻ vé, viewer, M2/M3, vùng cấm, `?full=1`,
+`?zones=1` đều **hết hiệu lực** — giữ nguyên làm history theo RULE #2.
+Việc còn sống nằm ở §"⏭️ Việc tiếp theo (SAU PIVOT)" gần cuối file.
+
+---
 
 **Quy tắc:** việc mới thêm vào cuối section. Việc xong đánh `[x]` + ngày, **không xoá**
 (giữ history). Sửa code là cập nhật file này cùng lượt (CLAUDE.md RULE #1).
@@ -35,8 +49,14 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ## 🟡 P1 — Cần khách trả lời để hoàn thiện
 
-- [ ] Q-30 · Bản đồ welcome: SVG tự vẽ (đang dùng) hay bản đồ 3D thật?
-      → Đã làm sẵn `?map=real`, chỉ cần bỏ ảnh vào `assets/map/park-map-real.jpg`
+- [-] ~~Q-30 · Bản đồ welcome: SVG tự vẽ hay bản đồ 3D thật?~~ · 2026-08-03 —
+      **hết hiệu lực**, M1 không còn bản đồ (D-44). Đã gỡ `?map=real`.
+- [ ] **Q-37 · Xác nhận quyền dùng 12 ảnh banner** lấy từ suoitien.vn cho tour VR,
+      và xin bản gốc độ phân giải cao (vài tấm site đã nén sẵn) —
+      danh sách nguồn: [`06-data.md`](06-data.md) §6.8
+- [ ] **Q-38 · Ảnh cho 8 điểm còn thiếu** — `xelua` `taxi` `tauluon` `massage`
+      `coixay` `vrgame` `thuyenrong` `thuyenbay` chưa có ảnh banner dùng được trên
+      site chính. Có ảnh là carousel phủ hết bộ 20 điểm highlight.
 - [ ] Q-32 · Link nút "Xem combo" — đang dùng `suoitien.vn/combo-tro-choi`
       (trùng đúng href mục *Bảng giá › Combo trò chơi* trong menu thật, không phải đoán)
 - [ ] Q-31 · Logo SVG hoặc PNG nhỏ hơn (bản đang dùng 131 KB, load từ suoitien.vn)
@@ -330,24 +350,30 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 ## ⏭️ Việc tiếp theo
 
 ### Nội dung / asset còn thiếu
-- [ ] `assets/map/park-map-real.jpg` — bỏ vào là `?map=real` chạy (hiện tự fallback + toast)
+- [x] ~~`assets/map/park-map-real.jpg`~~ — không cần nữa, M1 bỏ bản đồ · 2026-08-03 (D-44)
+- [ ] Ảnh banner độ phân giải cao cho 12 thẻ carousel (Q-37) + 8 điểm còn thiếu (Q-38)
 - [ ] Ảnh thumbnail thật cho từng điểm (Q27 = chưa có → đang dùng gradient theo nhóm)
 - [ ] Rà lại `blurb` 20 điểm — hiện là tôi tự viết, cần người của Suối Tiên duyệt
 - [ ] Dịch EN cho các mục con của menu (hiện chỉ dịch 9 mục cấp 1)
 
 ### Cải thiện đã xác định
-- [ ] **Bản đồ dọc riêng cho mobile** — `xm/ym` đã có sẵn trong `data.js`, cần vẽ SVG portrait mới (D-32)
-- [ ] Zoom / pan bản đồ trong modal welcome (desktop)
+- [-] ~~Bản đồ dọc riêng cho mobile~~ · 2026-08-03 — M1 bỏ bản đồ (D-44), D-32 hết hiệu lực
+- [-] ~~Zoom / pan bản đồ trong modal welcome~~ · 2026-08-03 — cùng lý do
+- [ ] Preload ảnh thẻ kế tiếp — hiện `loading="lazy"` từ thẻ thứ 2; quẹt thật nhanh
+      qua 3–4 thẻ vẫn thấy một nhịp trắng trên mạng chậm
 - [ ] Panorama mock: thêm biến thể cảnh cho `culture` / `food` (hiện 6 nhóm dùng chung 1 hình dạng, chỉ khác màu)
 
 ### A11y & QA còn phải làm thủ công
-- [ ] Screen reader thật (NVDA / VoiceOver) — modal welcome đọc tiêu đề + hotspot
+- [ ] Screen reader thật (NVDA / VoiceOver) — modal welcome đọc tiêu đề, rồi
+      `aria-roledescription="carousel"` + `aria-label` từng thẻ + `.st-cr-live` "Tên — 3/12"
 - [ ] Verify 10 cặp contrast ở §2.1.7 bằng tool (mới tính lý thuyết)
 - [ ] iPhone thật có notch — `env(safe-area-inset-*)` ở dock, topbar, scene-label, CTA
 - [ ] Safari iOS + Samsung Internet (mới test Chromium)
 - [ ] `prefers-reduced-motion` — kiểm tra morph, viền chạy, peek bob đã tắt hết
+      (autoplay + transition của carousel: **đã verify bằng Playwright** 2026-08-03)
 - [ ] `localStorage` bị chặn (chế độ riêng tư)
-- [ ] Đo FPS trên máy Android tầm trung khi modal mở (scrim blur toàn màn hình)
+- [ ] Đo FPS trên máy Android tầm trung khi modal mở (scrim blur toàn màn hình
+      **+ 7 thẻ 3D cùng transition** — đây là chỗ nặng nhất của prototype giờ)
 
 ### Đóng gói
 - [ ] Trang `compare.html` — before/after 2 nút + before/after header, để thuyết trình
@@ -356,9 +382,9 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ### v2 — sau khi khách duyệt
 - [ ] Re-skin 2 overlay có sẵn theo token brand
-- [ ] Thanh thumbnail carousel các điểm ở đáy
+- [ ] Thanh thumbnail các điểm ở đáy viewer (dùng lại `ST.carousel` được)
 - [ ] Thuyết minh audio từng điểm
-- [ ] "Đã ghé" state cho hotspot (localStorage)
+- [ ] "Đã ghé" state cho thẻ carousel (localStorage)
 - [ ] Journey mode — tuyến tham quan gợi ý
 - [ ] Nối `ST.track()` thật + dashboard 9 event ([`05-flows.md`](05-flows.md) §5.9)
 - [ ] Xử lý cụm B (sidebar trái) và cụm E (2 nút phải) nếu khách mở phạm vi
@@ -367,10 +393,111 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ---
 
+## ⏭️ Việc tiếp theo (SAU PIVOT 2026-08-03) — phần còn sống
+
+### ✅ Vòng YC-14 (2026-08-04)
+
+- [x] Nút *"Xem trên bản đồ 2D"* từ footer lên `.st-search-row` cạnh ô tìm · 2026-08-04
+- [x] Xoá `.st-foot-actions` / `.st-foot-map` khỏi HTML + CSS · 2026-08-04
+- [x] `css/carousel.css` viết lại: cỡ thẻ suy từ chiều cao sân khấu, bỏ `66vh` · 2026-08-04
+- [x] Bỏ cặp auto-margin ở `.st-popup-head` / `.st-popup-foot` · 2026-08-04
+- [x] Bỏ 2 vệt radial ở `#st-popup` · 2026-08-04
+- [x] `#st-pop2` + `.st-wall` đổi từ nền tối sang `--st-bg`, kê lại viền ô / độ mờ hover
+      / eyebrow / tiêu đề / nút thanh công cụ / nút × · 2026-08-04
+- [x] Playwright 7 viewport: tỉ lệ thẻ 1.5, không tràn, nút bản đồ cùng hàng ô tìm ở
+      ≥600px, nền cả 2 bản `rgb(255,255,255)` + `background-image: none` · 2026-08-04
+- [ ] **Verify contrast bằng tool cho chrome MỚI của wall trên nền trắng** — eyebrow
+      `--st-green-700` trên `--st-green-50`, `#st-wall-sub` `--st-n-600` trên trắng, và
+      nút `.st-wall-bar .st-ghost` `--st-n-500`. Mới xem bằng mắt trên screenshot
+- [ ] Xem lại `--st-n-800` (nền ô chưa tải ảnh) trên nền trắng — giờ nó là vệt tối duy
+      nhất của wall, có thể nên đổi sang `--st-n-200`
+
+### 🟡 Cần khách trả lời
+
+- [ ] **Q-42 🔴 · CHỌN BẢN 1 HAY BẢN 2?** Đây là câu chặn mọi việc còn lại — chốt xong
+      thì xoá bản kia (3 css + 3 js riêng, [`01-architecture.md`](01-architecture.md) §1.1)
+      · Bản 1 `index.html` — nhanh hơn 1 click, gọn, light/airy
+      · Bản 2 `index2.html` — thấy quy mô 9 khu vực, có tìm/lọc
+      · **Từ D-54 hai bản cùng nền trắng** → so được đúng thứ đang hỏi (carousel
+        tuần tự ↔ mosaic toàn cảnh), không bị tông màu làm nhiễu
+      · So sánh cạnh nhau: mở `host-demo.html` rồi bấm nút "Bản 1 / Bản 2"
+- [ ] **Q-43 🔴 · Số hiệu + toạ độ pin trên bản đồ 2D** — mới **2/20** số đọc được từ
+      ảnh khách gửi (`1` = Cổng Thiên Tiên Môn, `22A` = Vương Quốc Cá Sấu). 18 số còn
+      lại và **toàn bộ x/y** là ước lượng bằng mắt. Đủ để trình bày, **chưa đủ để chỉ
+      đường thật**. Bản thật đọc `map/map_places.json` —
+      xem [`06-data.md`](06-data.md) §6.10
+- [ ] **Q-41 · Duyệt cách chia 9 khu vực của bản 2** — hiện là tôi tự đặt theo `cat` +
+      cảm nhận, Suối Tiên chưa có phân loại chính thức. Bảng nhóm:
+      [`06-data.md`](06-data.md) §6.9
+
+- [ ] **Q-37 · Quyền dùng 12 ảnh banner** lấy từ suoitien.vn cho tour VR, và xin **bản
+      gốc độ phân giải cao** (vài tấm site đã nén sẵn) — nguồn từng ảnh:
+      [`06-data.md`](06-data.md) §6.8
+- [ ] **Q-38 · Ảnh cho 8 điểm còn thiếu** — `xelua` `taxi` `tauluon` `massage` `coixay`
+      `vrgame` `thuyenrong` `thuyenbay`. Có ảnh là carousel phủ hết bộ 20 điểm highlight
+- [ ] **Q-39 · Popup hiện khi nào?** mỗi phiên · 1 lần duy nhất · bỏ qua khi có
+      `?pano=`? Logic này nay thuộc **trang cha**, popup không tự quyết —
+      [`07-integration.md`](07-integration.md) §7.9
+- [ ] **Q-40 · 3 thẻ hay 5 thẻ?** Đang hiểu "hai bên chỉ cần preview 2 ảnh" = 2 ảnh
+      tổng cộng (1 mỗi bên). Nếu ý là 2 ảnh MỖI BÊN thì đổi `visible: 1` → `2` trong
+      `js/popup.js`, đúng một con số
+
+### 🔧 Bên tích hợp (trang cha) — checklist đầy đủ ở `07-integration.md` §7.8
+
+- [ ] `background: transparent` trên thẻ `<iframe>` (§7.2.1)
+- [ ] `z-index` iframe > 10009 (§7.4)
+- [ ] Nghe `st:navigate` + `st:close`, siết `e.origin` ở production
+- [ ] Khoá cuộn · Esc ngoài iframe · `aria-hidden` nền · trả focus (§7.3)
+- [ ] Cân nhắc pause render 3DVista lúc popup mở (popup che kín màn)
+
+### 🧩 Bên popup
+
+- [ ] **(bản 2)** Thay cross-fade ảnh tĩnh trong ô wall bằng **video loop 4–6 s** hoặc
+      panorama nhẹ — `note.md` §59–64. Hiện là MOCK rẻ tiền nhưng đủ trình bày ý tưởng
+- [ ] **(bản 2)** Parallax khi hover đang giả lập "xoay panorama 10–20°" (`note.md` §41)
+      bằng cách dịch ảnh 5% — bản thật cần panorama nhúng
+- [ ] **(bản 2)** Hiệu ứng chuyển cảnh của slider mới có fade + scale; `note.md` §111
+      còn gợi ý mây trôi / sóng nước / ánh sáng vàng / âm thanh ngắn theo khu vực
+
+- [ ] Xác minh chữ ký `VRCore.navigateToPano` rồi **xoá vòng thử** trong `js/bridge.js`
+      (đang đánh dấu `// MOCK:`)
+- [ ] Nối `ST.track()` vào `VR360Track.event()`, hoặc để trang cha ghi từ `st:navigate`
+      ([`05-flows.md`](05-flows.md) §5.5)
+- [ ] `@font-face` local thay Google Fonts (hiện mất mạng là mất `Arima Madurai`) —
+      ngoại lệ RULE #3 duy nhất còn tồn tại
+- [ ] Preload ảnh thẻ kế tiếp — hiện `loading="lazy"` từ thẻ thứ 2; quẹt thật nhanh qua
+      3–4 thẻ vẫn thấy một nhịp trắng trên mạng chậm
+
+### ♿ A11y & QA còn phải làm thủ công
+
+- [ ] Screen reader thật (NVDA / VoiceOver) **qua ranh giới iframe** — đọc được tiêu đề,
+      `aria-roledescription="carousel"`, `aria-label` từng thẻ, vùng live "Tên — 3/12"
+- [ ] Kiểm `aria-hidden` nền của trang cha có thật sự che được nội dung dưới không
+- [ ] iPhone thật có notch — `env(safe-area-inset-*)` ở `.st-popup-inner` và nút ×
+- [ ] Safari iOS + Samsung Internet (mới test Chromium)
+- [ ] Đo FPS trên Android tầm trung: 3 thẻ 3D + 3DVista render dưới nền
+- [x] `prefers-reduced-motion` — autoplay tắt, transition về .01ms · verify Playwright
+      2026-08-03
+- [x] Focus trap bao gồm cả nút × · verify Playwright 2026-08-03
+
+### 📦 Đóng gói
+
+- [ ] Screenshot / GIF các luồng chính cho `README.md`
+- [ ] Quyết định URL deploy của popup (cùng origin với trang VR thì tốt hơn — §7.7)
+
+---
+
 ## Nhật ký
 
 | Ngày | Việc |
 |---|---|
+| 2026-08-04 (v7) | **Nền trắng phẳng 2 bản + carousel to hơn (YC-14).** (a) Bỏ 2 vệt radial ở `#st-popup`; `#st-pop2` + `.st-wall` đổi từ nền tối sang `--st-bg` — **đảo ngược D-50 #4**, kèm kê lại viền ô (`inset 1px --st-n-200`), độ mờ hover (`.42 → .62`), eyebrow, tiêu đề, nút thanh công cụ, nút `×` (có override kính mờ ở slider). (b) Nút bản đồ chuyển từ `.st-foot-map` (footer) lên `.st-search-row` cạnh ô tìm; xoá hẳn `.st-foot-actions`. (c) Viết lại `css/carousel.css`: cỡ thẻ suy từ chiều cao sân khấu thay vì hằng số `66vh`, bỏ cặp auto-margin — thẻ giữa `547 → 662px` ở 1440×900, `560 → 820px` ở 1920. Playwright 7 viewport → PASS, 0 lỗi console. D-54. |
+| 2026-08-03 (v6) | **Sửa lỗi ảnh ô wall hụt mép phải.** `base.css` `img { max-width: 100% }` kẹp `.st-wt-img` (`width: 112%`) xuống 100% → dải trống dọc 34px (51px khi parallax). Thêm `max-width: none`. Thêm `tools/check-image-cover.js` đo rect thật ở 2 bản × {mặc định, parallax ±2.5%, hover, mobile}; đã kiểm ngược là tool bắt đúng lỗi. D-53. |
+| 2026-08-03 (v5) | **Bản đồ 2D + bản 1 đổi sang khu vực (YC-13).** Thêm `js/map2d.js` + `css/map2d.css` (dùng chung 2 bản: pan/zoom, pin số hiệu màu theo nhóm, thẻ chi tiết, lọc theo khu vực đang xem) + `assets/map/park-2400.webp` (flatten `#0f172a`, 391 KB) + `D.MAP`/`D.MAP_META`. Bản 1: thẻ carousel đổi từ ĐIỂM sang **KHU VỰC**, thêm ô tìm kiếm bỏ dấu và trạng thái danh sách. Rule `img { object-fit: cover }` trong `base.css`. Test Playwright 13 nhóm kiểm, cả 2 bản → 0 lỗi console. D-51 + D-52. |
+| 2026-08-03 (v4) | **Dựng BẢN 2 (YC-12).** `index2.html` — VR Wall 9 ô → Infinite Slider → VR, theo `note.md` §137. Thêm `js/wall.js` · `js/slider.js` · `js/popup2.js` · `css/wall.css` · `css/slider.css` · `css/responsive2.css` + `D.GROUPS` (9 nhóm) + `D.imgOf` + `D.deaccent` + chuỗi `wall.*`/`slider.*`. **Song song, không thay bản 1**; dùng chung `bridge.js` nên trang cha không phải sửa gì. `host-demo.html` thêm nút chuyển bản. Docs mới: `09-variant2.md`. Test Playwright bản 2 (10 nhóm kiểm) + **hồi quy bản 1** → 0 lỗi console. D-50. |
+| 2026-08-03 (v3) | **Popup TOÀN MÀN + carousel 3 thẻ (YC-11).** Bỏ `.st-scrim` + `.st-popup-panel`; `#st-popup` chiếm trọn màn, nền trắng đặc + 2 vệt radial brand. Thẻ giữa `340px → 560px`, `visible` thành tham số của `ST.carousel.create()` (`1` = 3 thẻ). Sửa bẫy cặp auto-margin bị media query mobile phá. D-48 + D-49. |
+| 2026-08-03 (v2) | **PIVOT sang popup nhúng iframe (YC-10).** Xoá 12 file của phần "trang VR"; gộp `overlays/store/app/welcome` → `js/popup.js`; thêm `js/bridge.js` (VRCore trực tiếp + postMessage) và `host-demo.html`. Sprite icon 68 → 5. Viết lại `CLAUDE.md` + 11 file docs. Test Playwright: độc lập · iframe · bridge 2 chiều · Esc · mobile · landscape → **0 lỗi console**. D-46 + D-47. |
+| 2026-08-03 | **3D carousel + sửa lỗi mở modal lần 2 (YC-9).** Gỡ hoàn toàn bản đồ SVG, 8 hotspot, mini-card, tooltip và danh sách mobile khỏi M1; thay bằng 3D coverflow 12 ảnh banner tải từ `suoitien.vn` (760×507 webp, 930 KB). Thêm `css/carousel.css`, `js/carousel.js`, `assets/img/cards/`, icon `i-star`, 4 chuỗi i18n. Sửa lỗi mở lần 2 mất nội dung: tách event `modal:shown`, thêm token `gen`, dọn animation tồn đọng đầu `open()`. Test Playwright: 4 kịch bản mở modal + reduced-motion + đổi ngôn ngữ + bàn phím → **0 lỗi console**. D-44 + D-45; **đảo ngược D-08 + D-32**. |
 | 2026-08-01 (v4) | **Clone 2 overlay (YC-8).** Dựng `#st-route` (M2) + `#st-places` (M3) bám sát 2 ảnh khách gửi. Thêm `css/route.css`, `css/places.css`, `js/route.js`, `js/places.js`, lớp `.st-fs`, `MAP_META`, `WAYFIND`, khối `BI` trong i18n, 9 icon. 2 nút cụm C trỏ vào overlay mới. **Đảo ngược D-09v2.** D-43. |
 | 2026-08-01 (v3) | **Thẻ vé combo + bỏ div nền (YC-7).** Nút combo tách khỏi cụm C thành `#st-ticket` dạng tấm vé (rút gọn từ `.j-seanote`: bỏ con dấu, bỏ nút trong vé, nhỏ gọn hơn), đặt dưới navbar bên phải, nảy nhẹ mỗi 8s. Cụm C bỏ `background`/`border`/`shadow` → 2 pill rời, quay lại hàng ngang. Thêm `css/ticket.css`. D-41 + D-42. |
 | 2026-08-01 (v2) | **Thu phạm vi (YC-6).** Khách chốt chỉ giao header + cụm C 3 nút + modal welcome; mọi thứ khác không được thêm vào trang vì trip360 đã có control ở đó. Thêm `css/scope.css` + cờ `SCOPE`. **Đảo ngược D-05v2**: cụm C về dưới-trái, xếp dọc (hàng ngang tràn qua cụm ⓓ ở 1280px với nhãn EN). Thêm nút `Xem combo`. Cập nhật cả 11 file docs. |

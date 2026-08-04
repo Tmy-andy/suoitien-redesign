@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   responsive2.css — @media của index2.html (VR Wall + Slider). NẠP CUỐI.
+   Bản 1 (index.html) dùng responsive.css — hai file tách hẳn để sửa bản này
+   không có cách nào làm vỡ bản kia.
+
+   note.md §55: "Trên điện thoại cần chuyển sang dạng 2–4 ô lớn hoặc slider dọc."
+   → chọn 2 cột. Slider dọc sẽ trùng vai với chính Infinite Slider ở trạng
+     thái 2, thành ra có hai slider chồng khái niệm.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ══ ≥1600px — màn rộng: giữ mosaic không bị kéo dãn quá ════════════════ */
+@media (min-width: 1600px) {
+  .st-wall-grid { max-width: 1560px; margin: 0 auto; width: 100%; }
+  .st-wall-bar { gap: var(--st-s-3); }
+}
+
+/* ══ ≤1023px — tablet: mosaic 4×3 → 2 cột ══════════════════════════════
+   Ở bề ngang này, 4 cột làm 6 ô nhỏ chỉ còn ~170px — chữ không đọc nổi.
+   Ô lớn vẫn chiếm 2 cột × 2 hàng để giữ được điểm nhấn. */
+@media (max-width: 1023px) {
+  .st-wall { padding-left: var(--st-s-4); padding-right: var(--st-s-4); }
+  .st-wall-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: minmax(120px, 1fr);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .st-s-lg { grid-column: 1 / span 2; grid-row: auto / span 2; }
+  .st-s-sm .st-wt-name { font-size: 15px; }
+
+  .st-sld { --sld-w: 88vw; --sld-x: 6vw; }
+  .st-sld-top { padding-right: calc(var(--st-s-4) + 56px); padding-left: var(--st-s-4); }
+  .st-sld-bot { padding-left: var(--st-s-4); padding-right: var(--st-s-4); }
+}
+
+/* ══ ≤599px — mobile ════════════════════════════════════════════════════ */
+@media (max-width: 599px) {
+  .st-wall {
+    padding: calc(var(--st-sat) + var(--st-s-10)) var(--st-s-3)
+             calc(var(--st-sab) + var(--st-s-3));
+  }
+  .st-wall-head { margin-bottom: var(--st-s-4); }
+  #st-wall-sub { font-size: 14px; }
+  .st-wall-grid { gap: var(--st-s-2); grid-auto-rows: minmax(104px, 1fr); }
+
+  /* Không có hover trên mobile → mô tả và CTA sẽ không bao giờ hiện.
+     Cho số điểm hiện sẵn, bỏ hẳn 2 dòng kia. */
+  .st-wt-sub, .st-wt-cta { display: none !important; }
+  .st-wt-body { padding: var(--st-s-3); }
+  .st-s-lg .st-wt-body { padding: var(--st-s-4); }
+  .st-s-lg .st-wt-name { font-size: 21px; }
+
+  /* Thanh công cụ xếp dọc — 3 pill nằm ngang ở 390px sẽ vỡ chữ */
+  .st-wall-bar { flex-direction: column; align-items: stretch; gap: 6px; margin-top: var(--st-s-4); }
+  .st-wall-bar button { justify-content: center; }
+
+  .st-p2-close {
+    width: 40px; height: 40px;
+    top: calc(var(--st-sat) + var(--st-s-3));
+    right: var(--st-s-3);
+  }
+  .st-p2-close svg { width: 18px; height: 18px; }
+
+  /* ── Slider ─────────────────────────────────────────────────────────── */
+  .st-sld { --sld-w: 90vw; --sld-x: 5vw; }
+  .st-sld-top {
+    padding: calc(var(--st-sat) + var(--st-s-3)) calc(var(--st-s-3) + 50px)
+             var(--st-s-2) var(--st-s-3);
+    gap: var(--st-s-2);
+  }
+  .st-sld-back { padding: 9px 12px; font-size: 13px; }
+  .st-sld-back span { display: none; }        /* chỉ còn mũi tên, nhường chỗ ô tìm */
+  .st-sld-search input { width: 100%; height: 40px; }
+  .st-sld-search { flex: 1 1 auto; }
+
+  /* Nút ‹ › đè lên mép cảnh — ở 390px không còn chỗ đặt ra ngoài */
+  .st-sld-nav { width: 40px; height: 40px; }
+  .st-sld-nav svg { width: 19px; height: 19px; }
+  .st-sld-prev { left: 2px; }
+  .st-sld-next { right: 2px; }
+
+  .st-sld-info { padding: var(--st-s-4); }
+  .st-sld-name { font-size: 22px; }
+  .st-sld-blurb { font-size: 13.5px; }
+  .st-sld-go { min-height: 46px; margin-top: var(--st-s-3); width: 100%; justify-content: center; }
+
+  .st-sld-bot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--st-s-2);
+    padding: var(--st-s-2) var(--st-s-3) calc(var(--st-sab) + var(--st-s-3));
+  }
+  .st-sld-counter { margin-left: 0; text-align: center; }
+  .st-sld-map { margin-left: 0; justify-content: center; }
+
+  /* Thanh công cụ wall xếp dọc rồi → nút bản đồ tự xuống hàng, không cần gì thêm */
+
+  #st-debug { width: calc(100vw - var(--st-s-6)); }
+}
+
+/* ══ Landscape thấp ═════════════════════════════════════════════════════ */
+@media (max-height: 460px) and (orientation: landscape) {
+  .st-wall { padding-top: calc(var(--st-sat) + var(--st-s-4)); }
+  .st-wall-head { margin-bottom: var(--st-s-3); }
+  #st-wall-sub, .st-wall-head .st-eyebrow { display: none; }
+  .st-wall-bar { margin-top: var(--st-s-3); }
+
+  .st-sld-top { padding-top: calc(var(--st-sat) + var(--st-s-3)); padding-bottom: 6px; }
+  .st-sld-bot { padding-top: 6px; padding-bottom: calc(var(--st-sab) + var(--st-s-3)); }
+  .st-sld-blurb { display: none; }
+  .st-sld-go { min-height: 42px; margin-top: var(--st-s-2); }
+}
+
+/* ══ Con trỏ thô (touch) ════════════════════════════════════════════════ */
+@media (hover: none) {
+  /* Không có hover thì "làm tối các ô khác" không bao giờ kích hoạt — và nếu
+     kích hoạt bằng :focus-within sau khi chạm thì màn hình tối sập một cách
+     khó hiểu. Tắt hẳn. */
+  .st-wall-grid:hover .st-wall-tile:not(:hover),
+  .st-wall-grid:focus-within .st-wall-tile:not(:focus-within) { filter: none; }
+  .st-wall-tile:hover { transform: none; }
+  .st-p2-close:hover { transform: none; }
+  .st-sld-panel:not(.st-active) { filter: brightness(.65); }
+}

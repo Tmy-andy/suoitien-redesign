@@ -1,6 +1,18 @@
-> Cập nhật: 2026-08-01 (v7 — §2.1.8 vai trò cam + bề mặt overlay toàn màn hình · D-43)
+> Cập nhật: 2026-08-04 (v11 — §2.11 viết lại: hai bản dùng CHUNG nền trắng · D-54)
 
 # 02 — Design System
+
+> ⚠️ **Phần lớn file này viết cho bản trước** (header, navbar, dock, thẻ vé) và giữ lại
+> làm nguồn tra **màu/font gốc từ site chính** — phần đó vẫn đúng và vẫn là nguồn của
+> `tokens.css`. Nhưng các mục tả spec của UI đã gỡ (§2.3.1 vùng cấm, §2.4.1 răng cưa
+> tấm vé, §2.7.1 bộ icon `i-fa-*`) **không còn tương ứng với code** — xem
+> [`08-decisions.md`](08-decisions.md) D-46.
+>
+> `tokens.css` hiện chỉ còn những token popup thật sự dùng: 3 thang màu brand, neutral,
+> `--st-bg`, 6 bậc chữ, spacing, radius, shadow, motion, 3 z-index.
+> **Đã gỡ:** `--st-topbar-h` · `--st-navbar-h` · `--st-header-h` · `--st-rz-*` (vùng
+> cấm) · `--st-c-max-w` · `--st-sh-brand` · `--st-sh-cta` · `--st-blur` ·
+> `--st-surface-blur` · `--st-scrim` (D-48 bỏ lớp nền mờ).
 
 > ✅ **v2:** Toàn bộ token dưới đây **đọc trực tiếp từ CSS thật** của
 > `suoitien.vn/halink-content/themes/halink-c5/public/theme/css/style.css`
@@ -143,7 +155,7 @@ sang UI đè lên panorama sẽ loạn. Phân vai rõ:
 | Màu | Dùng cho | KHÔNG dùng cho |
 |---|---|---|
 | **Xanh lá `#128125`** | Nền navbar · nút primary · icon · chip active · text nhấn | Nền lớn phủ panorama |
-| **Vàng `#DEA800` / `#FBD255`** | Nền topbar · nền nút "Mua vé"/"Mua combo" · ring hotspot must-see | Text (contrast kém) |
+| **Vàng `#DEA800` / `#FBD255`** | Nền topbar · nền nút "Mua vé"/"Mua combo" · badge `★ Nên xem` trên thẻ carousel + chip chú giải | Text (contrast kém) |
 | **Đỏ `#EB0029`** | **Chỉ** chữ trên nút vé · đường viền nhận diện `#E7313B` · badge "MỚI" | Nút thường, icon thường — đỏ nhiều = báo lỗi |
 | **Trắng** | Nền mọi panel/modal/dock (theo Q25 = light) | — |
 
@@ -365,10 +377,10 @@ trưng nhận diện, phải giữ.
 |---|---|---|
 | `--st-r-sm` | `8px` | Chip, badge |
 | `--st-r-md` | `12px` | Card, input |
-| `--st-r-lg` | `18px` | Panel, dropdown |
+| `--st-r-lg` | `18px` | Thẻ carousel `.st-cr-card` · Panel, dropdown |
 | `--st-r-xl` | `24px` | Modal welcome, **`#st-dock` cụm C** (cột cao thì pill trông lạ) |
 | `--st-r-pill` | `999px` | ✅ Navbar, từng nút trong cụm C — **đặc trưng site** |
-| `--st-r-circle` | `50%` | Nút icon tròn, hotspot |
+| `--st-r-circle` | `50%` | Nút icon tròn, nút ‹ › của carousel |
 
 ### 2.4.1 Răng cưa tấm vé — CSS mask 3 lớp ⭐ (D-41)
 
@@ -428,7 +440,7 @@ Kỹ thuật lấy từ [`../design-seanote.txt`](../design-seanote.txt) §4.
 | `--st-dur-scene` | `500ms` | Chuyển panorama |
 | `--st-ease` | `cubic-bezier(.4, 0, .2, 1)` | Mặc định |
 | `--st-ease-out` | `cubic-bezier(.16, 1, .3, 1)` | Modal xuất hiện |
-| `--st-ease-spring` | `cubic-bezier(.34, 1.56, .64, 1)` | Hotspot hover, badge pop |
+| `--st-ease-spring` | `cubic-bezier(.34, 1.56, .64, 1)` | Nút morph, chấm carousel giãn thành gạch |
 
 Animation đặc trưng lấy từ site: **4 vệt viền chạy quanh nút vé** (`animate1..4`,
 2s linear infinite, gradient `#D6282E → #128125`). Tái dùng cho nút "Mua vé" +
@@ -621,23 +633,113 @@ bề rộng từng dải. Ra kết quả quyết định: thập đỏ `4` và t
 
 | Tên | Điều kiện | Thay đổi chính |
 |---|---|---|
-| Mobile | `≤ 599px` | Topbar chỉ còn hotline + vé · navbar → hamburger · dock cuộn ngang · welcome fullscreen · map portrait |
+| Mobile | `≤ 599px` | Thẻ carousel `min(78vw,340px)` · footer đảo `column-reverse`, nút skip thành pill 48px · nút × thu còn 40px |
 | Tablet | `600–1023px` | Topbar rút gọn · navbar 5 mục + "Thêm" · dock đầy đủ |
 | Desktop | `1024–1439px` | Đầy đủ |
 | Wide | `≥ 1440px` | Modal welcome `max-width: 1120px` |
 
 Dùng `svh`/`dvh` thay `vh` (site VR thật đã dùng `100svh` — giữ nhất quán).
 
-## 2.9 So sánh trước / sau — dùng để thuyết trình
+## 2.9 Nền của popup toàn màn (D-48)
 
-| Hạng mục | Trang VR hiện tại | Đề xuất |
+| | Bản modal (D-46) | Bản toàn màn (D-48) |
 |---|---|---|
-| Màu nút | `#0e6b2e` xanh + `#1769ff` **xanh dương** | `#128125` xanh brand + trắng-mờ. **Bỏ xanh dương** |
-| Đồng bộ với site chính | ❌ không có gì chung | ✅ cùng xanh `#128125`, vàng `#DEA800`, pill 50px, đường đỏ, font Arima |
-| Số vùng control | 5 vùng rời rạc (sidebar trái, 2 nút dưới-trái, cluster dưới-giữa, 2 nút phải, 2 nút trên-phải) | 3 vùng: header trên · dock dưới-giữa · sidebar trái |
-| Icon | 2 hệ khác nhau (fill vs stroke) | 1 hệ stroke 1.75, trong circle viền xanh |
-| Bề mặt | Màu đặc + bóng đen 35% | Trắng-mờ + blur + viền hue xanh lá |
-| Onboarding | ❌ không có | Modal welcome + bản đồ hotspot + nút thu nhỏ để mở lại |
-| Header | ❌ không có | Clone topbar vàng + navbar xanh + tab VR360 |
-| Biết đang ở đâu | ❌ không có | `#st-scene-label` tên điểm + `4/158` |
-| Mua vé | ❌ không có | CTA vàng + link `suoitien.vn/chon-ve` |
+| Lớp nền | `.st-scrim` `rgba(6,12,20,.62)` | **không có** |
+| Nền popup | Panel trắng `min(94vw,1120px)` | `--st-bg: #fff` phủ kín màn |
+| `backdrop-filter` | Phải đẩy sang thẻ `<iframe>` của trang cha (D-47) | Không cần |
+
+Popup không "nổi lên trên" panorama nữa mà **thay thế hẳn nó** trong lúc mở. Vì vậy
+token `--st-scrim` đã gỡ, thay bằng `--st-bg`.
+
+### Vì sao không để trắng trơn
+
+Một mặt phẳng trắng tinh cỡ full HD trông chết cứng, nhất là khi nó vừa thay thế một
+tấm panorama đầy màu. `#st-popup` có 2 vệt `radial-gradient` cực nhạt:
+
+```css
+background:
+  radial-gradient(78% 52% at 50% -8%,   var(--st-green-50)  0%, transparent 72%),
+  radial-gradient(48% 42% at 104% 108%, var(--st-gold-100) 0%, transparent 74%),
+  var(--st-bg);
+```
+
+Nhạt tới mức không đọc ra là "gradient" — chỉ thấy mặt phẳng bớt phẳng. Và nó dùng đúng
+2 màu brand, không phải xám trung tính.
+
+### `opacity` là thứ duy nhất được animate lúc mở
+
+`#st-popup` và `.st-popup-inner` đều là tổ tiên của `.st-cr-stage` (mang `perspective`).
+Một `transform` ở đó tạo containing block mới và làm phẳng chiều sâu 3D của thẻ trong
+suốt animation — thẻ sẽ bay vào màn dẹt lét rồi mới bật thành 3D. Chỉ `scale(.98)` lúc
+**đóng** là được, vì lúc đó cả màn đang mờ đi.
+
+## 2.10 Bảng màu popup thực sự dùng
+
+| Token | Dùng ở đâu trong popup |
+|---|---|
+| `--st-green-600` `#128125` | Chấm carousel đang chọn · chữ eyebrow · hover nút ‹ › |
+| `--st-green-500` | Viền 3px của thẻ giữa |
+| `--st-green-50` | Nền chip eyebrow "TOUR 360°" · vệt radial đỉnh màn |
+| `--st-gold-300` `#FBD255` | Nền badge `★ Nên xem` + chip legend |
+| `--st-gold-400` | Ring focus của thẻ carousel |
+| `--st-gold-100` | Vệt radial góc dưới-phải |
+| `--st-gold-500` `#DEA800` | 1/3 dải nhận diện trên đỉnh màn |
+| `--st-red-500` `#EB0029` | 1/3 dải nhận diện |
+| `--st-bg` `#fff` | Nền popup |
+| neutral 0–900 | Chữ, nút ×, chấm chưa chọn, nút skip trên mobile |
+
+Ba màu brand đều xuất hiện, và xuất hiện **đúng vai** như trên site chính: xanh = hành
+động, vàng = nhấn mạnh nhẹ, đỏ = chỉ để nhận diện (không dùng làm nút).
+
+## 2.11 Hai bản dùng CHUNG một nền trắng (D-54) — ⚫ trước là nền TỐI (D-50)
+
+> **Đã đảo ngược.** Từ D-50 tới 2026-08-04, `index2.html` dùng nền `--st-n-900` +
+> 2 vệt radial brand ("phòng chiếu"). Lập luận: 9 ô ảnh cạnh nhau trên nền trắng thành
+> một mảng màu hỗn loạn. Khách chốt ngược lại: **hai bản là hai phương án của cùng một
+> sản phẩm**, nền khác nhau làm hỏng phép so *carousel ↔ mosaic* mà khách đang cần.
+> Lý do đầy đủ: [`08-decisions.md`](08-decisions.md) D-54(a).
+
+Từ 2026-08-04, `#st-popup` (bản 1), `#st-pop2` và `.st-wall` (bản 2) đều là **một màu
+`--st-bg` phẳng**, không gradient, không vệt radial.
+
+### Vì sao bỏ cả vệt radial rất nhạt
+
+Bản trước có `radial-gradient(… rgba(18,129,37,.05) …)` neo ở đỉnh màn. Ý định là "ấm
+nhẹ"; kết quả trên màn thật là **một mảng ám xanh có mép**, và nó nằm **ngay dưới dải
+brand 4px** nên mắt có sẵn một mốc trắng-chuẩn để so. Khách phát hiện ra ngay.
+
+> **Luật rút ra:** gradient dưới 8% alpha trên một vùng phẳng lớn không đọc ra là sắc
+> độ — nó đọc ra là **vết bẩn**. Muốn ấm thì đặt màu vào *phần tử* (badge, chip, nút),
+> đừng đặt vào *nền*.
+
+### Bù tương phản cho bản 2 mà không cần nền tối
+
+Nền tối làm hai việc miễn phí mà nền trắng phải trả tiền:
+
+| Việc | Nền tối lo | Nền trắng phải làm |
+|---|---|---|
+| Tách cạnh ô khỏi nền | Ảnh sáng tự cắt ra | `.st-wall-tile` cần `inset 0 0 0 1px var(--st-n-200)` — ảnh có trời/tường trắng sẽ chảy tràn vào nền nếu thiếu |
+| Cho ô "lùi ra sau" khi ô khác hover | `brightness(.42)` = chìm vào nền | `brightness(.62) saturate(.72)` — `.42` trên trắng thành **8 vệt đen**, trông như lỗi tải ảnh |
+
+### Bảng vai màu — giờ giống hệt bản 1
+
+| Token | Vai ở bản 2 |
+|---|---|
+| `--st-bg` | Nền `#st-pop2` + `.st-wall` |
+| `--st-n-800` | Nền ô **chưa tải xong ảnh** (chỉ còn vai này của thang tối) |
+| `--st-green-700` trên `--st-green-50` | Eyebrow `SUỐI TIÊN 360` |
+| `--st-n-900` / `--st-n-600` | `#st-wall-title` / `#st-wall-sub` |
+| `--st-green-600/500` | Nút "Bắt đầu hành trình", "Khám phá VR 360°", hover ‹ ›, viền ô khi hover |
+| `--st-gold-300` | Vòng nhấn khi hover ô · **chip nhóm đang chọn** · dòng CTA trong ô |
+| `--st-n-100` / `--st-n-700` | Nút thanh công cụ `.st-wall-bar button` và `.st-p2-close` |
+
+### Chỗ DUY NHẤT còn nền tối: slider
+
+`.st-slider` giữ nguyên tông tối. Ở đó mỗi cảnh chiếm **gần trọn màn** — lập luận
+"phòng chiếu" của D-50 vẫn đúng cho một ảnh lớn đơn lẻ, chỉ sai cho một lưới 9 ô.
+
+Kéo theo **một ngoại lệ phải nhớ**: `.st-p2-close` sáng (`--st-n-100`) ở wall nhưng có
+override về kính mờ khi `#st-pop2.st-state-slider` — nút sáng đè lên ảnh tối sẽ chói.
+
+> Ba màu brand vẫn đúng vai như site chính: xanh = hành động, vàng = nhấn mạnh nhẹ, đỏ
+> = chỉ nhận diện (dải 4px trên đỉnh, không dùng làm nút).

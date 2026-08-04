@@ -1,0 +1,333 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   slider.css — Infinite Attraction Slider (D-50)
+   Cặp với js/slider.js. Chỉ index2.html dùng.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.st-sld {
+  --sld-w:   84vw;      /* bề ngang một cảnh — 8vw mỗi bên để hé cảnh kế */
+  --sld-x:   8vw;
+
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: scale(1.03);
+  pointer-events: none;
+  transition: opacity var(--st-dur-slow) var(--st-ease-out),
+              transform var(--st-dur-slow) var(--st-ease-out);
+}
+#st-pop2.st-state-slider .st-sld {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.st-sld[hidden] { display: none; }
+
+/* ── Nền: chính ảnh đang xem, blur + tối ────────────────────────────────
+   note.md §85 nói vừa "ảnh toàn màn hình" vừa "hai bên hé lộ" — nghe mâu
+   thuẫn. Cách gỡ: nền là ảnh hiện tại phủ kín viewport (thoả vế 1), các cảnh
+   nằm TRÊN nó dưới dạng cổng có hé hai bên (thoả vế 2). */
+.st-sld-bg {
+  position: absolute;
+  inset: -6%;
+  background: center/cover no-repeat var(--st-n-900);
+  filter: blur(34px) brightness(.42) saturate(1.1);
+  transform: scale(1.06);
+  transition: background-image 600ms var(--st-ease);
+}
+.st-sld-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6,12,20,.5) 0%, rgba(6,12,20,.2) 40%, rgba(6,12,20,.72) 100%);
+}
+
+/* ── Thanh trên: quay lại · tìm kiếm ──────────────────────────────────── */
+.st-sld-top {
+  position: relative;
+  z-index: 20;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-3);
+  padding: calc(var(--st-sat) + var(--st-s-5)) calc(var(--st-s-6) + 58px)
+           var(--st-s-3) var(--st-s-6);
+}
+.st-sld-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font: var(--st-t-btn);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: background var(--st-dur-fast) var(--st-ease);
+}
+.st-sld-back:hover { background: rgba(255,255,255,.24); }
+.st-sld-back svg { width: 17px; height: 17px; }
+
+.st-sld-search {
+  position: relative;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+.st-sld-search > svg {
+  position: absolute;
+  left: 13px;
+  width: 17px; height: 17px;
+  color: rgba(255,255,255,.6);
+  pointer-events: none;
+}
+.st-sld-search input {
+  width: clamp(180px, 22vw, 300px);
+  height: 42px;
+  padding: 0 38px 0 38px;
+  border: 0;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font: var(--st-t-sm);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.st-sld-search input::placeholder { color: rgba(255,255,255,.5); }
+.st-sld-search input:focus-visible { background: rgba(255,255,255,.2); box-shadow: 0 0 0 2px var(--st-green-400); }
+.st-sld-clear {
+  position: absolute;
+  right: 8px;
+  width: 26px; height: 26px;
+  display: none;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: rgba(255,255,255,.18);
+  color: #fff;
+}
+.st-sld-clear svg { width: 13px; height: 13px; }
+.st-sld.st-searching .st-sld-clear { display: grid; }
+
+/* ── Sân khấu ─────────────────────────────────────────────────────────── */
+.st-sld-stage {
+  position: relative;
+  z-index: 10;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.st-sld-track { position: absolute; inset: 0; }
+
+.st-sld-panel {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: var(--sld-x);
+  width: var(--sld-w);
+  overflow: hidden;
+  border-radius: var(--st-r-xl);
+  background: var(--st-n-800);
+  cursor: pointer;
+  /* Cảnh rìa lùi lại và tối đi — "hé lộ" chứ không tranh chỗ với cảnh giữa */
+  transform:
+    translateX(calc(var(--o) * var(--sld-w)))
+    scale(calc(1 - var(--oa) * .07));
+  opacity: calc(1 - var(--oa) * .35);
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  transition: transform 620ms var(--st-ease-out),
+              opacity 620ms var(--st-ease),
+              box-shadow var(--st-dur-base) var(--st-ease);
+}
+.st-sld-panel.st-active { cursor: default; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.st-sld-panel:not(.st-active) { filter: brightness(.55) saturate(.8); }
+.st-sld-panel:not(.st-active):hover { filter: brightness(.8); opacity: .9; }
+
+.st-sld-img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 900ms var(--st-ease-out);
+}
+.st-sld-panel.st-active .st-sld-img { transform: scale(1.06); }
+
+.st-sld-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+              rgba(6,12,20,0) 34%,
+              rgba(6,12,20,.5) 62%,
+              rgba(6,12,20,.92) 100%);
+}
+
+/* Chọn xong → cảnh phóng ra rồi mờ, như đi xuyên qua cổng */
+.st-sld-panel.st-going {
+  transform: translateX(calc(var(--o) * var(--sld-w))) scale(1.18);
+  opacity: 0;
+  transition: transform 420ms var(--st-ease-out), opacity 420ms var(--st-ease);
+}
+
+/* ── Chữ trong cảnh ───────────────────────────────────────────────────── */
+.st-sld-info {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: clamp(var(--st-s-5), 3vw, var(--st-s-12));
+  color: #fff;
+  max-width: 720px;
+}
+.st-sld-cat {
+  display: inline-block;
+  margin-bottom: var(--st-s-2);
+  padding: 4px 11px;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.2);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font: var(--st-t-xs);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.st-sld-name {
+  font: var(--st-t-display);
+  font-size: clamp(24px, 3vw, 44px);
+  line-height: 1.12;
+  text-shadow: 0 2px 20px rgba(0,0,0,.6);
+  margin-bottom: var(--st-s-2);
+}
+.st-sld-blurb {
+  font: var(--st-t-body);
+  font-size: clamp(14px, 1.15vw, 17px);
+  color: rgba(255,255,255,.82);
+  text-wrap: pretty;
+  max-width: 56ch;
+}
+.st-sld-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  margin-top: var(--st-s-4);
+  padding: 12px 22px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-green-600);
+  color: #fff;
+  font: var(--st-t-btn);
+  box-shadow: 0 8px 24px rgba(18,129,37,.45);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease);
+}
+.st-sld-go:hover { background: var(--st-green-500); transform: translateY(-2px); }
+.st-sld-go svg { width: 18px; height: 18px; }
+
+/* Chỉ cảnh giữa mới khoe chữ đầy đủ — cảnh rìa chỉ còn tên */
+.st-sld-panel:not(.st-active) .st-sld-blurb,
+.st-sld-panel:not(.st-active) .st-sld-go,
+.st-sld-panel:not(.st-active) .st-sld-cat { display: none; }
+.st-sld-panel:not(.st-active) .st-sld-name { font-size: clamp(15px, 1.3vw, 20px); }
+
+/* ── Nút ‹ › ──────────────────────────────────────────────────────────── */
+.st-sld-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 30;
+  width: 52px; height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: rgba(255,255,255,.16);
+  color: #fff;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transform: translateY(-50%);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease);
+}
+.st-sld-nav:hover { background: var(--st-green-600); transform: translateY(-50%) scale(1.07); }
+.st-sld-nav svg { width: 23px; height: 23px; }
+.st-sld-prev { left: var(--st-s-3); }
+.st-sld-next { right: var(--st-s-3); }
+
+/* ── Thanh dưới: chip nhóm + đếm ──────────────────────────────────────── */
+.st-sld-bot {
+  position: relative;
+  z-index: 20;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--st-s-3);
+  padding: var(--st-s-3) var(--st-s-6) calc(var(--st-sab) + var(--st-s-5));
+}
+.st-sld-chips {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  /* 9 chip không vừa 1 dòng ở màn hẹp → cuộn ngang. Fade mép phải để chỗ bị
+     cắt trông có chủ ý, không phải lỗi tràn. */
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+}
+.st-sld-chips::-webkit-scrollbar { display: none; }
+.st-sld-chip {
+  flex: none;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.10);
+  color: rgba(255,255,255,.78);
+  font: var(--st-t-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease);
+}
+.st-sld-chip:hover { background: rgba(255,255,255,.2); color: #fff; }
+.st-sld-chip.st-on { background: var(--st-gold-300); color: var(--st-n-900); }
+
+/* Nút "Xem khu vực này trên bản đồ" — nằm giữa dải chip và bộ đếm.
+   `flex: none` + `margin-left` để dải chip cuộn được mà nút không bị đẩy đi. */
+.st-sld-map {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  margin-left: var(--st-s-3);
+  padding: 8px 14px;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  font: var(--st-t-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: background var(--st-dur-fast) var(--st-ease);
+}
+.st-sld-map:hover { background: var(--st-green-600); }
+.st-sld-map svg { width: 16px; height: 16px; }
+
+.st-sld-counter {
+  margin-left: var(--st-s-3);
+  flex: none;
+  font: var(--st-t-sm);
+  font-variant-numeric: tabular-nums;
+  color: rgba(255,255,255,.6);
+}
+
+.st-sld-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: var(--st-t-body);
+  color: rgba(255,255,255,.66);
+}
+.st-sld-empty[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .st-sld, .st-sld-panel, .st-sld-img, .st-sld-bg { transition: none; }
+}

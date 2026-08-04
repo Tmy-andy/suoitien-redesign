@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-01 (v6 — YC-8: clone 2 overlay mở ra từ nút · D-43)
+> Cập nhật: 2026-08-04 (v11 — YC-14: nền trắng 2 bản, nút bản đồ lên hàng tìm kiếm,
+> carousel to nhất có thể · D-54)
 
 # 00 — Yêu cầu
 
@@ -113,6 +114,192 @@ D-43 — tóm tắt: kết luận cũ trả lời câu hỏi *"có nên dựng l
 khách đang hỏi *"bấm nút thì DEMO thấy gì"*.
 
 Chi tiết: [`04-modals.md`](04-modals.md) §4.4 + §4.4b · [`08-decisions.md`](08-decisions.md) D-43.
+
+---
+
+## 0.1e YC-9 — 3D carousel ảnh banner + lỗi mở modal lần 2 (nguyên văn, 2026-08-03)
+
+> 1. Phần modal hiển thị mới đầu khi vừa vào trang bị lỗi khi mở lại lần thứ 2, không
+>    mở được hình ảnh phía dưới
+> 2. Thay đổi lại thiết kế: Bỏ hoàn toàn bản đồ với hotpot đi, bây giờ sẽ sử dụng kiểu
+>    slide ảnh tự động được cuộn ngang dạng các thẻ 3D xoay tròn, hiểu không? Khi click
+>    vào ảnh thì nhảy đến trang hình tương ứng. Ừ, là 3D Carousel các ảnh banner. Lấy
+>    ảnh từ nguồn này https://suoitien.vn/
+
+**Chốt (1) — lỗi.** Nguyên nhân: `overlays.js` bắn event `modal:open` **trong lúc**
+animation morph đang thu panel bé bằng cái nút trong dock, nên code đo khung bản đồ đo
+ra ~46px rồi gán cứng vào. Lần mở đầu không có morph nên không lộ. Sửa bằng cách tách
+event `modal:shown` (bắn sau khi morph xong) + 2 chốt an toàn khác — D-45.
+
+**Chốt (2) — thiết kế.** M1 bỏ **hoàn toàn** bản đồ SVG, 8 hotspot, mini-card hover,
+tooltip touch và danh sách mobile. Thay bằng **3D coverflow carousel 12 ảnh banner**:
+tự chạy ngang 3,6 s/thẻ, thẻ giữa nằm phẳng, thẻ hai bên nghiêng và lùi sâu; **bấm thẻ
+nào đi thẳng điểm đó**. Ảnh tải về từ `suoitien.vn` (12 tấm, resize 760×507 webp,
+930 KB) — **không hotlink**, để prototype vẫn xem được khi không có mạng.
+
+**Đây là ĐẢO NGƯỢC** của D-08 (bản đồ SVG stylized) cùng hai nhánh mọc ra từ nó: nhánh
+🟡 Q-30 (`?map=real`) và D-32 (danh sách 8 điểm cho mobile).
+
+**Còn cần khách trả lời:** Q-37 (quyền dùng 12 ảnh + xin bản gốc HD) · Q-38 (ảnh cho
+8 điểm chưa có) — xem [`TODO.md`](TODO.md) §🟡 P1.
+
+Chi tiết: [`04-modals.md`](04-modals.md) §4.3.2–4.3.4 ·
+[`06-data.md`](06-data.md) §6.8 (nguồn từng ảnh) ·
+[`08-decisions.md`](08-decisions.md) D-44 + D-45.
+
+---
+
+## 0.1f YC-10 — ⭐ PIVOT: project chỉ còn CÁI POPUP (nguyên văn, 2026-08-03)
+
+> Giờ thế này, bạn bỏ hết tất cả đi, và cho pj hiện tại là trang của popup, hiểu
+> không? Là giờ chúng ta chỉ design cái popup thôi, nó sẽ thành page html được nhúng
+> thành popup trong iframe trang khác
+
+**Chốt.** `index.html` **là** cái popup. Toàn bộ phần "trang VR" — header, viewer mock,
+cụm C, thẻ vé, M2 chỉ đường, M3 danh sách — **gỡ hết**.
+
+### Ba điểm hợp đồng đã hỏi và đã chốt
+
+| Câu hỏi | Khách chọn | Đã loại |
+|---|---|---|
+| Iframe nhúng thế nào? | **Phủ full màn hình** — popup tự lo mọi thứ bên trong | Iframe vừa khít hộp popup, trang cha lo scrim + canh giữa |
+| Báo cho trang cha bằng gì? | **Cả hai** — thử `parent.VRCore` trực tiếp, rơi về `postMessage` | Chỉ postMessage · chỉ gọi thẳng |
+| Ngôn ngữ VI/EN lấy từ đâu? | **Trang cha truyền vào** (`?lang=` + `postMessage`) | Nút VI/EN trong popup · cả hai |
+
+**Đè lên toàn bộ §0.1b (YC-6) và §0.8** — hai mục đó nói về việc "prototype thả ĐÈ LÊN
+trip360 nên không được lấn vào 4 cụm control có sẵn". Ràng buộc đó biến mất: popup nằm
+trong iframe nổi lên trên, hết mở là hết, không đè lên cái gì lâu dài.
+
+---
+
+## 0.1g YC-11 — Popup TOÀN MÀN + carousel 3 thẻ (nguyên văn, 2026-08-03)
+
+Ngay sau khi xem bản dựng của YC-10:
+
+> không, full màn luôn chứ không lồng trong modal nữa. Hiểu không?
+
+và:
+
+> 1. tiếp tục
+> 2. Hình ở giữa to hơn, hai bên chỉ cần preview 2 ảnh thôi
+
+**Chốt (1).** Popup `fixed; inset: 0`, nền trắng đặc. Bỏ `.st-scrim` và
+`.st-popup-panel` — không còn hộp modal canh giữa, không còn lớp nền mờ. → D-48.
+
+**Chốt (2).** Carousel còn **3 thẻ**: 1 thẻ giữa `560px` (trước `340px`) + 1 thẻ
+preview mỗi bên. → D-49.
+
+> **Đã đọc "hai bên chỉ cần preview 2 ảnh" là 2 ảnh TỔNG CỘNG** (1 mỗi bên), vì nó đi
+> kèm "hình ở giữa to hơn" — ít thẻ hơn thì thẻ giữa mới có chỗ mà to. Nếu ý khách là
+> 2 ảnh MỖI BÊN (tổng 5 thẻ) thì đổi `visible: 1` → `visible: 2` trong `js/popup.js`,
+> đúng một con số, không phải sửa CSS.
+
+**Còn cần khách trả lời:** Q-37 (quyền dùng 12 ảnh + xin bản gốc HD) · Q-38 (ảnh cho
+8 điểm chưa có) · Q-39 (popup hiện khi nào — mỗi phiên? 1 lần? — logic đó nay thuộc
+trang cha) · Q-40 (xác nhận 3 thẻ hay 5 thẻ). Xem [`TODO.md`](TODO.md) §🟡 P1.
+
+Chi tiết: [`07-integration.md`](07-integration.md) (hợp đồng đầy đủ) ·
+[`08-decisions.md`](08-decisions.md) D-46 → D-49.
+
+---
+
+## 0.1h YC-12 — Dựng BẢN 2 theo note.md (nguyên văn, 2026-08-03)
+
+> làm index 2. Đọc file note.md và làm cái chỗ mà mix 2 cái lại với nhau đi
+
+`note.md` (khách tự soạn, để ở gốc repo) đề xuất 5 ý tưởng cho màn mở đầu, và có **hai**
+chỗ nói về "kết hợp":
+
+| Chỗ | Nội dung | Chọn? |
+|---|---|---|
+| §137 *"Phương án đề xuất: Kết hợp VR Wall và Infinite Slider"* | Ý tưởng 2 + 5. Có bố cục popup chi tiết (§181), bảng chấm điểm (§208), khuyến nghị cuối (§219) | ✅ **làm cái này** |
+| §339 *"Đề xuất tối ưu nhất: Ý tưởng 3 + Ý tưởng 1"* | Cinematic Gateway + Living Map. 4 dòng, không có spec | ❌ |
+
+**Chốt.** Dựng `index2.html` theo §137:
+`VR WALL tổng quan → INFINITE SLIDER khám phá → VR 360 chi tiết` (§223).
+
+**Song song, không thay thế `index.html`.** Đây là hai ý tưởng thiết kế khác nhau để
+khách chọn; sửa đè thì mất bản 1, không còn gì để so.
+
+> Chọn §137 vì: (a) toàn bộ nửa đầu `note.md` là phần đào sâu cho đúng 2 ý tưởng đó,
+> (b) nó là chỗ duy nhất có bố cục cụ thể để dựng, (c) §339 cần **bản đồ động** mà bản
+> đồ đã gỡ từ D-44.
+
+**Đã bỏ 2 mục khỏi thanh công cụ §198:** *"Xem bản đồ"* (không còn bản đồ) và *"Khám phá
+theo chủ đề"* (chính là cái wall đang hiện). Còn 3 mục, cả 3 chạy thật.
+
+**Còn cần khách trả lời:** Q-41 (duyệt cách chia 9 nhóm) · Q-42 (**chọn bản 1 hay bản
+2**). Xem [`TODO.md`](TODO.md) §🟡 P1.
+
+Chi tiết: [`09-variant2.md`](09-variant2.md) (spec đầy đủ) ·
+[`08-decisions.md`](08-decisions.md) D-50.
+
+---
+
+## 0.1j YC-14 — Nền trắng cho cả 2 bản + carousel to hơn (nguyên văn, 2026-08-04)
+
+> 1. Ở index.html: Nút xem trên bản đồ 2D nằm cạnh thanh tìm kiếm
+> 2. Ở index.html: Giảm khoảng trống, ưu tiên cho carouser to nhất có thể mà không làm gãy layout.
+> 3. Tôi nhìn không nhầm thì nó có cái màu xanh xanh nằm dưới thanh 3 màu trên top của
+>    trang đúng không? Xóa nó đi, ở 2 chỗ luôn. Và 2 nơi đều nền trắng như nhau
+
+**Chốt (1) — nút bản đồ lên header.** `.st-search-row` mới bọc ô tìm + `.st-head-map`,
+ngay dưới phụ đề. `.st-foot-actions` / `.st-foot-map` xoá hẳn. Vẫn ẩn nút này ở trạng
+thái `list` (đã có `.st-list-map` đúng phạm vi). → D-54(b).
+
+**Chốt (2) — carousel to nhất có thể.** Bỏ hằng số `66vh` và cặp auto-margin; cỡ thẻ suy
+từ **chiều cao sân khấu** rồi để `aspect-ratio: 3/2` lo bề ngang. Thẻ giữa `547 → 662px`
+ở 1440×900 và `560 → 820px` ở 1920×1080. → D-54(c).
+
+**Chốt (3) — "màu xanh xanh".** Khách nhìn đúng: `#st-popup` có
+`radial-gradient(… rgba(18,129,37,.05) …)` neo ở đỉnh màn, **ngay dưới dải brand 4px**.
+Bỏ ở **cả hai chỗ** = cả hai bản.
+
+> "2 nơi đều nền trắng như nhau" kéo theo một hệ quả lớn hơn câu chữ: **bản 2 phải bỏ
+> nền tối** — tức **đảo ngược D-50 điểm #4**. Chấp nhận vì hai bản là hai phương án của
+> *cùng một sản phẩm*; khách đang so **cách trình bày** (carousel ↔ mosaic), nền khác
+> nhau làm nhiễu đúng phép so đó. Slider của bản 2 **vẫn tối** (một cảnh lớn đơn lẻ,
+> lập luận "phòng chiếu" vẫn đúng ở đó). → D-54(a).
+
+Chi tiết: [`08-decisions.md`](08-decisions.md) D-54 ·
+[`02-design-system.md`](02-design-system.md) §2.11 ·
+[`03-components.md`](03-components.md) §3.2 · [`04-modals.md`](04-modals.md) §4.1 ·
+[`09-variant2.md`](09-variant2.md) §9.2.1.
+
+---
+
+## 0.1i YC-13 — Bản đồ 2D + bản 1 đổi sang khu vực (nguyên văn, 2026-08-03)
+
+Khách gửi ảnh chụp overlay *"Chỉ đường"* đang chạy trên trip360 (bản đồ isometric, pin
+tròn có số, bảng chỉ dẫn từng chặng bên trái) kèm 3 yêu cầu:
+
+> tất cả ảnh phải là cover để không lộ mảng trống
+>
+> index.html: Bổ sung tính năng tìm kiếm và thay đổi lại: thay vì mỗi ảnh 1 địa điểm
+> thì cho thành 1 khu vực. Khi click vào thì hiển thị danh sách của khu vực đó.
+>
+> index: Đều thêm tính năng "Xem trên bản đồ 2D", sử dụng ảnh trong Ban Do Suoi Tien để
+> mở. pin địa điểm trên đó tương ứng với trang trong ảnh. Nếu chọn khu vực rồi thì vẫn
+> có nút xem danh sách đó trên bản đồ 2D và trên bản đồ chỉ có các điểm đã được lọc.
+
+**Chốt (1) — ảnh cover.** Thêm `img { object-fit: cover }` làm mặc định trong
+`css/base.css`; chỗ nào cần `contain` phải khai tường minh kèm lý do (hiện chỉ có
+`.st-map-img`).
+
+> Riêng ảnh bản đồ, `cover` **không đủ**: công viên là hình bất quy tắc nên ảnh có vùng
+> trong suốt, `cover` chỉ phủ kín bounding box còn phần trong suốt vẫn để lộ nền. Phải
+> **flatten ảnh lên đúng màu nền khung xem**. Xem D-51.
+
+**Chốt (2) — bản 1 đổi sang khu vực.** Thẻ carousel giờ là **khu vực** (`D.GROUPS`),
+bấm ra **danh sách** điểm của khu vực đó; thêm **ô tìm kiếm bỏ dấu** ở header. → D-52.
+
+**Chốt (3) — bản đồ 2D.** `js/map2d.js` dùng chung cả hai bản, nhận một mảng key và chỉ
+vẽ pin của những điểm đó → *"xem tất cả"* và *"xem khu vực này"* là cùng một hàm. → D-51.
+
+**Còn cần khách trả lời:** Q-43 (số hiệu + toạ độ pin — mới 2/20 số là thật).
+
+Chi tiết: [`08-decisions.md`](08-decisions.md) D-51 + D-52 ·
+[`03-components.md`](03-components.md) §3.4–3.5 · [`06-data.md`](06-data.md) §6.10.
 
 ---
 
@@ -324,7 +511,7 @@ Danh sách đầy đủ 84 mục: [`06-data.md`](06-data.md) §6.6.
 | Q9 | Số hotspot? | "cứ làm theo đề xuất trước. **cần có top nhưng kiểu hint cho khách thôi**" | ✅ 8 hotspot. "Top" thể hiện **nhẹ** — không phải huy chương/số thứ tự, mà là ring vàng nhấp nháy + nhãn nhỏ "nên xem". Không xếp hạng 1-2-3. |
 | Q10 | Click hotspot? | **(a) nhảy thẳng** | ⚠️ **Đảo ngược D-10.** Bỏ preview panel + nút "Đi đến". Click hotspot → đóng modal → nhảy luôn. Bù lại: **hover/focus hiện mini-card** (tên + type + 1 câu) để vẫn "nói về tour" mà **không thêm click**. |
 | Q11 | Nút bỏ qua? | "có" | ✅ "Để tôi tự khám phá →" |
-| Q12 | Hiện lại lần sau? | **(b) 1 lần**, "lúc tắt thì nó **thu nhỏ thành 1 nút cạnh 2 nút điểm đến kia**. Bấm vào thì mở lên lại" | ⭐ **Component mới:** `#st-welcome-reopen`. Modal đóng → animate **thu nhỏ (morph) về vị trí nút** trong dock. Click nút → animate **bung ngược lại** thành modal. Xem [`04-modals.md`](04-modals.md) §4.3.8. |
+| Q12 | Hiện lại lần sau? | **(b) 1 lần**, "lúc tắt thì nó **thu nhỏ thành 1 nút cạnh 2 nút điểm đến kia**. Bấm vào thì mở lên lại" | ⭐ **Component mới:** `#st-welcome-reopen`. Modal đóng → animate **thu nhỏ (morph) về vị trí nút** trong dock. Click nút → animate **bung ngược lại** thành modal. ⚫ **Hết hiệu lực từ 2026-08-03** — không còn dock để morph về, và nút mở lại (nếu trang cha có) nằm ở document khác nên không đo rect qua ranh giới iframe được. Xem D-29 + D-46. |
 | Q13 | Delay? | "theo bạn đề xuất đi" | ✅ Chờ `viewer:ready` + 800ms → fade + scale-in 400ms (D-13). |
 
 ### Nhóm 3 — Button layout

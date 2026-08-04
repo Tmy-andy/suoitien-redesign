@@ -1,166 +1,113 @@
 /* ═══════════════════════════════════════════════════════════════════════
    responsive.css — LOAD CUỐI CÙNG. Tất cả @media gom về đây.
    Breakpoint: ≤599 mobile · 600-1023 tablet · 1024-1439 desktop · ≥1440 wide
+
+   Popup chiếm trọn màn ở MỌI breakpoint (D-48) — không còn hộp modal, nên
+   không còn nhánh "mobile thì cho fullscreen" như bản trước. Việc còn lại chỉ
+   là điều tiết cỡ thẻ và mật độ chữ.
+
+   Lưu ý khi debug: đây là kích thước của IFRAME, không phải của trang cha.
+   Iframe được nhúng phủ kín viewport nên hai con số thường bằng nhau — nhưng
+   nếu bên tích hợp cho iframe một kích thước khác, media query ở đây đi theo
+   iframe. Xem docs/07-integration.md §7.5.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* ══ ≥1440px — wide ═════════════════════════════════════════════════════ */
-@media (min-width: 1440px) {
-  #st-welcome .st-modal-panel { width: min(92vw, 1180px); }
+/* ══ ≤1279px — laptop nhỏ: nới cap bề ngang, và QUAY VỀ 3 THẺ ═══════════
+   Ở 1024–1279 thì `46vw` (mặc định) chỉ dùng hết ~70% chiều cao sân khấu —
+   thẻ nhỏ hơn mức khung cho phép. Nới lên 56vw để chiều cao mới là thứ chặn.
+
+   Nới xong thì bậc ±2 hết chỗ: thẻ giữa rộng 56vw đẩy bậc ±2 ra tới ~1,2 lần
+   bề ngang của nó, chỉ còn hở ~110px ở mép — đọc ra là một vệt màu chứ không
+   phải "còn ảnh nữa". Thà 3 thẻ rõ (D-49) còn hơn 5 thẻ trong đó 2 cái là rác.
+   Ẩn bằng CSS chứ không hạ `visible` trong JS: JS vẫn dựng đủ 5 thẻ nên xoay
+   ngang máy là bậc ±2 hiện lại ngay, không phải dựng lại carousel. */
+@media (max-width: 1279px) {
+  .st-cr { --st-card-maxw: 56vw; }
+  /* Không cần !important: js/carousel.js chỉ ghi `display:'none'` (thẻ quá xa)
+     hoặc `display:''` (xoá hẳn khai báo inline) — không bao giờ ghi giá trị
+     hiện, nên luật này luôn thắng đúng lúc cần. */
+  .st-cr-card[data-oa="2"] { display: none; }
 }
 
-/* ══ Nav có 9 mục thay vì 8 (thêm tab VR360) nên hết slack sớm hơn gốc ═══
-   ≥1600px: giữ ĐÚNG 14px + padding 6.46% như gốc, vẫn còn thừa chỗ.
-   Dưới đó thu dần font/gap/padding để tỉ lệ khoảng trống quanh logo vẫn
-   giống gốc, thay vì để chữ dính vào logo. */
-/* Nav KHÔNG có bậc font/padding — gốc giữ 14px và để flex co giãn mượt.
-   Chỉ thu padding của 2 nhóm khi hẹp để chữ không chạm logo. */
-@media (max-width: 1439px) { .st-nav-left, .st-nav-right { padding: 0 24px; } }
-@media (max-width: 1319px) { .st-nav-left, .st-nav-right { padding: 0; }
-                             .st-nav-list { gap: 6px; } }
-
-/* ══ ≤1199px — dock bỏ bớt khoảng trắng ═════════════════════════════════ */
-@media (max-width: 1199px) {
-  .st-dbtn.st-v-primary   { padding: 0 15px; }
-  .st-dbtn.st-v-secondary { padding: 0 14px; }
-}
-
-/* ══ ≤1199px — navbar → hamburger (9 mục không còn chỗ) ════════════════ */
-@media (max-width: 1199px) {
-  #st-navbar { width: calc(100% - var(--st-s-6)); padding: 0 var(--st-s-3); justify-content: space-between; }
-  #st-btn-search { display: none; }
-  .st-nav-list { display: none; }
-  #st-btn-menu { display: grid; }
-  .st-logo { width: auto; margin: 0 auto; }
-  .st-logo img { height: 96px; }
-}
-
-/* ══ ≤1200px — TOPBAR: bám đúng gốc ═════════════════════════════════════
-   THẬT: `@media (max-width:1200px){ .list-top-nav li span{font-size:11px} }`
-   — gốc **giữ nguyên đủ 3 mục** (địa chỉ + hotline + email) và **giữ container
-   85%**, chỉ thu chữ xuống 11px.
-   Bản trước tôi làm khác hẳn: ẩn địa chỉ + `.st-topbar-in{width:100%}` → cả
-   hàng dàn hết bề ngang, khoảng cách giữa các mục lệch xa gốc. Đây là chỗ
-   khách chỉ ra "khoảng cách vẫn khác bản gốc". */
-@media (max-width: 1200px) {
-  .st-tb-contact > li > a,
-  .st-tb-contact > li > span {
-    font-size: 11px;
-    /* Gốc KHÔNG đặt white-space → dưới ~1100px chữ tự xuống dòng (địa chỉ và
-       hotline thành 2 dòng). Ta giữ `nowrap` thì thay vì xuống dòng nó CHỒNG
-       lên mục kế. Bỏ nowrap để hành vi giống gốc.
-       ⚠️ Đây là khuyết điểm của chính site gốc (2 dòng tràn khỏi row 40px), ta
-       clone theo yêu cầu "giống hệt". Muốn gọn hơn: nâng ngưỡng bỏ địa chỉ ở
-       khối `≤999px` bên dưới lên `≤1199px` — sửa đúng 1 con số. */
-    white-space: normal;
+/* ══ ≤1023px — tablet: kéo thẻ preview vào gần cho đỡ hụt mép ══════════ */
+@media (max-width: 1023px) {
+  .st-popup-inner { padding-left: var(--st-s-5); padding-right: var(--st-s-5); }
+  .st-cr {
+    --st-card-step: 76%;
+    --st-card-z:    170px;
+    --st-card-maxw: 62vw;
   }
-}
-
-/* ══ ≤999px — điểm mình PHẢI tự quyết ═══════════════════════════════════
-   Từ ≤900px site gốc bỏ hẳn header desktop, đổi sang header mobile riêng
-   (`.navbar-wrapper{display:none}` + `.show-mb`) — cấu trúc đó ngoài phạm vi
-   prototype. Nên từ đây trở xuống là thiết kế của mình: bỏ địa chỉ (mục dài
-   nhất) để hotline + email + cờ + social còn đủ chỗ. */
-@media (max-width: 999px) {
-  #st-topbar { padding: 0 var(--st-s-4); }
-  .st-topbar-in { width: 100%; }
-  .st-tb-contact li:first-child { display: none; }   /* bỏ địa chỉ */
-}
-
-/* ══ ≤899px — dock rút gọn: nhóm "xem" chuyển vào popover ═══════════════ */
-@media (max-width: 899px) {
-  #st-dock .st-dock-group-view { display: none; }
-  #st-dock .st-dock-sep.st-sep-view { display: none; }
-  #st-cta-tickets { bottom: auto; top: calc(var(--st-sat) + var(--st-header-h) + 60px); }
-  html.st-nav-hidden #st-cta-tickets { top: calc(var(--st-sat) + 56px); }
 }
 
 /* ══ ≤599px — mobile ════════════════════════════════════════════════════ */
 @media (max-width: 599px) {
-  :root { --st-topbar-h: 66px; --st-navbar-h: 50px; --st-navbar-top: 40px; }
-
-  /* topbar chỉ còn hotline + cờ */
-  .st-tb-contact li:not(.st-tb-phone) { display: none; }
-  .st-tb-social { display: none; }
-  #st-topbar { padding: 0 var(--st-s-3); }
-  .st-topbar-in { padding-top: 8px; }
-  .st-tb-contact, .st-tb-right { height: 34px; }
-  .st-tb-ic { width: 26px; height: 26px; }
-  .st-tb-ic svg { width: 13px; height: 13px; }       /* co theo tròn 26px (30→26) */
-  /* giữ tỉ lệ hộp cờ 26:20 của gốc */
-  .st-flag { width: 23.4px; height: 18px; }
-  #st-lang { padding: 0 8px; }
-
-  #st-navbar { width: calc(100% - var(--st-s-4)); padding: 0 var(--st-s-3); }
-  .st-logo img { height: 78px; }
-  #st-btn-search { display: none; }
-
-  /* dock full-width cuộn ngang + fade 2 đầu */
-  #st-dock {
-    left: var(--st-s-3);
-    right: var(--st-s-3);
-    transform: none;
-    max-width: none;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    justify-content: flex-start;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  .st-popup-inner {
+    /* s-10 ở trên để không chui xuống dưới nút × (40px, top s-3) */
+    padding: calc(var(--st-sat) + var(--st-s-10)) var(--st-s-4)
+             calc(var(--st-sab) + var(--st-s-3));
   }
-  #st-dock::-webkit-scrollbar { display: none; }
-  .st-dbtn[data-tip]::after { display: none; }   /* tooltip vô nghĩa trên touch */
+  .st-popup-close { width: 40px; height: 40px; top: calc(var(--st-sat) + var(--st-s-3)); right: var(--st-s-3); }
+  .st-popup-close svg { width: 18px; height: 18px; }
 
-  /* scene label dời lên trên dock */
-  #st-scene-label {
-    left: var(--st-s-3);
-    right: var(--st-s-3);
-    max-width: none;
-    bottom: calc(var(--st-s-5) + var(--st-sab) + 68px);
-  }
-  .st-mock-note { display: none; }
+  .st-popup-head { margin-bottom: var(--st-s-4); }
+  #st-popup-sub { font-size: 14px; }
 
-  /* CTA vé → 1 nút nổi góc phải */
-  #st-cta-tickets { top: auto; bottom: calc(var(--st-s-5) + var(--st-sab) + 128px); gap: 4px; }
-  html.st-nav-hidden #st-cta-tickets { top: auto; }
-  .st-cta { padding: 11px 12px; font-size: 11.5px; }
-  .st-cta span { display: none; }
-  .st-cta svg { width: 20px; height: 20px; }
+  /* Thẻ giữa chiếm gần trọn bề ngang; 2 thẻ preview chỉ còn hé ra ở rìa —
+     vừa đủ báo "còn nữa, quẹt tiếp đi". Trên mobile thao tác chính là quẹt
+     chứ không phải bấm nút.
 
-  /* modal welcome fullscreen */
-  #st-welcome .st-modal-panel {
-    width: 100%;
-    height: 100dvh;
-    max-height: none;
-    border-radius: 0;
-    border: 0;
-    padding: calc(var(--st-s-6) + var(--st-sat)) var(--st-s-4) calc(var(--st-s-4) + var(--st-sab));
+     `92vw` chứ không `78vw` (D-55): ở màn dọc, thứ chặn cỡ thẻ là BỀ NGANG
+     chứ không phải chiều cao — 78vw ra thẻ 304×203 nằm giữa một sân khấu cao
+     430px, tức bỏ không hơn 200px. Nới bề ngang là cách DUY NHẤT lấy lại chỗ
+     đó (chiều cao có thừa cũng vô dụng khi tỉ lệ đã khoá ở 3:2).
+     Nới xong thì phải kéo `--st-card-step` xuống theo, nếu không 2 thẻ preview
+     bị đẩy ra gần hết màn, chỉ còn hở ~37px — hết ý nghĩa "còn nữa". */
+  .st-cr {
+    --st-card-step: 74%;
+    --st-card-z:    140px;
+    --st-card-rot:  28deg;
+    --st-card-maxw: 92vw;
   }
-  .st-brandline { border-radius: 0; }
-  .st-welcome-head { margin-bottom: var(--st-s-4); }
-  #st-welcome-sub { font-size: 14px; }
-  /* Bản đồ là landscape nên trên máy dọc nó bị nhỏ → dồn nội dung lại,
-     bỏ khoảng trống chết, ẩn nhãn khu (cỡ chữ đó không đọc được).
-     TODO: vẽ bản đồ dọc riêng cho mobile (toạ độ xm/ym đã có sẵn trong data.js). */
-  .st-welcome-mapwrap { flex: 0 0 auto; }
-  .st-map-svg text { display: none; }
-  #st-welcome-list {
-    display: block;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    margin-top: var(--st-s-3);
-    padding-top: var(--st-s-2);
-    border-top: 1px solid var(--st-n-200);
-    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
-    mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+  .st-cr-nav { width: 40px; height: 40px; }
+  .st-cr-nav svg { width: 19px; height: 19px; }
+  .st-cr-name { font-size: 17px; }
+
+  .st-popup-foot {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: var(--st-s-2);
+    padding-top: var(--st-s-3);
   }
-  .st-hotspot { width: 32px; height: 32px; }
-  .st-hotspot svg { width: 17px; height: 17px; }
-  .st-welcome-foot { flex-direction: column-reverse; align-items: stretch; gap: var(--st-s-2); margin-top: auto; }
-  #st-welcome-skip {
+
+  /* ── Ô tìm kiếm + danh sách (D-52) ────────────────────────────────── */
+  /* Ô tìm và nút bản đồ xuống 2 hàng — 390px không đủ cho cả hai nằm ngang */
+  .st-search-row { flex-direction: column; align-items: stretch; gap: var(--st-s-2); margin-top: var(--st-s-2); }
+  .st-search input { height: 44px; }
+  .st-head-map { height: 44px; justify-content: center; }
+
+  /* Nút "Xem khu vực này trên bản đồ" xuống hàng riêng: 3 thứ (back · tên ·
+     nút bản đồ) không cùng vừa một hàng 390px. */
+  .st-list-top { flex-wrap: wrap; gap: var(--st-s-2); margin-bottom: var(--st-s-3); }
+  .st-list-head { order: -1; width: 100%; text-align: left; }
+  .st-list-title { font-size: 20px; }
+  .st-list-map { margin-left: auto; }
+  .st-list-back span, .st-list-map span { display: none; }
+  .st-list-back, .st-list-map { padding: 10px 13px; }
+
+  /* 2 cột thẻ ảnh (D-56). Một cột ở 390px ra thẻ cao 292px — cuộn 12 thẻ như
+     vậy là 3,5 màn hình. Hai cột vẫn đọc được tên và thấy hết trong ~2 màn. */
+  .st-list-grid { grid-template-columns: repeat(2, 1fr); gap: var(--st-s-2); }
+  .st-li-name { font-size: 15px; }
+  .st-li-body { padding: var(--st-s-3); }
+  .st-li-cat { font-size: 10px; }
+  /* Không có hover trên điện thoại → blurb/CTA không bao giờ hiện được, mà
+     vẫn chiếm chỗ tính toán. Bỏ hẳn; số hiệu + tên + ảnh là đủ để chọn. */
+  .st-li-blurb, .st-li-cta { display: none; }
+  .st-li-no { top: var(--st-s-2); left: var(--st-s-2); }
+  .st-li-must { top: var(--st-s-2); right: var(--st-s-2); width: 22px; height: 22px; }
+  #st-popup-skip {
     justify-content: center;
-    min-height: 46px;
+    min-height: 48px;
     border-radius: var(--st-r-pill);
     background: var(--st-n-100);
     color: var(--st-n-700);
@@ -168,48 +115,24 @@
   }
   .st-legend { justify-content: center; }
 
-  /* share → bottom sheet */
-  #st-share { place-items: end stretch; }
-  #st-share .st-modal-panel {
-    width: 100%;
-    max-height: 88dvh;
-    border-radius: var(--st-r-xl) var(--st-r-xl) 0 0;
-    padding-bottom: calc(var(--st-s-6) + var(--st-sab));
-    transform: translateY(100%);
-  }
-  #st-share.st-open .st-modal-panel { transform: none; }
-  .st-brandline { border-radius: var(--st-r-xl) var(--st-r-xl) 0 0; }
-
-  #st-toast { top: calc(var(--st-sat) + var(--st-header-h) + 12px); }
   #st-debug { width: calc(100vw - var(--st-s-6)); }
-  #st-hint { font-size: 13.5px; padding: 9px 14px; }
 }
 
-/* ══ ≤380px — máy nhỏ: dock bỏ label ════════════════════════════════════ */
-@media (max-width: 380px) {
-  .st-dbtn.st-v-primary, .st-dbtn.st-v-secondary { padding: 0; width: 44px; }
-  .st-dbtn.st-v-primary span, .st-dbtn.st-v-secondary span { display: none; }
-}
-
-/* ══ Landscape thấp (điện thoại xoay ngang) ═════════════════════════════ */
+/* ══ Landscape thấp (điện thoại xoay ngang) ═════════════════════════════
+   Chiều cao ~400px: header + carousel + footer không cùng lúc vừa. Bỏ câu
+   mô tả và thu thẻ lại — thẻ là thứ duy nhất không bỏ được. */
 @media (max-height: 460px) and (orientation: landscape) {
-  #st-dock { bottom: calc(var(--st-s-2) + var(--st-sab)); padding: 6px; }
-  .st-dbtn.st-v-primary, .st-dbtn.st-v-secondary { min-height: 38px; }
-  .st-dbtn.st-v-tonal { width: 38px; height: 38px; }
-  .st-dbtn.st-v-circle { width: 34px; height: 34px; }
-  #st-scene-label { bottom: calc(var(--st-s-2) + var(--st-sab) + 56px); }
-  #st-welcome .st-modal-panel { padding-top: var(--st-s-4); }
-  .st-welcome-head { margin-bottom: var(--st-s-3); }
-  #st-welcome-sub { display: none; }
+  .st-popup-inner { padding-top: calc(var(--st-sat) + var(--st-s-4)); }
+  .st-popup-head { margin-bottom: var(--st-s-3); }
+  #st-popup-sub { display: none; }
+  .st-eyebrow { display: none; }
+  .st-popup-foot { padding-top: var(--st-s-3); }
 }
 
-/* ══ Con trỏ thô (touch) — bỏ mini-card, dùng tooltip ══════════════════ */
+/* ══ Con trỏ thô (touch) ════════════════════════════════════════════════ */
 @media (hover: none) {
-  .st-hotspot-card { display: none; }
-}
-
-/* ══ Màn hình rất thấp — thu header cho đỡ chiếm chỗ ════════════════════ */
-@media (max-height: 520px) {
-  :root { --st-topbar-h: 60px; --st-navbar-h: 48px; --st-navbar-top: 36px; }
-  .st-logo img { height: 68px; }
+  /* Không có hover thì không có cách "xem trước" thẻ rìa → trả chúng về độ
+     sáng bình thường để vẫn nhìn ra đó là ảnh gì. */
+  .st-cr-card:not(.st-active) { filter: none; }
+  .st-popup-close:hover { transform: none; }
 }

@@ -3,656 +3,223 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Suối Tiên VR360 — Prototype re-design</title>
-<meta name="description" content="Prototype re-design giao diện tour VR360 Công viên Văn hóa Suối Tiên.">
+<title>Suối Tiên VR360 — Popup chọn điểm bắt đầu</title>
 
-<!-- Font thật của suoitien.vn: Arima Madurai. Be Vietnam Pro cho phần dày chữ (D-23).
-     Đây là dependency ngoài DUY NHẤT — có fallback system stack khi offline. -->
+<!-- ══════════════════════════════════════════════════════════════════════
+     BẢN 1 — CAROUSEL KHU VỰC → DANH SÁCH → VR 360
+
+     Trang này LÀ CHÍNH CÁI POPUP, chiếm trọn màn hình, nhúng vào trang VR
+     bằng một <iframe> phủ kín viewport:
+
+         <iframe src=".../index.html?lang=vi"
+                 style="position:fixed; inset:0; width:100%; height:100%;
+                        border:0; background:transparent; z-index:10050"></iframe>
+
+     rồi nghe postMessage `st:navigate` / `st:close`.
+     → Hợp đồng đầy đủ: docs/07-integration.md
+     → Trang cha mô phỏng: host-demo.html (có nút chuyển sang BẢN 2)
+
+     Ba trạng thái (docs/04-modals.md §4.2):
+       A. carousel 9 KHU VỰC   → bấm thẻ ra danh sách khu vực đó
+       B. danh sách điểm       → bấm 1 điểm đi VR
+       M. bản đồ 2D (phủ lên)  → pin chỉ gồm các điểm đang lọc
+
+     Mở thẳng file này bằng double-click cũng chạy — bridge thành no-op.
+     ══════════════════════════════════════════════════════════════════════ -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@400;500;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/viewer.css">
-<link rel="stylesheet" href="css/navbar.css">
-<link rel="stylesheet" href="css/controls.css">
-<link rel="stylesheet" href="css/welcome.css">
-<link rel="stylesheet" href="css/overlays.css">
-<link rel="stylesheet" href="css/route.css">
-<link rel="stylesheet" href="css/places.css">
-<link rel="stylesheet" href="css/ticket.css">
+<link rel="stylesheet" href="css/carousel.css">
+<link rel="stylesheet" href="css/popup.css">
+<link rel="stylesheet" href="css/map2d.css">
 <link rel="stylesheet" href="css/responsive.css">
-<!-- NẠP CUỐI: thu phạm vi về 3 nút + modal welcome (D-39). -->
-<link rel="stylesheet" href="css/scope.css">
 </head>
 <body>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     SVG SPRITE — 1 hệ duy nhất: stroke 1.75, linecap/linejoin round,
-     viewBox 24, không fill (D-16). Phải nằm trước mọi <use>.
-
-     transform="translate(dx dy)" trên một số symbol = bù LỆCH TÂM HÌNH HỌC:
-     bbox của nét vẽ không nằm giữa viewBox 24×24, nên khi đặt icon vào vòng
-     tròn (topbar, dock) nó lệch thấy rõ. dx/dy đo bằng getBBox() trong browser,
-     dịch tâm bbox về (12,12). Sửa path thì phải đo lại — xem scratchpad/bbox.js.
+     SPRITE ICON — inline, không phải file rời.
+     `<use href="file.svg#id">` bị CORS chặn khi mở `file://`; inline là cách
+     duy nhất chạy được cả `file://` lẫn `http://`.
+     Hệ nét mảnh: stroke 1.75, không fill (D-16). Ngoại lệ `i-star`: ở cỡ 12px
+     trong badge, sao nét mảnh chỉ còn là vệt xám không đọc ra hình.
      ══════════════════════════════════════════════════════════════════════ -->
 <svg id="st-icons" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
 <defs>
-<g id="i-route" transform="translate(0.05 0.05)"><path d="M9 20 4 18V4l5 2 6-2 5 2v14l-5-2-6 2Z"/><path d="M9 6v14M15 4v14"/></g>
-<g id="i-list" transform="translate(1.32 0.05)"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></g>
-<g id="i-map" transform="translate(0.05 -0.06)"><path d="M9 20 3 17.5v-13L9 7l6-2.5 6 2.5v13L15 17Z"/><path d="M9 7v13M15 4.5v13"/><circle cx="12" cy="11" r="1.6"/></g>
-<g id="i-pin" transform="translate(0.05 1.11)"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></g>
 <g id="i-close" transform="translate(0.05 0.05)"><path d="M6 6l12 12M18 6L6 18"/></g>
-<g id="i-menu" transform="translate(0.05 0.05)"><path d="M4 7h16M4 12h16M4 17h16"/></g>
-<g id="i-search" transform="translate(0.1 0.1)"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></g>
-<g id="i-chevrons-down"><path d="m6 5 6 6 6-6M6 13l6 6 6-6"/></g>
-<g id="i-chevron-down"><path d="m6 9 6 6 6-6"/></g>
-<g id="i-chevron-right"><path d="m9 6 6 6-6 6"/></g>
 <g id="i-chevron-left"><path d="m15 6-6 6 6 6"/></g>
-<!-- ── Chỉ dẫn từng chặng + toolbar bản đồ (M2) ── -->
-<g id="i-flag" transform="translate(1.1 0)"><path d="M6 21V3.6"/><path d="M6 4.6h11.4l-2.4 3.7 2.4 3.7H6"/></g>
-<g id="i-turn-left" transform="translate(0.4 0)"><path d="M17.5 20.4v-7.6a4 4 0 0 0-4-4H7.2"/><path d="m10.9 5.2-3.7 3.6 3.7 3.6"/></g>
-<g id="i-turn-right" transform="translate(-0.4 0)"><path d="M6.5 20.4v-7.6a4 4 0 0 1 4-4h6.3"/><path d="m13.1 5.2 3.7 3.6-3.7 3.6"/></g>
-<g id="i-straight"><path d="M12 20.4V5.2"/><path d="m6.6 10.6 5.4-5.4 5.4 5.4"/></g>
-<g id="i-goal" transform="translate(0.05 0.05)"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/></g>
-<g id="i-split" transform="translate(0.05 0.05)"><rect x="3.2" y="4.6" width="17.6" height="14.8" rx="2.6"/><path d="M3.2 12h17.6"/></g>
+<g id="i-chevron-right"><path d="m9 6 6 6-6 6"/></g>
+<g id="i-arrow-right" transform="translate(0.5 0)"><path d="M4 12h15m-6-6 6 6-6 6"/></g>
+<g id="i-arrow-left" transform="translate(-0.5 0)"><path d="M20 12H5m6-6-6 6 6 6"/></g>
+<g id="i-search" transform="translate(0.1 0.1)"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></g>
+<g id="i-map" transform="translate(0.05 -0.06)"><path d="M9 20 3 17.5v-13L9 7l6-2.5 6 2.5v13L15 17Z"/><path d="M9 7v13M15 4.5v13"/><circle cx="12" cy="11" r="1.6"/></g>
+<g id="i-vr" transform="translate(0.05 -0.15)"><rect x="2.5" y="7.5" width="19" height="9" rx="3.2"/><path d="M9.6 16.5 12 13.4l2.4 3.1"/><circle cx="7" cy="12" r="1"/><circle cx="17" cy="12" r="1"/></g>
 <g id="i-plus"><path d="M12 5.2v13.6M5.2 12h13.6"/></g>
 <g id="i-minus"><path d="M5.2 12h13.6"/></g>
-<g id="i-arrow-right" transform="translate(0.5 0)"><path d="M4 12h15m-6-6 6 6-6 6"/></g>
 <g id="i-expand" transform="translate(0.05 0.05)"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></g>
-<g id="i-collapse" transform="translate(0.05 0.05)"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></g>
-<g id="i-sound-on" transform="translate(-0.35 0.05)"><path d="M4 9v6h3.5L12 19V5L7.5 9Z"/><path d="M16 9.2a4 4 0 0 1 0 5.6M18.6 6.6a7.6 7.6 0 0 1 0 10.8"/></g>
-<g id="i-sound-off" transform="translate(0.91 0.05)"><path d="M4 9v6h3.5L12 19V5L7.5 9Z"/><path d="m16 10 4 4m0-4-4 4"/></g>
-<g id="i-rotate" transform="translate(-0.5 0.63)"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.4h-4.4"/></g>
-<g id="i-compass" transform="translate(0.05 0.05)"><circle cx="12" cy="12" r="8.5"/><path d="m15 9-1.6 4.4L9 15l1.6-4.4Z"/></g>
-<g id="i-vr" transform="translate(0.05 -0.15)"><rect x="2.5" y="7.5" width="19" height="9" rx="3.2"/><path d="M9.6 16.5 12 13.4l2.4 3.1"/><circle cx="7" cy="12" r="1"/><circle cx="17" cy="12" r="1"/></g>
-<g id="i-share" transform="translate(-1.52 0.05)"><circle cx="18" cy="5.5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="m8.3 10.7 7.4-3.9m0 10.4-7.4-3.9"/></g>
-<g id="i-help" transform="translate(-0.04 0.46)"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.5"/><circle cx="12" cy="16.6" r=".9" fill="currentColor" stroke="none"/></g>
-<g id="i-ticket" transform="translate(-0.17 0.07)"><path d="M3 8.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.2a2.3 2.3 0 0 0 0 4.6v1.2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.2a2.3 2.3 0 0 0 0-4.6Z"/><path d="M14 7.5v9" stroke-dasharray="2 2.4"/></g>
-<g id="i-combo" transform="translate(0.03 1.04)"><rect x="3" y="7" width="8.4" height="10.6" rx="1.8"/><rect x="12.6" y="4.6" width="8.4" height="10.6" rx="1.8"/><path d="M6 11.4h2.6M15.6 9h2.6"/></g>
-<g id="i-globe" transform="translate(0.05 0.05)"><circle cx="12" cy="12" r="8.5"/><path d="M3.6 12h16.8M12 3.6c2.2 2.4 3.3 5.3 3.3 8.4s-1.1 6-3.3 8.4c-2.2-2.4-3.3-5.3-3.3-8.4s1.1-6 3.3-8.4Z"/></g>
-<g id="i-more" transform="translate(0.05 0.05)"><circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/></g>
-<g id="i-phone" transform="translate(0.5 0.59)"><path d="M6.5 3.6h3l1.5 3.7-2 1.4a11.4 11.4 0 0 0 5.3 5.3l1.4-2 3.7 1.5v3a2 2 0 0 1-2.2 2A16.6 16.6 0 0 1 4.5 5.8a2 2 0 0 1 2-2.2Z"/></g>
-<g id="i-mail" transform="translate(0.05 0.44)"><rect x="3" y="5.5" width="18" height="13" rx="2.4"/><path d="m3.6 7.3 8.4 6 8.4-6"/></g>
-<g id="i-copy" transform="translate(0.53 0.54)"><rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 5.6A2.1 2.1 0 0 0 13.4 4H6.6A2.6 2.6 0 0 0 4 6.6v6.8c0 .9.6 1.7 1.6 2.1"/></g>
-<g id="i-check" transform="translate(-0.04 -0.66)"><path d="m5 12.6 4.6 4.6L19 6.8"/></g>
-<g id="i-drag" transform="translate(0.17 -0.59)"><path d="M9 11V6.4a1.6 1.6 0 1 1 3.2 0V11m0-1.4a1.6 1.6 0 1 1 3.2 0V11m0-.6a1.6 1.6 0 1 1 3.2 0v4.2a5.4 5.4 0 0 1-5.4 5.4h-1.4a5 5 0 0 1-4-2l-3-4a1.6 1.6 0 0 1 2.4-2.1L9 14.4V11"/></g>
-<g id="i-swap"><path d="M7 4v14m0 0-3-3m3 3 3-3M17 20V6m0 0-3 3m3-3 3 3"/></g>
-<g id="i-my-location" transform="translate(0.05 0.05)"><circle cx="12" cy="12" r="4"/><path d="M12 2v3.2M12 18.8V22M2 12h3.2M18.8 12H22"/></g>
-<!-- social -->
-<g id="i-fb" transform="translate(-0.9 -0.46)"><path d="M14.6 8.4h2.2V5.6h-2.4c-2.2 0-3.6 1.4-3.6 3.6v1.6H8.6v2.9h2.2v7h3v-7h2.3l.4-2.9h-2.7V9.6c0-.7.3-1.2.8-1.2Z"/></g>
-<g id="i-tt" transform="translate(-0.76 0.62)"><path d="M14.4 3.4v10.9a3.3 3.3 0 1 1-2.7-3.2"/><path d="M14.4 3.4c.4 2.2 2 3.8 4.2 4.1"/></g>
-<g id="i-ig" transform="translate(-0.04 0.13)"><rect x="3.8" y="3.8" width="16.4" height="16.4" rx="4.6"/><circle cx="12" cy="12" r="3.7"/><circle cx="16.7" cy="7.3" r=".9" fill="currentColor" stroke="none"/></g>
-<g id="i-yt" transform="translate(0.03 0.05)"><rect x="3" y="6" width="18" height="12" rx="3.6"/><path d="m10.6 9.7 4.4 2.3-4.4 2.3Z"/></g>
-<g id="i-in" transform="translate(0.24 -0.24)"><rect x="3.8" y="3.8" width="16.4" height="16.4" rx="3"/><path d="M7.6 10.4v6.2M7.6 7.6v.1M11.4 16.6v-6.2m0 2.1c0-1.2.9-2.1 2.1-2.1s2.1.9 2.1 2.1v4.1"/></g>
-<!-- ── Icon ĐẶC kiểu FontAwesome — CHỈ dùng cho topbar, để giống site gốc.
-     Gốc dùng <i class="fa fa-map-marker"> … glyph đặc, màu trắng, 15px.
-     Phải khai báo fill/stroke inline để không bị quy tắc `svg use` (nét mảnh) ghi đè.
-     Phần UI VR còn lại vẫn dùng hệ nét mảnh (D-16). ── -->
-<g id="i-fa-pin" fill="currentColor" stroke="none"><path transform="translate(5.14286 20.57143) scale(0.01339 -0.01339)" d="M768 896q0 106 -75 181t-181 75t-181 -75t-75 -181t75 -181t181 -75t181 75t75 181zM1024 896q0 -109 -33 -179l-364 -774q-16 -33 -47.5 -52t-67.5 -19t-67.5 19t-46.5 52l-365 774q-33 70 -33 179q0 212 150 362t362 150t362 -150t150 -362z"/></g>
-<g id="i-fa-phone" fill="currentColor" stroke="none"><path transform="translate(2.57143 21.42857) scale(0.01339 -0.01339)" d="M1408 296q0 -27 -10 -70.5t-21 -68.5q-21 -50 -122 -106q-94 -51 -186 -51q-27 0 -52.5 3.5t-57.5 12.5t-47.5 14.5t-55.5 20.5t-49 18q-98 35 -175 83q-128 79 -264.5 215.5t-215.5 264.5q-48 77 -83 175q-3 9 -18 49t-20.5 55.5t-14.5 47.5t-12.5 57.5t-3.5 52.5 q0 92 51 186q56 101 106 122q25 11 68.5 21t70.5 10q14 0 21 -3q18 -6 53 -76q11 -19 30 -54t35 -63.5t31 -53.5q3 -4 17.5 -25t21.5 -35.5t7 -28.5q0 -20 -28.5 -50t-62 -55t-62 -53t-28.5 -46q0 -9 5 -22.5t8.5 -20.5t14 -24t11.5 -19q76 -137 174 -235t235 -174 q2 -1 19 -11.5t24 -14t20.5 -8.5t22.5 -5q18 0 46 28.5t53 62t55 62t50 28.5q14 0 28.5 -7t35.5 -21.5t25 -17.5q25 -15 53.5 -31t63.5 -35t54 -30q70 -35 76 -53q3 -7 3 -21z"/></g>
-<g id="i-fa-mail" fill="currentColor" stroke="none"><path transform="translate(0 19.71429) scale(0.01339 -0.01339)" d="M1792 826v-794q0 -66 -47 -113t-113 -47h-1472q-66 0 -113 47t-47 113v794q44 -49 101 -87q362 -246 497 -345q57 -42 92.5 -65.5t94.5 -48t110 -24.5h1h1q51 0 110 24.5t94.5 48t92.5 65.5q170 123 498 345q57 39 100 87zM1792 1120q0 -79 -49 -151t-122 -123 q-376 -261 -468 -325q-10 -7 -42.5 -30.5t-54 -38t-52 -32.5t-57.5 -27t-50 -9h-1h-1q-23 0 -50 9t-57.5 27t-52 32.5t-54 38t-42.5 30.5q-91 64 -262 182.5t-205 142.5q-62 42 -117 115.5t-55 136.5q0 78 41.5 130t118.5 52h1472q65 0 112.5 -47t47.5 -113z"/></g>
-<g id="i-fa-fb" fill="currentColor" stroke="none"><path transform="translate(4.94196 21.42857) scale(0.01339 -0.01339)" d="M959 1524v-264h-157q-86 0 -116 -36t-30 -108v-189h293l-39 -296h-254v-759h-306v759h-255v296h255v218q0 186 104 288.5t277 102.5q147 0 228 -12z"/></g>
-<g id="i-fa-tw" fill="currentColor" stroke="none"><path transform="translate(0.85714 20.57143) scale(0.01339 -0.01339)" d="M1620 1128q-67 -98 -162 -167q1 -14 1 -42q0 -130 -38 -259.5t-115.5 -248.5t-184.5 -210.5t-258 -146t-323 -54.5q-271 0 -496 145q35 -4 78 -4q225 0 401 138q-105 2 -188 64.5t-114 159.5q33 -5 61 -5q43 0 85 11q-112 23 -185.5 111.5t-73.5 205.5v4q68 -38 146 -41 q-66 44 -105 115t-39 154q0 88 44 163q121 -149 294.5 -238.5t371.5 -99.5q-8 38 -8 74q0 134 94.5 228.5t228.5 94.5q140 0 236 -102q109 21 205 78q-37 -115 -142 -178q93 10 186 50z"/></g>
-<g id="i-fa-in" fill="currentColor" stroke="none"><path transform="translate(1.71429 20.75893) scale(0.01339 -0.01339)" d="M349 911v-991h-330v991h330zM370 1217q1 -73 -50.5 -122t-135.5 -49h-2q-82 0 -132 49t-50 122q0 74 51.5 122.5t134.5 48.5t133 -48.5t51 -122.5zM1536 488v-568h-329v530q0 105 -40.5 164.5t-126.5 59.5q-63 0 -105.5 -34.5t-63.5 -85.5q-11 -30 -11 -81v-553h-329 q2 399 2 647t-1 296l-1 48h329v-144h-2q20 32 41 56t56.5 52t87 43.5t114.5 15.5q171 0 275 -113.5t104 -332.5z"/></g>
-<g id="i-fa-ig" fill="currentColor" stroke="none"><path transform="translate(1.71429 20.57143) scale(0.01339 -0.01339)" d="M1024 640q0 106 -75 181t-181 75t-181 -75t-75 -181t75 -181t181 -75t181 75t75 181zM1162 640q0 -164 -115 -279t-279 -115t-279 115t-115 279t115 279t279 115t279 -115t115 -279zM1270 1050q0 -38 -27 -65t-65 -27t-65 27t-27 65t27 65t65 27t65 -27t27 -65zM768 1270 q-7 0 -76.5 0.5t-105.5 0t-96.5 -3t-103 -10t-71.5 -18.5q-50 -20 -88 -58t-58 -88q-11 -29 -18.5 -71.5t-10 -103t-3 -96.5t0 -105.5t0.5 -76.5t-0.5 -76.5t0 -105.5t3 -96.5t10 -103t18.5 -71.5q20 -50 58 -88t88 -58q29 -11 71.5 -18.5t103 -10t96.5 -3t105.5 0t76.5 0.5 t76.5 -0.5t105.5 0t96.5 3t103 10t71.5 18.5q50 20 88 58t58 88q11 29 18.5 71.5t10 103t3 96.5t0 105.5t-0.5 76.5t0.5 76.5t0 105.5t-3 96.5t-10 103t-18.5 71.5q-20 50 -58 88t-88 58q-29 11 -71.5 18.5t-103 10t-96.5 3t-105.5 0t-76.5 -0.5zM1536 640q0 -229 -5 -317 q-10 -208 -124 -322t-322 -124q-88 -5 -317 -5t-317 5q-208 10 -322 124t-124 322q-5 88 -5 317t5 317q10 208 124 322t322 124q88 5 317 5t317 -5q208 -10 322 -124t124 -322q5 -88 5 -317z"/></g>
-<g id="i-fa-yt" fill="currentColor" stroke="none"><path transform="translate(1.71429 20.57143) scale(0.01339 -0.01339)" d="M971 292v-211q0 -67 -39 -67q-23 0 -45 22v301q22 22 45 22q39 0 39 -67zM1309 291v-46h-90v46q0 68 45 68t45 -68zM343 509h107v94h-312v-94h105v-569h100v569zM631 -60h89v494h-89v-378q-30 -42 -57 -42q-18 0 -21 21q-1 3 -1 35v364h-89v-391q0 -49 8 -73 q12 -37 58 -37q48 0 102 61v-54zM1060 88v197q0 73 -9 99q-17 56 -71 56q-50 0 -93 -54v217h-89v-663h89v48q45 -55 93 -55q54 0 71 55q9 27 9 100zM1398 98v13h-91q0 -51 -2 -61q-7 -36 -40 -36q-46 0 -46 69v87h179v103q0 79 -27 116q-39 51 -106 51q-68 0 -107 -51 q-28 -37 -28 -116v-173q0 -79 29 -116q39 -51 108 -51q72 0 108 53q18 27 21 54q2 9 2 58zM790 1011v210q0 69 -43 69t-43 -69v-210q0 -70 43 -70t43 70zM1509 260q0 -234 -26 -350q-14 -59 -58 -99t-102 -46q-184 -21 -555 -21t-555 21q-58 6 -102.5 46t-57.5 99 q-26 112 -26 350q0 234 26 350q14 59 58 99t103 47q183 20 554 20t555 -20q58 -7 102.5 -47t57.5 -99q26 -112 26 -350zM511 1536h102l-121 -399v-271h-100v271q-14 74 -61 212q-37 103 -65 187h106l71 -263zM881 1203v-175q0 -81 -28 -118q-37 -51 -106 -51q-67 0 -105 51 q-28 38 -28 118v175q0 80 28 117q38 51 105 51q69 0 106 -51q28 -37 28 -117zM1216 1365v-499h-91v55q-53 -62 -103 -62q-46 0 -59 37q-8 24 -8 75v394h91v-367q0 -33 1 -35q3 -22 21 -22q27 0 57 43v381h91z"/></g>
-<!-- ── Cờ — viewBox 24×18 = ĐÚNG kích thước gốc của vi.png / en.png trên site
-     chính (24×18 px, hiển thị height:20px → 26.67×20). Trước đây dùng 26×20
-     (3:2) nên tỉ lệ sai; ngôi sao lại vẽ cao 75% chiều cao cờ nên bị viền
-     trắng 1px cắt mất 2 cánh dưới ("cờ VN bị khuất").
-     Sao VN: tâm (12,9), bán kính ngoài 5.4 = 30% chiều cao (≈ ảnh gốc).
-     Union Jack: bề rộng nét theo chuẩn quy về H=18 — chữ thập trắng 6 / đỏ 3.6,
-     chéo trắng 3.6 / đỏ 2.4. Phải clip vì nét chéo tràn ra ngoài góc.
-     Dùng fill/stroke inline để không bị quy tắc `svg use` (nét mảnh) ghi đè. ── -->
-<g id="i-flag-vi">
-  <rect width="24" height="18" fill="#da251d" stroke="none"/>
-  <!-- Sao: tâm (12, 9) = ĐÚNG tâm lá cờ · bán kính ngoài 5.6 (cao 10.1 = 56%
-       chiều cao cờ, rộng 10.65).
-       ⚠️ ĐỪNG đo sao bằng cách NGƯỠNG pixel vàng. vi.png có viền ringing —
-       kênh green quanh sao tụt xuống 0, THẤP HƠN cả nền đỏ (37) — nên mọi
-       ngưỡng đều ăn mất rìa và cho R quá nhỏ (tôi đã sai 3 lần: 4.6 → 4.35 →
-       4.95). Cách đúng: render thử hàng loạt R ở ĐÚNG cỡ 24×18 rồi lấy R có
-       **RMS thấp nhất so với vi.png** (`scratchpad/col.html`); đáy phẳng ở
-       R = 5.5–5.7, cy = 9.0. -->
-  <path d="M12 3.4 13.257 7.27h4.069l-3.292 2.391 1.258 3.869L12 11.139l-3.292 2.391 1.258-3.869L6.674 7.27h4.069z" fill="#ffff00" stroke="none"/>
-</g>
-<!-- clipPath để NGOÀI <g> cờ: <use> nhân bản cả subtree, để trong sẽ trùng id
-     nếu symbol được dùng >1 lần. -->
-<clipPath id="st-uk-frame"><rect width="24" height="18"/></clipPath>
-<g id="i-flag-en">
-  <!-- ⚠️ KHÔNG dựng cờ chuẩn 60×30 rồi `scale(0.4 0.6)` như bản trước.
-       Bóp không đều làm nét DỌC mỏng đi 2/3 (thập đỏ còn 2.4, trắng còn 4),
-       trong khi en.png thật có nét ĐẲNG HƯỚNG. Đo trên lưới 24×18 của en.png:
-         · thập đỏ  = 4px  ở CẢ hai chiều (cột 10–13, hàng 7–10)
-         · viền trắng thập = 1px mỗi bên → nét trắng 6px cả hai chiều
-         · chéo trắng ≈ 3.6px (đo bề ngang dải ở hàng 4 ≈ 6px, ×sin θ)
-         · **KHÔNG có chéo ĐỎ** — mọi pixel trên đường chéo của en.png đều là
-           trắng hoặc xanh (kiểm từng pixel), ở cỡ 24×18 chi tiết này mất hẳn.
-       Màu lấy đúng từ ảnh: xanh (0,0,99) · đỏ (208,23,46) · trắng #fff. -->
-  <g clip-path="url(#st-uk-frame)" fill="none" stroke-linecap="butt">
-    <rect width="24" height="18" fill="#000063" stroke="none"/>
-    <path d="M0 0 24 18M24 0 0 18" stroke="#ffffff" stroke-width="3.6"/>
-    <path d="M12 0V18M0 9H24" stroke="#ffffff" stroke-width="6"/>
-    <path d="M12 0V18M0 9H24" stroke="#d0172e" stroke-width="4"/>
-  </g>
-</g>
-<!-- phân loại điểm -->
-<g id="i-gate" transform="translate(0.05 -1.79)"><path d="M4 20V8.6L12 4l8 4.6V20"/><path d="M9 20v-5.6a3 3 0 0 1 6 0V20M2.6 20h18.8"/></g>
-<g id="i-see" transform="translate(0.05 0.05)"><path d="M2.6 12S6 6.4 12 6.4 21.4 12 21.4 12 18 17.6 12 17.6 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.8"/></g>
-<g id="i-thrill" transform="translate(0.05 -1.74)"><path d="M3 18c3-9 6-11 9-11s6 2 9 11"/><path d="M3 18h18M7.5 18v2.4M16.5 18v2.4"/><circle cx="12" cy="9.6" r="1.5"/></g>
-<g id="i-wave"><path d="M2.6 9.4c2-2 3.4-2 5 0s3 2 4.8 0 3.4-2 5 0 2.4 1.6 4 0"/><path d="M2.6 14.8c2-2 3.4-2 5 0s3 2 4.8 0 3.4-2 5 0 2.4 1.6 4 0"/></g>
-<g id="i-boat" transform="translate(0.85 -2.68)"><path d="M3.4 15.6h17.2l-2.2 4.4H5.6Z"/><path d="M6.6 15.6V7l9.4 3.6-9.4 2.4"/></g>
-<g id="i-ride" transform="translate(0.05 -0.98)"><rect x="2.6" y="9" width="18.8" height="7" rx="2.2"/><circle cx="7" cy="18.4" r="1.8"/><circle cx="17" cy="18.4" r="1.8"/><path d="M2.6 12.4h18.8M8 9V6.4h8V9"/></g>
-<g id="i-spa" transform="translate(-0.25 -1.85)"><path d="M12 20c0-4.4 3.2-7.6 7.6-7.6C19.6 16.8 16.4 20 12 20Z"/><path d="M12 20c0-4.4-3.2-7.6-7.6-7.6C4.4 16.8 7.6 20 12 20Z"/><path d="M12 20V9.6M12 9.6c0-3 1.4-5 3.2-5.6-.6 2.6-1.4 4.4-3.2 5.6Z"/></g>
-<g id="i-gift" transform="translate(0.05 -0.84)"><rect x="3" y="9.4" width="18" height="10.6" rx="2"/><path d="M3 13.4h18M12 9.4V20"/><path d="M12 9.4C9.6 9.4 7.6 8.4 7.6 6.8S9 4.6 10 5c1 .5 2 2.4 2 4.4Zm0 0c2.4 0 4.4-1 4.4-2.6S15 4.6 14 5c-1 .5-2 2.4-2 4.4Z"/></g>
-<g id="i-adv" transform="translate(0.09 -2.13)"><path d="M3 19.4 12 4l9 15.4Z"/><path d="m8.2 12.6 2.2 2.2 2.2-2.6 2.2 2.6"/></g>
-<g id="i-food" transform="translate(-0.68 1.8)"><path d="M6.6 3.6v7.2a2.4 2.4 0 0 0 4.8 0V3.6M9 3.6v7.2M9 13.2V20.4"/><path d="M17.4 20.4v-7.2c1.6 0 2.6-1.2 2.6-3.6s-1-6-2.6-6-2.6 3.6-2.6 6 1 3.6 2.6 3.6"/></g>
+<g id="i-star" fill="currentColor" stroke="none"><path d="M12 3.4l2.63 5.33 5.88.86-4.25 4.15 1 5.86L12 16.83l-5.26 2.77 1-5.86L3.5 9.59l5.88-.86Z"/></g>
 </defs>
 </svg>
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     VIEWER (mock panorama)
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-viewer" role="img" aria-label="Ảnh toàn cảnh 360 độ (bản mô phỏng)">
-  <div class="st-pano">
-    <div class="st-pano-layer" data-depth="0.30"></div>
-    <div class="st-pano-layer" data-depth="0.60"></div>
-    <div class="st-pano-layer" data-depth="1.00"></div>
-  </div>
-  <div class="st-pano-vignette" aria-hidden="true"></div>
-  <div class="st-pano-fade" aria-hidden="true"></div>
-  <p class="st-mock-note" aria-hidden="true">Ảnh 360° mô phỏng · bản thật dùng 3DVista</p>
-</div>
-
-<div id="st-hint" hidden>
-  <svg class="st-hint-hand" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-drag"/></svg>
-  <span data-i18n="hint"></span>
-</div>
-
-<div id="st-scene-label" aria-live="polite"></div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     HEADER — topbar vàng + navbar xanh (clone suoitien.vn)
+     #st-popup CHIẾM TRỌN MÀN HÌNH (D-48) — không hộp modal, không nền mờ.
+     Vẫn giữ role="dialog" aria-modal: xét hành vi nó vẫn là modal.
      ══════════════════════════════════════════════════════════════════════ -->
-<header id="st-header">
-  <div id="st-topbar">
-    <div class="st-topbar-in">
-      <ul class="st-tb-contact"></ul>
-      <div class="st-tb-right">
-        <div id="st-lang" role="group" data-i18n-aria="a11y.langGroup"></div>
-        <ul class="st-tb-social"></ul>
-      </div>
-    </div>
-  </div>
+<div id="st-popup" role="dialog" aria-modal="true"
+     aria-labelledby="st-popup-title" aria-describedby="st-popup-sub">
 
-  <nav id="st-navbar" data-i18n-aria="a11y.mainNav">
-    <button id="st-btn-menu" type="button" data-i18n-aria="a11y.openMenu" aria-controls="st-drawer" aria-expanded="false">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-menu"/></svg>
-    </button>
-    <ul class="st-nav-list st-nav-left"></ul>
-    <a class="st-logo" id="st-logo" href="#"><img alt="Suối Tiên" width="150" height="76"></a>
-    <ul class="st-nav-list st-nav-right"></ul>
-    <button id="st-btn-search" type="button" data-i18n-aria="a11y.search">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
-    </button>
-  </nav>
-</header>
+  <span class="st-brandline" aria-hidden="true"></span>
 
-<button id="st-nav-peek" type="button" data-i18n-aria="peek" aria-controls="st-header" aria-expanded="false">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevrons-down"/></svg>
-</button>
+  <button class="st-popup-close" type="button" data-st-close data-i18n-aria="close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+  </button>
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     CỤM C (Chỉ đường · Điểm đến) + popover + CTA vé
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-dock" role="toolbar" data-i18n-aria="a11y.dock"></div>
+  <div class="st-popup-inner">
 
-<div id="st-more-popover" role="menu" aria-hidden="true"></div>
+    <div class="st-popup-head">
+      <span class="st-eyebrow" data-i18n="popup.eyebrow"></span>
+      <h1 id="st-popup-title" tabindex="-1"></h1>
+      <p id="st-popup-sub" data-i18n="popup.subtitle"></p>
 
-<div id="st-cta-tickets"></div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     THẺ VÉ COMBO — component RIÊNG, dưới navbar bên phải (D-41)
-     Cả tấm vé là 1 <a>: bấm đâu cũng đi, không có nút bên trong.
-     JS render vào — xem js/controls.js renderTicket().
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-ticket-wrap"></div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     M1 · MODAL WELCOME
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-welcome" class="st-modal" aria-hidden="true">
-  <div class="st-scrim"></div>
-  <div class="st-modal-panel" role="dialog" aria-modal="true"
-       aria-labelledby="st-welcome-title" aria-describedby="st-welcome-sub">
-    <span class="st-brandline" aria-hidden="true"></span>
-
-    <button class="st-modal-close" type="button" data-st-close data-i18n-aria="close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
-    </button>
-
-    <div class="st-welcome-head">
-      <span class="st-eyebrow" data-i18n="welcome.eyebrow"></span>
-      <h1 id="st-welcome-title" tabindex="-1"></h1>
-      <p id="st-welcome-sub" data-i18n="welcome.subtitle"></p>
-    </div>
-
-    <div class="st-welcome-mapwrap">
-      <div id="st-welcome-map" role="group" data-i18n-aria="welcome.mapLabel">
-
-        <!-- ── Bản đồ 2D stylized · MOCK: không đúng địa hình thật ──────────
-             Toạ độ hotspot lưu bằng % nên đổi nền không phải sửa logic. -->
-        <svg class="st-map-svg" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-          <defs>
-            <linearGradient id="stGrass" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#eef9f1"/><stop offset="1" stop-color="#cdeed8"/>
-            </linearGradient>
-            <linearGradient id="stWater" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#cfeaf7"/><stop offset="1" stop-color="#a9d8ee"/>
-            </linearGradient>
-            <linearGradient id="stBldA" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#a7dcbb"/><stop offset="1" stop-color="#7fc99a"/>
-            </linearGradient>
-            <linearGradient id="stBldB" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#f6e2a8"/><stop offset="1" stop-color="#e9c96f"/>
-            </linearGradient>
-          </defs>
-
-          <rect width="1000" height="620" rx="20" fill="url(#stGrass)"/>
-
-          <!-- ranh giới công viên -->
-          <path d="M40 470 Q60 300 150 210 T400 120 Q620 70 800 130 Q940 180 950 330 Q960 480 830 540 Q600 600 340 570 Q90 545 40 470Z"
-                fill="#ffffff" fill-opacity=".42" stroke="#8ecfa6" stroke-width="2.5" stroke-dasharray="9 8"/>
-
-          <!-- cây / mảng xanh -->
-          <g fill="#9ad4ae" fill-opacity=".55">
-            <circle cx="120" cy="440" r="26"/><circle cx="160" cy="470" r="18"/>
-            <circle cx="255" cy="180" r="22"/><circle cx="300" cy="160" r="15"/>
-            <circle cx="700" cy="160" r="24"/><circle cx="745" cy="185" r="16"/>
-            <circle cx="880" cy="430" r="27"/><circle cx="912" cy="400" r="17"/>
-            <circle cx="520" cy="530" r="20"/><circle cx="560" cy="550" r="14"/>
-          </g>
-
-          <!-- hồ -->
-          <path d="M690 380 q80-50 150-10 q60 34 30 92 q-32 60-120 46 q-92-16-60-128Z" fill="url(#stWater)"/>
-          <path d="M715 430q28-12 56 0M735 462q30-12 60 0" stroke="#ffffff" stroke-opacity=".7" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <path d="M330 470 q70-34 130 4 q46 30 6 66 q-52 44-118 8 q-52-30-18-78Z" fill="url(#stWater)"/>
-
-          <!-- đường đi: bóng dưới + nét trắng trên -->
-          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <g stroke="#bfe0cb" stroke-width="17">
-              <path d="M140 500 L215 400 Q250 340 330 320 T520 300 Q640 285 720 330 T860 420"/>
-              <path d="M215 400 Q290 250 400 210 T620 175"/>
-              <path d="M520 300 L470 430 Q450 500 520 520"/>
-              <path d="M720 330 L760 240"/>
-              <path d="M330 320 L250 280"/>
-            </g>
-            <g stroke="#ffffff" stroke-width="11">
-              <path d="M140 500 L215 400 Q250 340 330 320 T520 300 Q640 285 720 330 T860 420"/>
-              <path d="M215 400 Q290 250 400 210 T620 175"/>
-              <path d="M520 300 L470 430 Q450 500 520 520"/>
-              <path d="M720 330 L760 240"/>
-              <path d="M330 320 L250 280"/>
-            </g>
-          </g>
-
-          <!-- khối kiến trúc -->
-          <g stroke="#ffffff" stroke-width="3">
-            <rect x="96" y="452" width="72" height="52" rx="9" fill="url(#stBldB)"/>
-            <path d="M132 430 l40 24 h-80Z" fill="#e9c96f"/>
-            <rect x="176" y="410" width="60" height="46" rx="9" fill="url(#stBldA)"/>
-            <rect x="368" y="106" width="86" height="58" rx="10" fill="url(#stBldA)"/>
-            <rect x="486" y="192" width="96" height="64" rx="10" fill="url(#stBldB)"/>
-            <path d="M534 160 l52 32h-104Z" fill="#e9c96f"/>
-            <rect x="580" y="326" width="92" height="62" rx="10" fill="url(#stBldA)"/>
-            <rect x="726" y="216" width="74" height="52" rx="10" fill="url(#stBldB)"/>
-            <rect x="800" y="392" width="82" height="56" rx="10" fill="url(#stBldA)"/>
-            <rect x="196" y="240" width="66" height="48" rx="9" fill="url(#stBldA)"/>
-          </g>
-
-          <!-- tàu lượn (nét trang trí) -->
-          <path d="M726 452 q40-64 92-30 q46 30 6 74" fill="none" stroke="#f0a3a3" stroke-width="6" stroke-linecap="round"/>
-
-          <!-- nhãn khu -->
-          <g font-size="17" font-weight="700" fill="#0a5220" fill-opacity=".62"
-             font-family="'Be Vietnam Pro',system-ui,sans-serif">
-            <text x="90" y="572">CỔNG CHÍNH</text>
-            <text x="352" y="96">KHU THAM QUAN</text>
-            <text x="596" y="316">KHU VĂN HOÁ</text>
-            <text x="742" y="510">KHU TRÒ CHƠI</text>
-            <text x="330" y="580">CÔNG VIÊN NƯỚC</text>
-          </g>
-        </svg>
-        <!-- hotspot do js/welcome.js chèn vào đây -->
+      <!-- Ô tìm kiếm (D-52) + nút bản đồ (D-54) trên CÙNG một hàng.
+           Gõ vào ô tìm là nhảy thẳng sang trạng thái danh sách, tìm trên TOÀN
+           BỘ 20 điểm chứ không giới hạn trong khu vực đang xem. -->
+      <div class="st-search-row">
+        <div class="st-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
+          <input type="search" id="st-search-input" autocomplete="off"
+                 data-i18n-aria="list.searchLbl" data-i18n-ph="list.searchPh">
+          <button type="button" class="st-search-clear" data-i18n-aria="list.clear">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+          </button>
+        </div>
+        <button type="button" class="st-head-map" data-open-map="all">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
+          <span data-i18n="map.open"></span>
+        </button>
       </div>
     </div>
 
-    <!-- Danh sách 8 điểm — CHỈ hiện trên mobile, nơi bản đồ landscape quá nhỏ
-         và hotspot 32px khó bấm chính xác. -->
-    <ul id="st-welcome-list"></ul>
+    <!-- ══ TRẠNG THÁI A — 3D carousel 9 KHU VỰC ═════════════════════════
+         Thẻ, chấm và vùng live do js/carousel.js sinh; đây là bộ khung.
+         Từ D-52 mỗi thẻ là một KHU VỰC (D.GROUPS), không phải một điểm. -->
+    <div id="st-popup-deck" class="st-cr">
+      <!-- .st-cr-viewport chỉ để neo 2 nút ‹ › vào đúng tầm cao thẻ. Không neo
+           vào .st-cr được (nó cao bằng cả vùng còn lại của màn nên nút trôi
+           lên trên), cũng không đặt nút BÊN TRONG .st-cr-stage được (stage là
+           preserve-3d, nút sẽ thành mặt phẳng trong không gian 3D). -->
+      <div class="st-cr-viewport">
+        <div class="st-cr-stage" role="group" aria-roledescription="carousel"
+             data-i18n-aria="popup.deckLabel"></div>
 
-    <div class="st-welcome-foot">
-      <span class="st-legend"><i class="st-legend-dot" aria-hidden="true"></i><span data-i18n="welcome.legend"></span></span>
-      <button id="st-welcome-skip" class="st-linkbtn" type="button" data-st-close>
-        <span data-i18n="welcome.skip"></span>
+        <button class="st-cr-nav st-cr-prev" type="button" data-cr-nav="prev"
+                data-i18n-aria="popup.prev">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-left"/></svg>
+        </button>
+        <button class="st-cr-nav st-cr-next" type="button" data-cr-nav="next"
+                data-i18n-aria="popup.next">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+        </button>
+      </div>
+
+      <div class="st-cr-dots"></div>
+      <p class="st-cr-live st-sr-only" aria-live="polite"></p>
+    </div>
+
+    <!-- ══ TRẠNG THÁI B — danh sách điểm của một khu vực ════════════════ -->
+    <section id="st-list" class="st-list" hidden aria-hidden="true">
+      <header class="st-list-top">
+        <button type="button" class="st-list-back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+          <span data-i18n="list.back"></span>
+        </button>
+        <div class="st-list-head">
+          <h2 class="st-list-title" tabindex="-1"></h2>
+          <span class="st-list-count"></span>
+        </div>
+        <button type="button" class="st-list-map" data-open-map="area">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
+          <span data-i18n="map.openArea"></span>
+        </button>
+      </header>
+
+      <ul class="st-list-grid"></ul>
+      <p class="st-list-empty" hidden data-i18n="list.empty"></p>
+    </section>
+
+    <div class="st-popup-foot">
+      <span class="st-legend">
+        <i class="st-legend-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-star"/></svg></i>
+        <span data-i18n="popup.legend"></span>
+      </span>
+      <button id="st-popup-skip" class="st-linkbtn" type="button" data-st-close>
+        <span data-i18n="popup.skip"></span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-right"/></svg>
       </button>
     </div>
   </div>
 </div>
 
+
 <!-- ══════════════════════════════════════════════════════════════════════
-     M4 · SHARE
+     BẢN ĐỒ 2D (D-51) — phủ lên popup. Markup DÙNG CHUNG với index2.html,
+     sửa ở đây thì phải sửa cả bên đó. Pin do js/map2d.js sinh.
      ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-share" class="st-modal" aria-hidden="true">
-  <div class="st-scrim" data-st-close></div>
-  <div class="st-modal-panel st-sheet" role="dialog" aria-modal="true" aria-labelledby="st-share-title">
-    <span class="st-brandline" aria-hidden="true"></span>
-    <button class="st-modal-close" type="button" data-st-close data-i18n-aria="close">
+<div id="st-map" hidden aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="st-map-top">
+    <div class="st-map-head">
+      <span class="st-map-sub" data-i18n="map.sub"></span>
+      <span class="st-map-title"></span>
+    </div>
+    <span class="st-map-count"></span>
+    <button type="button" class="st-map-x" data-map-act="close" data-i18n-aria="close">
       <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
     </button>
-    <h2 id="st-share-title" tabindex="-1" data-i18n="share.title"></h2>
-    <p class="st-share-scene"></p>
-    <div class="st-copyrow">
-      <input id="st-share-url" type="text" readonly>
-      <button id="st-share-copy" class="st-btn st-btn-primary" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-copy"/></svg>
-        <span data-i18n="share.copyBtn"></span>
+  </div>
+
+  <div class="st-map-view">
+    <div class="st-map-canvas">
+      <img class="st-map-img" alt="" decoding="async">
+      <div class="st-map-pins"></div>
+    </div>
+
+    <div class="st-map-card" hidden></div>
+
+    <div class="st-map-tools">
+      <button type="button" class="st-map-fit" data-map-act="fit" data-i18n-aria="map.fit">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-expand"/></svg>
       </button>
-    </div>
-    <ul class="st-share-social"></ul>
-    <p class="st-note" data-i18n="share.qrNote"></p>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     M5 · HELP
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-help" class="st-modal" aria-hidden="true">
-  <div class="st-scrim" data-st-close></div>
-  <div class="st-modal-panel" role="dialog" aria-modal="true" aria-labelledby="st-help-title">
-    <span class="st-brandline" aria-hidden="true"></span>
-    <button class="st-modal-close" type="button" data-st-close data-i18n-aria="close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
-    </button>
-    <h2 id="st-help-title" tabindex="-1" data-i18n="help.title"></h2>
-    <ol class="st-help-steps"></ol>
-    <label class="st-check">
-      <input id="st-help-hide" type="checkbox">
-      <span data-i18n="help.dontShow"></span>
-    </label>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     M2 · OVERLAY CHỈ ĐƯỜNG — clone của overlay có sẵn trên trip360 (D-43)
-     Toàn màn hình, KHÔNG phải dialog canh giữa → dùng .st-fs-panel.
-     Song ngữ đồng thời (dòng Việt đậm + dòng Anh nhạt) đúng như bản thật.
-     Logic: js/route.js · Style: css/route.css · Docs: docs/04-modals.md §4.4
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-route" class="st-modal st-fs" aria-hidden="true">
-  <div class="st-fs-panel" role="dialog" aria-modal="true" aria-labelledby="st-route-title">
-
-    <!-- ── Bảng điều khiển trái ─────────────────────────────────────────── -->
-    <aside id="st-rt-side">
-      <div class="st-rt-head">
-        <span class="st-rt-logo" aria-hidden="true">ST</span>
-        <div class="st-rt-headtxt">
-          <h2 id="st-route-title" tabindex="-1" data-i18n="route.title"></h2>
-          <p data-i18n="route.subtitle"></p>
-        </div>
-        <button id="st-rt-lang" type="button" data-i18n-aria="a11y.langGroup">
-          <span></span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-down"/></svg>
-        </button>
-        <button id="st-rt-collapse" type="button" aria-expanded="true" aria-controls="st-rt-side">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-left"/></svg>
-        </button>
-      </div>
-
-      <div class="st-rt-scroll">
-        <div class="st-rt-card">
-          <!-- Ray trái: chấm xanh · nét đứt · ô vuông đỏ (chi tiết nhận diện) -->
-          <span class="st-rt-rail" aria-hidden="true">
-            <i class="st-rt-dot"></i><i class="st-rt-dash"></i><i class="st-rt-sq"></i>
-          </span>
-          <div class="st-rt-fields">
-            <label class="st-rt-field">
-              <span class="st-rt-lab" data-i18n="route.from"></span>
-              <span class="st-rt-sel">
-                <select id="st-rt-from"></select>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-down"/></svg>
-              </span>
-            </label>
-            <label class="st-rt-field">
-              <span class="st-rt-lab" data-i18n="route.to"></span>
-              <span class="st-rt-sel">
-                <select id="st-rt-to"></select>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-down"/></svg>
-              </span>
-            </label>
-          </div>
-          <div class="st-rt-acts">
-            <button id="st-rt-swap" class="st-rt-btn" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-swap"/></svg>
-              <span data-i18n="route.swap"></span>
-            </button>
-            <button id="st-rt-mine" class="st-rt-btn st-rt-tonal" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-my-location"/></svg>
-              <span data-i18n="route.myLoc"></span>
-            </button>
-          </div>
-        </div>
-
-        <div id="st-rt-summary" aria-live="polite"></div>
-
-        <button id="st-rt-steps-toggle" type="button" aria-expanded="true" aria-controls="st-rt-steps">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-right"/></svg>
-          <span data-i18n="route.steps"></span>
-        </button>
-        <ol id="st-rt-steps"></ol>
-
-        <p class="st-rt-mock" data-i18n="route.mock"></p>
-      </div>
-    </aside>
-
-    <!-- ── Bản đồ ───────────────────────────────────────────────────────── -->
-    <div class="st-rt-stage">
-      <div id="st-rt-canvas">
-        <!-- MOCK: bản đồ SVG tự vẽ. Bản thật là map/img/map.jpg (~1.2 MB) —
-             thay <svg> này bằng <img> là xong, toạ độ pin tính theo % nên
-             không phải sửa JS. Gradient dùng id riêng `stRt*` để không đụng
-             defs của bản đồ trong modal welcome. -->
-        <svg class="st-rt-map" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="stRtGrass" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#f2fbf5"/><stop offset="1" stop-color="#d8f0e0"/>
-            </linearGradient>
-            <linearGradient id="stRtWater" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#d5edf9"/><stop offset="1" stop-color="#aedaef"/>
-            </linearGradient>
-            <linearGradient id="stRtBldA" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#b3e2c4"/><stop offset="1" stop-color="#86cd9f"/>
-            </linearGradient>
-            <linearGradient id="stRtBldB" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#f8e8b6"/><stop offset="1" stop-color="#ecd07a"/>
-            </linearGradient>
-          </defs>
-
-          <rect width="1000" height="620" fill="url(#stRtGrass)"/>
-
-          <!-- ranh giới công viên -->
-          <path d="M46 452 Q64 286 152 198 T404 112 Q626 62 806 124 Q944 174 952 324 Q962 476 832 538 Q602 598 342 568 Q96 542 46 452Z"
-                fill="#ffffff" fill-opacity=".46" stroke="#8ecfa6" stroke-width="2.5" stroke-dasharray="10 9"/>
-
-          <!-- mảng cây -->
-          <g fill="#9ad4ae" fill-opacity=".5">
-            <circle cx="118" cy="432" r="27"/><circle cx="158" cy="464" r="18"/>
-            <circle cx="262" cy="176" r="23"/><circle cx="306" cy="156" r="15"/>
-            <circle cx="704" cy="152" r="25"/><circle cx="748" cy="180" r="17"/>
-            <circle cx="884" cy="418" r="28"/><circle cx="916" cy="388" r="18"/>
-            <circle cx="516" cy="524" r="21"/><circle cx="556" cy="546" r="14"/>
-            <circle cx="392" cy="336" r="19"/><circle cx="620" cy="466" r="17"/>
-          </g>
-
-          <!-- hồ -->
-          <path d="M694 372 q82-50 152-10 q62 34 30 94 q-32 60-122 46 q-94-16-60-130Z" fill="url(#stRtWater)"/>
-          <path d="M718 424q28-12 56 0M738 456q30-12 60 0" stroke="#ffffff" stroke-opacity=".7" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <path d="M326 462 q72-34 132 4 q46 30 6 66 q-52 44-120 8 q-52-30-18-78Z" fill="url(#stRtWater)"/>
-
-          <!-- lối đi: bóng dưới + nét trắng trên -->
-          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <g stroke="#c4e2cf" stroke-width="18">
-              <path d="M136 496 L214 396 Q250 336 330 316 T520 296 Q640 282 720 326 T862 412"/>
-              <path d="M214 396 Q292 246 402 206 T624 170"/>
-              <path d="M520 296 L470 426 Q450 496 520 516"/>
-              <path d="M720 326 L762 236"/>
-              <path d="M330 316 L248 276"/>
-              <path d="M624 170 L680 232 L720 326"/>
-              <path d="M862 412 L880 500"/>
-            </g>
-            <g stroke="#ffffff" stroke-width="11">
-              <path d="M136 496 L214 396 Q250 336 330 316 T520 296 Q640 282 720 326 T862 412"/>
-              <path d="M214 396 Q292 246 402 206 T624 170"/>
-              <path d="M520 296 L470 426 Q450 496 520 516"/>
-              <path d="M720 326 L762 236"/>
-              <path d="M330 316 L248 276"/>
-              <path d="M624 170 L680 232 L720 326"/>
-              <path d="M862 412 L880 500"/>
-            </g>
-          </g>
-
-          <!-- khối kiến trúc -->
-          <g stroke="#ffffff" stroke-width="3">
-            <rect x="94" y="446" width="74" height="54" rx="9" fill="url(#stRtBldB)"/>
-            <path d="M131 424 l41 24h-82Z" fill="#ecd07a"/>
-            <rect x="174" y="404" width="62" height="48" rx="9" fill="url(#stRtBldA)"/>
-            <rect x="366" y="100" width="88" height="60" rx="10" fill="url(#stRtBldA)"/>
-            <rect x="484" y="186" width="98" height="66" rx="10" fill="url(#stRtBldB)"/>
-            <path d="M533 154 l53 32h-106Z" fill="#ecd07a"/>
-            <rect x="578" y="320" width="94" height="64" rx="10" fill="url(#stRtBldA)"/>
-            <rect x="724" y="210" width="76" height="54" rx="10" fill="url(#stRtBldB)"/>
-            <rect x="798" y="386" width="84" height="58" rx="10" fill="url(#stRtBldA)"/>
-            <rect x="194" y="234" width="68" height="50" rx="9" fill="url(#stRtBldA)"/>
-            <rect x="618" y="486" width="80" height="52" rx="9" fill="url(#stRtBldB)"/>
-          </g>
-
-          <!-- tàu lượn (nét trang trí) -->
-          <path d="M724 448 q42-64 94-30 q46 30 6 74" fill="none" stroke="#f0a3a3" stroke-width="6" stroke-linecap="round"/>
-
-          <g font-size="16" font-weight="700" fill="#0a5220" fill-opacity=".55"
-             font-family="'Be Vietnam Pro',system-ui,sans-serif">
-            <text x="84" y="566">CỔNG CHÍNH</text>
-            <text x="348" y="90">KHU THAM QUAN</text>
-            <text x="592" y="310">KHU VĂN HOÁ</text>
-            <text x="738" y="502">KHU TRÒ CHƠI</text>
-            <text x="322" y="574">CÔNG VIÊN NƯỚC</text>
-            <text x="836" y="352">HỒ LẠC CẢNH</text>
-          </g>
-        </svg>
-
-        <!-- Đường đi A→B. Cùng viewBox + cùng preserveAspectRatio với bản đồ
-             nên toạ độ khớp tuyệt đối. js/route.js ghi thuộc tính `d`. -->
-        <svg class="st-rt-path" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true">
-          <path id="st-rt-line-under" d=""/>
-          <path id="st-rt-line" d=""/>
-        </svg>
-
-        <!-- Pin số + cờ A/B: HTML tuyệt đối theo % (không phải SVG) để dùng
-             được token font/màu và bắt sự kiện như nút bình thường. -->
-        <div id="st-rt-pins"></div>
-      </div>
-    </div>
-
-    <!-- ── Thanh công cụ phải ───────────────────────────────────────────── -->
-    <div id="st-rt-tools" role="toolbar" data-i18n-aria="route.title"></div>
-
-    <button class="st-fs-close" type="button" data-st-close data-i18n-aria="close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
-    </button>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     M3 · OVERLAY DANH SÁCH ĐIỂM ĐẾN — clone (D-43)
-     Chip lọc KHÔNG ẩn thẻ không khớp mà LÀM MỜ tại chỗ — đúng hành vi bản
-     thật, giữ nguyên bố cục lưới khi đổi bộ lọc. Logic: js/places.js
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-places" class="st-modal st-fs" aria-hidden="true">
-  <div class="st-fs-panel" role="dialog" aria-modal="true" aria-labelledby="st-places-title">
-    <div class="st-pl-head">
-      <h2 id="st-places-title" tabindex="-1" data-i18n="places.title"></h2>
-      <span class="st-pl-searchwrap">
-        <svg class="st-pl-searchic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
-        <input id="st-pl-search" type="text" autocomplete="off" spellcheck="false">
-        <button id="st-pl-clear" type="button" hidden data-i18n-aria="places.clear">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
-        </button>
-      </span>
-      <button class="st-fs-close st-pl-x" type="button" data-st-close data-i18n-aria="close">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+      <button type="button" data-map-act="in" data-i18n-aria="map.zoomIn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>
+      </button>
+      <button type="button" data-map-act="out" data-i18n-aria="map.zoomOut">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg>
       </button>
     </div>
 
-    <div id="st-pl-chips" role="tablist" aria-label="Filter"></div>
-    <div id="st-pl-grid"></div>
-    <p id="st-pl-empty" hidden data-i18n="places.empty"></p>
-    <p id="st-pl-count"></p>
+    <p class="st-map-hint" data-i18n="map.hint"></p>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     M-PLACEHOLDER · overlay đã có sẵn trên site thật (D-09v2)
-     ⚠️ TỪ 2026-08-01 KHÔNG CÒN ĐƯỢC MỞ — 2 nút đã trỏ vào M2/M3 ở trên.
-     Giữ lại markup + chuỗi để `?full=1` và lịch sử quyết định còn trace được.
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-existing" class="st-modal" aria-hidden="true">
-  <div class="st-scrim" data-st-close></div>
-  <div class="st-modal-panel" role="dialog" aria-modal="true" aria-labelledby="st-existing-title">
-    <span class="st-brandline" aria-hidden="true"></span>
-    <button class="st-modal-close" type="button" data-st-close data-i18n-aria="close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
-    </button>
-    <div class="st-existing-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg></div>
-    <h2 id="st-existing-title" tabindex="-1"></h2>
-    <p class="st-existing-body"></p>
-    <p class="st-note" data-i18n="existing.note"></p>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     M6 · DRAWER mobile
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-drawer" class="st-modal" aria-hidden="true">
-  <div class="st-scrim" data-st-close></div>
-  <div class="st-drawer-panel" role="dialog" aria-modal="true" data-i18n-aria="a11y.mainNav">
-    <div class="st-drawer-head">
-      <img class="st-drawer-logo" alt="Suối Tiên">
-      <button class="st-modal-close" type="button" data-st-close data-i18n-aria="close">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
-      </button>
-    </div>
-    <nav class="st-drawer-nav"></nav>
-    <div class="st-drawer-foot"></div>
-  </div>
-</div>
-
-<div id="st-toast" role="status" aria-live="polite"></div>
+<!-- Panel debug — chỉ hiện với ?debug=1 -->
 <div id="st-debug" hidden></div>
 
+
+<!-- ══ JS — classic script, không module: biến global, mở file:// chạy được ══
+     Thứ tự phụ thuộc:
+       data → i18n → a11y → bridge → carousel → map2d → popup (cuối cùng)
+     `carousel.js` và `map2d.js` phải TRƯỚC `popup.js`: popup gọi
+     ST.carousel.create() / ST.map2d.create() ngay trong lượt bootstrap. -->
 <script src="js/data.js"></script>
 <script src="js/i18n.js"></script>
-<script src="js/store.js"></script>
 <script src="js/a11y.js"></script>
-<script src="js/viewer.js"></script>
-<script src="js/navbar.js"></script>
-<script src="js/controls.js"></script>
-<script src="js/overlays.js"></script>
-<script src="js/route.js"></script>
-<script src="js/places.js"></script>
-<script src="js/welcome.js"></script>
-<script src="js/app.js"></script>
+<script src="js/bridge.js"></script>
+<script src="js/carousel.js"></script>
+<script src="js/map2d.js"></script>
+<script src="js/popup.js"></script>
 </body>
 </html>

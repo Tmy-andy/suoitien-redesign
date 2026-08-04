@@ -1,405 +1,294 @@
-> Cập nhật: 2026-08-01 (v3 — §7.6.1 port M2/M3 clone · D-43)
+> Cập nhật: 2026-08-03 (v8 — thêm assets/map vào danh sách deploy · D-51)
 
-# 07 — Integration: ghép prototype vào bản 3DVista thật
+# 07 — Tích hợp: hợp đồng giữa popup và trang cha
 
-File này dành cho dev sẽ port prototype sang `suoitien.trip360.vn` thật.
-Mọi thông tin dưới đây đọc trực tiếp từ source site, verify **2026-07-30**.
+Popup là **một trang HTML độc lập** (`index.html`) được nhúng vào trang VR bằng
+`<iframe>`. Đây là file quan trọng nhất của bộ docs: nó là toàn bộ những gì bên tích
+hợp cần đọc.
 
-## 7.1 Hiện trạng repo thật — cái gì đang có
+**Muốn chép được ngay?** Mở [`host-demo.html`](../host-demo.html) — phần `<script>`
+cuối file chính là code trang cha, đã chạy được, ~40 dòng.
 
-Suy ra từ `index.htm` + các file fetch được:
+> ⭐ **Hợp đồng này dùng chung cho CẢ HAI bản** (`index.html` và `index2.html` — D-50).
+> Đổi bản chỉ là đổi `src` của iframe; không có message nào khác nhau, không phải sửa
+> một dòng nào ở trang cha. `host-demo.html` có nút **"Bản 1 / Bản 2"** để tự kiểm.
+
+---
+
+## 7.1 Bức tranh 30 giây
 
 ```
-<web root>/
-├── index.htm                     ← file phải sửa (thêm markup + link CSS/JS mới)
-├── favicon.ico, socialThumbnail.jpg
-│
-├── vr-360/                       ← 🔴 EXPORT 3DVISTA — READ-ONLY, KHÔNG SỬA
-│   ├── lib/tdvplayer.js
-│   ├── script.js                 ← chứa định nghĩa toàn bộ scene/panorama
-│   ├── fonts.css                 ← 'Be Vietnam Pro'
-│   ├── locale/vi-VN.txt, en.txt
-│   ├── media/panorama_XXXX_0/{f,b,l,r,u,d}/{level}/{tile}.jpg
-│   └── misc/icon16|32|180|192.png
-│
-├── packages/vr-core/index.js     ← SEAM chuẩn, publish window.VRCore
-│
-├── js/
-│   ├── context-menu.js           ← ES module, ContextMenuController (Việt hoá menu chuột phải)
-│   ├── floorplan.js              ← bộ nạp + điều khiển overlay bản đồ (10.7 KB)
-│   ├── floorplan.dc.html         ← template + class component React/DC (173 KB)
-│   ├── floorplan.css             ← CSS overlay + 2 nút FAB (8.9 KB)
-│   ├── geocalib.js               ← window.GeoCalib, GPS↔pixel affine + TPS
-│   └── vr360-tracking.js         ← window.VR360Track
-│
-├── map/
-│   ├── lib/{react,react-dom}.production.min.js, dc-runtime.js
-│   ├── fonts.css
-│   ├── img/map.jpg               (1.19 MB)
-│   └── map_{places,places_content,panos,graph,geo,locales}.json
-│
-├── data/catalog.json             ← 158 destinations
-└── backend/analytics/track.php
+┌─ TRANG CHA (suoitien.trip360.vn) ──────────────────────────────────┐
+│                                                                     │
+│   3DVista player  +  window.VRCore  +  floorplan (z 10000-10009)    │
+│                                                                     │
+│   ┌─ <iframe id="st-popup-frame"> ─ position:fixed; inset:0 ──────┐ │
+│   │  z-index: 10050 · background: transparent                     │ │
+│   │                                                                │ │
+│   │      index.html  =  #st-popup  — CHIẾM TRỌN MÀN               │ │
+│   │      (header + 3D carousel + footer, nền trắng đặc)           │ │
+│   │                                                                │ │
+│   └────────────────────────────────────────────────────────────────┘ │
+│                          ▲                    │                      │
+│         postMessage      │                    │  postMessage         │
+│         st:lang, st:open │                    ▼  st:ready,           │
+│                          │                       st:navigate,        │
+│                          └──── js/bridge.js ────  st:close           │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-## 7.2 3 cái bẫy phải biết trước khi sửa `index.htm`
+Popup **không biết gì** về trang cha ngoài `js/bridge.js`. Muốn nhúng vào chỗ khác
+(app khác, landing page khác) thì chỉ phải đọc lại đúng một file đó.
 
-### Bẫy 1 — `<base href="vr-360/">`
+---
+
+## 7.2 Trang cha phải viết gì
+
+### Bước 1 — nhúng iframe
 
 ```html
-<head>
-  <base href="vr-360/">
+<iframe id="st-popup-frame"
+        src="https://cdn-cua-ban/popup/index.html?lang=vi"
+        title="Chọn điểm bắt đầu tour 360°"></iframe>
 ```
-
-**Mọi** URL tương đối trong `index.htm` bị resolve từ `vr-360/`, không phải từ
-web root. Code hiện tại đã xử lý bằng cách prefix `../`:
-
-```html
-<script src="../map/lib/react.production.min.js"></script>
-<link rel="stylesheet" href="../js/floorplan.css">
-<script src="../js/floorplan.js"></script>
-```
-
-→ **Mọi asset mới của prototype cũng phải prefix `../`**, hoặc dùng path
-tuyệt-đối-gốc-web (`/css/st-tokens.css`). Comment trong code thật đã cảnh báo:
-
-> `ingestUrl phải tuyệt-đối-gốc-web vì <base href="vr-360/"> sẽ viết lại URL tương đối.`
-
-An toàn nhất cho code mới: **dùng path tuyệt đối `/`**.
-
-### Bẫy 2 — 3DVista ghi đè inline style của `#viewer`
-
-`floorplan.css` đã comment rõ:
-
-> `Dùng !important vì 3DVista ghi đè inline style của #viewer khi resize`
 
 ```css
-#viewer.fp-vrsplit {
-  top: 0 !important;
-  bottom: auto !important;
-  height: var(--fp-split, 50svh) !important;
-  z-index: 10005 !important;
+#st-popup-frame {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  border: 0;
+  background: transparent;    /* ⚠️ BẮT BUỘC — xem §7.2.1 */
+  z-index: 10050;             /* ⚠️ phải > 10009 — xem §7.4 */
 }
 ```
 
-→ Nếu prototype cần đổi layout `#viewer` (VD chừa chỗ cho navbar) thì **phải
-dùng class + `!important`**, không được set inline style — 3DVista sẽ xoá.
+Đúng 5 dòng. **Không** cần `backdrop-filter` — popup chiếm trọn màn với nền đặc
+(D-48), không còn lớp nền mờ nào để blur. Xem §7.2.2.
 
-### Bẫy 3 — `script.js` load bất đồng bộ, tour chưa sẵn sàng ngay
-
-`vr-core/index.js` có logic chờ khá cầu kỳ: load `tdvplayer.js` → rồi `script.js`
-→ rồi poll cho tới khi playlist có item class `PanoramaPlayListItem` hoặc
-`Panorama`, timeout 20s.
-
-→ **Không được** gọi `navigateToPano()` trước khi `ensureTourLoaded()` resolve.
-Modal welcome phải chờ promise này, không phải chờ `DOMContentLoaded`.
-
-## 7.3 API `window.VRCore` — seam chuẩn
-
-Từ `packages/vr-core/index.js` (8 KB, ES module, cũng publish global):
+### Bước 2 — nghe message
 
 ```js
-// Comment trong file gốc:
-//   vr-core — CANONICAL SEAM to the read-only 3DVista export.
-//   • getCurrentPanoId() — read the current scene's UUID.
-//   NEVER write to vr-360/ (read-only export).
+window.addEventListener('message', function (e) {
+  var d = e.data;
+  if (!d || typeof d.type !== 'string' || d.type.indexOf('st:') !== 0) return;
+
+  if (d.type === 'st:navigate') {
+    /* d.direct === true nghĩa là popup đã tự gọi VRCore rồi (cùng origin).
+       false thì trang cha phải tự đi. */
+    if (!d.direct && window.VRCore) VRCore.navigateToPano(window.tour, d.pano);
+  }
+
+  if (d.type === 'st:close') {
+    document.getElementById('st-popup-frame').hidden = true;
+    document.documentElement.style.overflow = '';        /* mở lại cuộn */
+  }
+});
 ```
 
-| Hàm | Signature | Ghi chú |
-|---|---|---|
-| `ensureTourLoaded` | `({ base='vr-360/', version, timeout=20000 }) => Promise<tour>` | Idempotent — gọi nhiều lần trả cùng 1 promise |
-| `mountViewer` | `(targetEl) => void` | Gắn player 3DVista vào element |
-| `resolvePanoIndex` | `(tour, panoUUID) => number` | UUID → index trong playlist |
-| `navigateToPano` | `(tour, panoUUID) => void` | **Đây là hàm prototype cần** |
-| `getCurrentPanoInfo` | `(tour) => { id, label }` | Đọc scene hiện tại |
-| `getCurrentPanoId` | `(tour) => string` | Chỉ UUID |
-| `auditPanoBindings` | `(tour, bindings) => …` | Kiểm tra binding key→UUID có hợp lệ |
+> **Chốt origin ở production.** Ví dụ trên nhận message từ mọi origin cho gọn. Khi
+> deploy thật, thêm `if (e.origin !== 'https://cdn-cua-ban') return;` — popup nằm ở
+> origin mình kiểm soát nên không có lý do gì để nới.
 
-`auditPanoBindings` rất hữu ích: chạy 1 lần lúc dev để verify 158 UUID trong
-`catalog.json` đều tồn tại trong tour.
+### Bước 3 — Esc và khoá cuộn
 
-### Cách port `ST.viewer` sang bản thật
+Hai việc popup **không thể tự làm** (§7.3):
 
 ```js
-// prototype — js/viewer.js
-ST.viewer.goTo = function (key) {
-  // MOCK: đổi background-image
-};
+document.documentElement.style.overflow = 'hidden';       /* lúc mở iframe */
 
-// bản thật — thay bằng:
-let _tour = null;
-ST.viewer.init = async function () {
-  _tour = await VRCore.ensureTourLoaded({ base: 'vr-360/' });
-  VRCore.mountViewer(document.getElementById('viewer'));
-  ST.store.emit('viewer:ready');
-};
-ST.viewer.goTo = function (key) {
-  const dest = ST.data.DESTINATIONS[key];
-  if (!dest || !_tour) return;
-  ST.store.emit('scene:loading', { key });
-  VRCore.navigateToPano(_tour, dest.pano);   // ← UUID đã có sẵn trong data.js
-  ST.store.set('sceneKey', key);
-  ST.store.emit('scene:change', { key, dest });
-};
-ST.viewer.getCurrent = function () {
-  return VRCore.getCurrentPanoInfo(_tour);
-};
+document.addEventListener('keydown', function (e) {       /* Esc ngoài iframe */
+  if (e.key === 'Escape' && frame && !frame.hidden) closePopup();
+});
 ```
 
-> `data.js` giữ nguyên UUID thật từ `catalog.json` → port là **đổi 1 hàm**, không
-> phải map lại data. Đây là lý do prototype không dùng UUID giả.
+### 7.2.1 Vì sao `background: transparent` là bắt buộc
 
-## 7.4 Z-index — phải dịch thang lên
+Iframe lấy nền từ document con. `css/base.css` đã đặt `html, body { background:
+transparent }` — nhưng **thẻ `<iframe>` ở trang cha cũng phải khai**, nếu không trình
+duyệt vẽ nền mặc định của element.
 
-Prototype dùng 0–90. Bản thật đã chiếm:
+Popup có nền trắng đặc nên **lúc đứng yên** không thấy khác biệt. Khác biệt nằm ở
+**animation vào/ra**: `#st-popup` fade `opacity`, và đúng những frame đó phải nhìn
+xuyên qua thấy panorama. Quên khai thì popup "bật" ra từ một tấm màn trắng thay vì
+hiện dần lên trên cảnh 360°.
 
-| z-index | Ai chiếm | Nguồn |
+Hai chỗ, phải khai cả hai.
+
+### 7.2.2 Không cần `backdrop-filter` (D-47 → D-48)
+
+Bản trước popup là hộp modal canh giữa trên nền mờ, và có một cái bẫy: `backdrop-filter`
+chỉ làm mờ được thứ nằm **sau nó trong cùng một document**. Trong iframe, phía sau lớp
+nền mờ là chỗ trống trong suốt → nó không làm gì cả. Cách chữa hồi đó là đẩy
+`backdrop-filter` sang chính thẻ `<iframe>` (D-47).
+
+**Từ D-48 câu hỏi này không còn:** popup chiếm trọn màn với nền đặc, không còn lớp nền
+mờ nào. Thêm `backdrop-filter` vào iframe giờ chỉ tốn GPU trong ~400 ms fade mà gần
+như không thấy gì. **Đừng thêm.**
+
+> Ghi lại vì đây là loại bẫy im lặng — không lỗi, không cảnh báo, chỉ là hiệu ứng
+> không xuất hiện. Ai sau này định dựng lại lớp nền mờ trong iframe sẽ vấp đúng nó.
+
+---
+
+## 7.3 Bốn thứ iframe KHÔNG làm được — trách nhiệm của trang cha
+
+| Việc | Vì sao popup không tự làm được | Trang cha phải làm |
 |---|---|---|
-| `1` | `#viewer` | `index.htm` inline style |
-| `10000` | `#fp-fabs` (2 nút) | `floorplan.css` |
-| `10001` | `#fp-overlay` | `floorplan.css` |
-| `10002` | `#fp-close` | `floorplan.css` |
-| `10005` | `#viewer.fp-vrsplit` | `floorplan.css` |
-| `10006` | `#fp-split-divider` | `floorplan.css` |
-| `10008` | `#viewer.fp-vrsplit.fp-vrfull` | `floorplan.css` |
-| `10009` | `#fp-vrfull-exit` | `floorplan.css` |
-| `10010+` | "chrome trang combo (buy bar/journey bar)" | comment trong `floorplan.css` |
+| **Khoá cuộn nền** | `document` của trang cha nằm ngoài tầm với | `documentElement.style.overflow = 'hidden'` khi mở |
+| **Esc khi focus ở ngoài iframe** | `keydown` chỉ bắn trong document đang có focus. Focus ở trong iframe thì popup nghe được (đã cài); người dùng bấm ra ngoài rồi Esc thì không | Tự nghe `keydown` như §7.2 bước 3 |
+| **Che nền khỏi screen reader** | `aria-modal="true"` chỉ có tác dụng trong cùng một cây accessibility | `aria-hidden="true"` (hoặc `inert`) lên nội dung trang cha khi popup mở |
+| **Trả focus sau khi đóng** | Phần tử được focus trước đó nằm ở document cha | Nhớ `document.activeElement` trước khi mở, `.focus()` lại khi nhận `st:close` |
 
-→ **Chỉ cần đổi giá trị trong `tokens.css`**, không sửa file CSS nào khác
-(vì [`01-architecture.md`](01-architecture.md) §1.5 cấm hardcode z-index):
+Ba trong bốn việc trên bản trước (popup là modal cùng document) tự lo được — chúng
+từng nằm trong `js/a11y.js` và đã bị gỡ. Chú thích đầu file đó ghi lại lý do.
+
+---
+
+## 7.4 z-index — vấn đề cũ đã tự biến mất
+
+Bản trước phải dịch cả thang z-index lên >10010 vì `floorplan.css` chiếm 10000–10009
+và 3DVista còn cao hơn. Kiến trúc iframe **xoá hẳn vấn đề đó**: popup nằm trong
+document riêng nên thang bên trong nó (`--st-z-popup: 10`) không tranh chấp với ai.
+
+Chỉ còn **đúng một con số** phải chỉnh, và nó nằm ở trang cha:
 
 ```css
-:root {
-  --st-z-viewer:      1;
-  --st-z-hint:        10020;
-  --st-z-scene-label: 10021;
-  --st-z-dock:        10030;
-  --st-z-rail:        10030;
-  --st-z-navbar:      10040;
-  --st-z-dropdown:    10045;
-  --st-z-overlay:     10060;
-  --st-z-modal:       10070;
-  --st-z-drawer:      10075;
-  --st-z-toast:       10085;
-  --st-z-debug:       10090;
-}
+#st-popup-frame { z-index: 10050; }   /* > 10009 của floorplan.css */
 ```
 
-Tất cả > 10010 → prototype UI luôn nằm trên mọi thứ của `floorplan.css`.
+---
 
-> ⚠️ Nhưng khi `#viewer.fp-vrsplit.fp-vrfull` bật (z 10008) thì nó vẫn **dưới**
-> dock của ta (10030) → dock sẽ đè lên VR fullscreen. Cần: khi split-view bật,
-> thêm class `.st-split-mode` lên `<html>` để ẩn dock/scene-label.
+## 7.5 Message — bảng tra đầy đủ
 
-## 7.5 Quyết định kiến trúc: thay hay sống chung với `floorplan`?
+Tất cả đều có tiền tố `st:` để trang cha lọc được giữa đủ thứ postMessage khác
+(3DVista, GTM, chat widget… đều bắn lung tung).
 
-Đây là quyết định lớn, cần chốt với khách/dev. 3 phương án:
+### Popup → trang cha
 
-### PA-A — Thay hoàn toàn `floorplan` (không khuyến nghị)
-
-| | |
-|---|---|
-| Làm gì | Xoá `#fp-fabs`, `#fp-overlay`, `floorplan.js/css/dc.html` khỏi `index.htm`. Prototype đảm nhiệm cả bản đồ + routing. |
-| Ưu | UI thống nhất tuyệt đối, 1 hệ design |
-| Nhược | **Mất hết**: pathfinding trên `map_graph.json`, GPS `GeoCalib`, split-view kéo được, 173 KB component React đã hoàn thiện. Phải viết lại từ đầu — công việc rất lớn. |
-
-### PA-B — Chỉ thay lớp vỏ, giữ ruột (✅ khuyến nghị)
-
-| | |
-|---|---|
-| Làm gì | Giữ nguyên `floorplan.js/dc.html` + toàn bộ logic. Chỉ: <br>① Ẩn `#fp-fabs`, thay bằng `#st-dock` <br>② `#st-btn-route` gọi đúng cái mà `#fp-launch` đang gọi <br>③ Re-skin `#fp-overlay` bằng CSS override dùng token của ta <br>④ Thêm navbar + welcome là lớp mới, độc lập |
-| Ưu | Giữ 100% chức năng thật. Rủi ro thấp. Đạt đủ YC-1/2/3. |
-| Nhược | Vẫn còn 1 file CSS "cũ" cần override cẩn thận |
-| Việc cần làm | Đọc `floorplan.js` xem `#fp-launch` bind handler gì → gọi lại handler đó từ `#st-btn-route` |
-
-### PA-C — Giữ nguyên `floorplan`, chỉ thêm welcome + navbar
-
-| | |
-|---|---|
-| Làm gì | Không chạm gì tới 2 nút hiện tại. Chỉ thêm modal welcome + navbar. |
-| Ưu | Rủi ro gần bằng 0, deploy được trong 1 ngày |
-| Nhược | **Không đáp ứng YC-2** (khách yêu cầu re-design 2 nút) |
-| Khi nào dùng | Làm 2 phase: phase 1 = PA-C (ra nhanh), phase 2 = PA-B |
-
-→ **Đề xuất: PA-B**, hoặc PA-C rồi PA-B nếu cần ra sớm. Ghi vào
-[`08-decisions.md`](08-decisions.md) D-11.
-
-## 7.6 Checklist port từng phần
-
-### Navbar (YC-3)
-
-- [ ] Thêm markup `#st-topbar` + `#st-navbar` + `#st-drawer` vào `index.htm`, **trước** `#viewer`
-- [ ] Link CSS bằng path tuyệt đối `/css/st-*.css` (tránh bẫy 1)
-- [ ] `#viewer` KHÔNG cần chừa chỗ — navbar là glass overlay (D-06), `#viewer` vẫn full viewport
-- [ ] Auto-dim: bind `pointerdown` trên `#viewer`. ⚠️ 3DVista có thể `stopPropagation` →
-      nếu vậy phải bind ở `capture` phase: `addEventListener('pointerdown', fn, true)`
-- [ ] Verify navbar không che nút của 3DVista ở góc trên-phải
-- [ ] Verify `#fp-close` (top 15px, right 16px, z 10002) không đè navbar — cần dời hoặc tăng z navbar
-
-### Modal welcome (YC-1)
-
-- [ ] Chờ `VRCore.ensureTourLoaded()` resolve, KHÔNG chờ `DOMContentLoaded` (bẫy 3)
-- [ ] Đổi bản đồ SVG → `map/img/map.jpg` + toạ độ pixel từ `map_places.json`
-- [ ] Đổi 8 hotspot toạ độ `%` → toạ độ thật
-- [ ] Lấy `blurb` từ `map_places_content.json`
-- [ ] Bật `localStorage` 24h (Q12) thay vì luôn hiện
-- [ ] Nối `ST.track()` → `VR360Track.event()` cho các event ở [`05-flows.md`](05-flows.md) §5.9
-- [ ] ⚠️ Test: modal có scrim blur — trên mobile cũ `backdrop-filter` trên toàn màn hình
-      rất tốn GPU khi 3DVista đang render. Cân nhắc pause render 3DVista khi modal mở.
-
-### Cụm C thay 2 nút FAB (YC-2 + nút combo · D-39/D-40)
-
-- [ ] Đọc `js/floorplan.js` tìm chỗ bind `#fp-launch` và `#fp-list-launch`
-- [ ] Expose 2 handler đó thành `window.fpOpenMap()` / `window.fpOpenList()`
-      (hoặc dùng lại API đã có — `floorplan.css` nhắc tới `window.fpVrFull`, khả năng
-      đã có sẵn API global tương tự)
-- [ ] `#fp-fabs { display: none !important }` — **ẩn**, không xoá khỏi DOM
-      (`floorplan.js` có thể còn tham chiếu tới `#fp-launch`)
-- [ ] `#st-btn-route.onclick = window.fpOpenMap`
-- [ ] `#st-btn-places.onclick = window.fpOpenList`
-- [ ] Re-skin `#fp-overlay` bằng file CSS override mới, load **sau** `floorplan.css`
-- [ ] Thêm class `.st-split-mode` lên `<html>` khi `#viewer.fp-vrsplit` bật → ẩn dock (§7.4)
-- [ ] Dùng `MutationObserver` trên `#viewer` để phát hiện class `fp-vrsplit` thay đổi
-      (giống cách `context-menu.js` dùng MutationObserver)
-- [ ] Thẻ vé `#st-ticket` (§3.3b) là `<a>`: bật `ST.data.LINKS_LIVE = true` để href
-      thành `https://suoitien.vn/combo-tro-choi` + `target="_blank"`
-- [ ] Kiểm răng cưa thẻ vé trên **Safari** — `mask-composite` là chỗ dễ vỡ nhất;
-      nếu hỏng thì vé thành hình chữ nhật trơn (vẫn dùng được, chỉ mất ẩn dụ)
-
-### 7.6.1 M2/M3 clone — port thế nào phụ thuộc Q-36 🔴
-
-Prototype có 2 overlay clone `#st-route` + `#st-places`. **Chưa chốt** chúng đóng vai
-gì ở bản thật — Q-36 ở [`00-requirements.md`](00-requirements.md) §0.6:
-
-| Nếu chọn | Phải làm gì | Rủi ro |
-|---|---|---|
-| **(a) chỉ để trình bày** *(giả định hiện tại)* | Không port gì. Nút thật gọi lại handler `#fp-launch` / `#fp-list-launch` như cũ | Không có. Giao diện thật vẫn là overlay cam-đỏ cũ, **lệch với header + cụm C mới** |
-| **(b) thay hẳn overlay cũ** | Nối đủ 6 nguồn dữ liệu ở [`06-data.md`](06-data.md) §6.7, viết lại `distance`/`buildSteps`/`pathD` bằng Dijkstra | Cao — `floorplan.dc.html` (173 KB React/DC) có những hành vi chưa quan sát hết |
-| **(c) lấy vỏ, giữ ruột** | Áp CSS mới lên DOM của `floorplan`, không dùng `route.js`/`places.js` | Trung bình — phải map từng class của bundle React đã minify |
-
-**Khuyến nghị: (c)**, cùng lý do đã chọn PA-B ở §7.5 — phần khó và đã chạy tốt
-(pathfinding, GPS, 158 điểm) thì đừng viết lại; phần dễ và đang lệch (màu, font,
-radius, khoảng cách) thì thay.
-
-Nếu chọn (b) thì làm theo đúng thứ tự ở §6.7: ảnh bản đồ → `map_places.json` → cuối
-cùng mới thay 3 hàm tính đường. Ba hàm đó cố tình gom một chỗ trong `route.js`.
-
-**Bẫy riêng cho M2/M3 khi ghép:**
-- `.st-fs-panel` phủ **toàn màn hình** → nó sẽ che cả header mới. Đúng ý (overlay là
-  chế độ riêng), nhưng phải kiểm nút đóng: `.st-fs-close` ở `top: 20px; right: 20px`
-  **trùng chỗ** với `#fp-close` (`top: 15px; right: 16px`) của overlay cũ. Chạy song
-  song 2 overlay là có 2 nút × chồng nhau.
-- z-index của `.st-modal` phải dịch lên >10010 như §7.4, nếu không overlay cũ
-  (`z: 10001`) sẽ nằm đè lên bản clone.
-- `mask`/`aspect-ratio`/`dvh` — kiểm Safari, xem §7.9.
-
-### ⭐ KHÔNG được đè lên 4 cụm control có sẵn (D-40)
-
-Đây là ràng buộc **cứng** của bản ghép, không phải khuyến nghị: prototype được thả ĐÈ
-LÊN bản 3DVista đang chạy, 4 cụm kia vẫn còn nguyên tại chỗ.
-
-- [ ] Kiểm tra `--st-c-max-w` trong `tokens.css` còn khớp bề ngang thật của cụm ⓓ
-      (đang giả định `340px` gồm lề). Đo lại trên site thật rồi sửa `--st-rz-d-w`.
-- [ ] Mở `index.html?zones=1` ở 1280×720, 1440×900, 390×844 → cụm C **không** chạm
-      ghost nào (trừ ghost vàng ⓐ, xem dưới)
-- [ ] Đối chiếu trực tiếp trên site thật: chụp màn hình trip360 rồi chồng lên
-      screenshot prototype cùng độ phân giải
-- [ ] **KHÔNG** dựng lại `#st-cta-tickets`, popover `⋯`, nhóm nút VR/la bàn/âm
-      thanh/toàn màn hình — trip360 đã có (cụm ⓓ, ⓔ). Chúng đang bị `scope.css` tắt;
-      đừng gỡ `class="st-scope-min"` trên bản ghép.
-
-### 🔴 Cụm ⓐ — điểm DUY NHẤT còn xung đột (Q-35)
-
-Header trải hết bề ngang nên đè lên cụm ⓐ (VN + chia sẻ, trên-phải). Header đã có sẵn
-`#st-lang` và 5 icon social → nó **thay thế** chức năng của ⓐ chứ không chỉ che.
-
-- [ ] **Chờ khách chốt Q-35.** Giả định đang dùng: ẩn cụm ⓐ gốc.
-- [ ] Nếu chốt "ẩn": tìm selector cụm ⓐ trong export 3DVista → `display:none`, và **ẩn
-      chứ không xoá** (script gốc có thể còn tham chiếu)
-- [ ] Nếu chốt "giữ": đẩy ⓐ xuống `top: calc(var(--st-header-h) + 12px)` và kiểm tra
-      lại khi header slide lên (`html.st-nav-hidden`)
-- [ ] Nhắc lại: `#fp-close` của overlay ở `top:15px; right:16px; z:10002` cũng bị header
-      che → phải xử lý cùng lúc (§7.2)
-
-## 7.7 Thứ tự load ở `index.htm` bản thật
-
-Chèn của ta vào đâu:
-
-```html
-<head>
-  <base href="vr-360/">
-  …
-  <link rel="stylesheet" href="fonts.css">              <!-- Be Vietnam Pro -->
-  <link rel="stylesheet" href="/js/floorplan.css">      <!-- CŨ -->
-  <link rel="stylesheet" href="/css/st-tokens.css">     <!-- MỚI: sau floorplan để override -->
-  <link rel="stylesheet" href="/css/st-base.css">
-  <link rel="stylesheet" href="/css/st-navbar.css">
-  <link rel="stylesheet" href="/css/st-controls.css">
-  <link rel="stylesheet" href="/css/st-welcome.css">
-  <link rel="stylesheet" href="/css/st-overlays.css">
-  <link rel="stylesheet" href="/css/st-fp-override.css"><!-- MỚI: re-skin #fp-overlay -->
-  <link rel="stylesheet" href="/css/st-responsive.css">
-</head>
-<body>
-  <svg id="st-icons" hidden>…</svg>          <!-- MỚI, trước mọi thứ dùng <use> -->
-  <div id="st-topbar">…</div>                <!-- MỚI -->
-  <nav id="st-navbar">…</nav>                <!-- MỚI -->
-  <div id="viewer" class="fill-viewport"></div>   <!-- CŨ, không đổi -->
-  <div id="fp-fabs" hidden>…</div>           <!-- CŨ, ẩn -->
-  <div id="fp-overlay">…</div>               <!-- CŨ, giữ, re-skin -->
-  <div id="st-dock">…</div>                  <!-- MỚI -->
-  <div id="st-scene-label">…</div>           <!-- MỚI -->
-  <div id="st-welcome">…</div>               <!-- MỚI -->
-  <div id="st-share">…</div>                 <!-- MỚI -->
-  <div id="st-help">…</div>                  <!-- MỚI -->
-  <div id="st-drawer">…</div>                <!-- MỚI -->
-  <div id="st-toast"></div>                  <!-- MỚI -->
-
-  <script src="../map/lib/react…"></script>      <!-- CŨ -->
-  <script src="../js/geocalib.js"></script>      <!-- CŨ -->
-  <script type="module" src="../packages/vr-core/index.js"></script>  <!-- CŨ -->
-  <script src="../js/vr360-tracking.js"></script><!-- CŨ -->
-  <script src="../js/floorplan.js"></script>     <!-- CŨ -->
-
-  <script src="/js/st-data.js"></script>         <!-- MỚI, từ đây xuống -->
-  <script src="/js/st-store.js"></script>
-  <script src="/js/st-a11y.js"></script>
-  <script src="/js/st-viewer.js"></script>       <!-- bản thật: wrap VRCore -->
-  <script src="/js/st-navbar.js"></script>
-  <script src="/js/st-controls.js"></script>
-  <script src="/js/st-overlays.js"></script>
-  <script src="/js/st-welcome.js"></script>
-  <script src="/js/st-app.js"></script>          <!-- CUỐI CÙNG -->
-</body>
-```
-
-⚠️ `st-app.js` phải sau `floorplan.js` vì nó cần `window.fpOpenMap` tồn tại.
-Nếu `floorplan.js` bind async thì `st-app.js` phải poll/chờ.
-
-## 7.8 Rủi ro & cách giảm
-
-| # | Rủi ro | Mức | Giảm thế nào |
+| type | Payload | Khi nào | Trang cha nên làm gì |
 |---|---|---|---|
-| R1 | 3DVista `stopPropagation` pointer event → auto-dim navbar không chạy | Cao | Bind ở capture phase, hoặc dùng `MutationObserver`/rAF poll trên transform của viewer |
-| R2 | `backdrop-filter` toàn màn hình + 3DVista render → tụt FPS trên mobile tầm trung | Cao | Pause 3DVista khi modal mở; hoặc dùng ảnh screenshot làm nền thay vì blur live |
-| R3 | `floorplan.dc.html` (React) có CSS reset toàn cục làm bẩn UI mới | Trung | CSS của ta scope hết vào `#st-*`, không dùng selector trần; test kỹ |
-| R4 | `#fp-close` (z 10002, top-right) đè navbar | Trung | Tăng z navbar > 10002 (đã làm ở §7.4) + dời `#fp-close` xuống dưới navbar |
-| R5 | Đổi `index.htm` bị ghi đè khi re-export tour từ 3DVista | Cao | ⚠️ **Quan trọng**: `index.htm` ở web root chứ không trong `vr-360/` nên khả năng an toàn. Nhưng phải verify quy trình publish của khách. |
-| R6 | Font `Be Vietnam Pro` load từ `vr-360/fonts.css` — path bị `<base>` chi phối | Thấp | Đã hoạt động trên site hiện tại, không đổi |
-| R7 | UUID trong `catalog.json` lệch với tour sau khi re-export | Trung | Chạy `VRCore.auditPanoBindings()` trong CI hoặc 1 trang `/audit.html` |
-| R8 | Thêm ~8 file CSS + 9 file JS → tăng số request | Thấp | Minify + gộp khi build production; prototype không cần |
+| `st:ready` | `{ w, h }` | Popup dựng xong DOM | Bỏ trạng thái loading của iframe (nếu có) |
+| `st:navigate` | `{ key, pano, name, direct }` | Người dùng bấm 1 thẻ | `direct === false` → tự gọi `VRCore.navigateToPano()`. `true` → popup gọi rồi, chỉ ghi analytics |
+| `st:close` | `{ reason }` | Animation đóng đã chạy xong | Ẩn/gỡ iframe, mở lại cuộn, trả focus |
+| `st:resize` | `{ w, h }` | *(chưa dùng)* | Dành cho bên nào muốn iframe co theo panel |
 
-## 7.9 Kiểm thử trước khi lên production
+`reason` của `st:close`: `'navigate'` (đã chọn 1 điểm) · `'button'` (nút × hoặc "Để
+tôi tự khám phá") · `'esc'` · `'debug'`.
 
-- [ ] Chrome, Safari (iOS), Firefox, Samsung Internet
-- [ ] iPhone có notch — check `env(safe-area-inset-*)` ở dock, topbar, scene-label
-- [ ] Android tầm trung — đo FPS khi modal welcome mở (R2)
-- [ ] Landscape mobile height 400px — dock có che hết màn hình không
-- [ ] Chỉ dùng bàn phím: Tab qua được navbar → dock → mở modal → Esc đóng → focus quay về nút
-- [ ] Screen reader (NVDA/VoiceOver): modal welcome đọc được tiêu đề + tên hotspot
-- [ ] `prefers-reduced-motion: reduce` — không còn animation nào
-- [ ] Chậm mạng (throttle 3G) — welcome không hiện trước khi panorama load
-- [ ] Split-view của `floorplan` bật → dock/scene-label ẩn đúng (§7.4)
-- [ ] Deep link `?pano=tuyet` mở đúng điểm, không mở welcome
-- [ ] Chuột phải vẫn ra menu Việt hoá của `context-menu.js`
-- [ ] Analytics vẫn gửi được sau khi thêm UI mới
+> **`st:close` đến SAU `st:navigate` khoảng 300 ms** — cố ý. Popup chạy hết animation
+> đóng rồi mới báo; gỡ iframe ngay lúc `st:navigate` sẽ làm popup biến mất cụp một
+> cái. Trang cha cứ điều hướng tour ngay khi nhận `st:navigate` — hai việc chạy song
+> song đúng như thiết kế.
+
+### Trang cha → popup
+
+| type | Payload | Tác dụng |
+|---|---|---|
+| `st:lang` | `{ lang: 'vi' \| 'en' }` | Đổi ngôn ngữ nóng, không reload |
+| `st:open` | — | Mở lại popup mà **không** tải lại iframe: reset carousel về thẻ 1, chạy lại animation vào màn |
+
+Gửi bằng `frame.contentWindow.postMessage({ type: 'st:lang', lang: 'en' }, '*')`.
+
+---
+
+## 7.6 Hai đường điều hướng — vì sao có cả hai (D-46)
+
+`js/bridge.js` khi người dùng chọn một điểm:
+
+```
+1. sameOrigin() ?  →  parent.VRCore.navigateToPano(tour, pano)   → direct = true
+2. LUÔN LUÔN       →  postMessage({ type:'st:navigate', …, direct })
+```
+
+- **Đường 1** chỉ chạy khi popup và trang cha cùng origin. Phép thử là chạm vào
+  `parent.location.href` trong `try/catch` — khác origin thì trình duyệt ném
+  `SecurityError`; không có API nào hỏi thẳng được.
+- **Đường 2 luôn được gửi**, kể cả khi đường 1 thành công: trang cha vẫn cần biết để
+  ghi analytics và để đóng iframe.
+
+`direct` trong payload cho trang cha biết có phải tự điều hướng không.
+
+> **Chữ ký `navigateToPano` chưa xác minh 100%.** `bridge.js` thử `navigateToPano(tour,
+> pano)` rồi `navigateToPano(pano)`. Khi ghép thật, xác minh đúng một dạng rồi **xoá
+> vòng thử** — chỗ đó đã đánh dấu `// MOCK:`.
+
+---
+
+## 7.7 Deploy — nơi đặt file
+
+Popup là tĩnh hoàn toàn, đặt ở đâu cũng chạy:
+
+```
+/popup/
+  index.html                  ← bản 1 (carousel khu vực → danh sách)
+  index2.html                 ← bản 2 (wall → slider)
+  css/*.css
+  js/*.js
+  assets/img/cards/*.webp     12 ảnh thẻ   (~930 KB)
+  assets/map/park-2400.webp   bản đồ 2D    (391 KB)
+```
+
+Tổng asset ~1,3 MB. **Đừng deploy** `Ban Do Suoi Tien/` (39 MB ảnh gốc) và
+`host-demo.html`.
+
+Khi khách đã chốt một bản (Q-42), **xoá bản kia** cùng 3 file css + 3 file js riêng
+của nó — danh sách ở [`01-architecture.md`](01-architecture.md) §1.1.
+
+**Cùng origin với trang VR thì tốt hơn** — đường 1 hoạt động, đỡ một vòng
+postMessage, và siết `e.origin` dễ hơn. Nhưng không bắt buộc.
+
+Không cần build, không npm install, không server-side.
+`host-demo.html` **đừng deploy** — nó chỉ là trang cha mô phỏng để test.
+
+---
+
+## 7.8 Checklist trước khi ghép
+
+**Bên tích hợp**
+
+- [ ] `background: transparent` trên **cả** thẻ `<iframe>` (§7.2.1)
+- [ ] `z-index` iframe > 10009 (§7.4)
+- [ ] Nghe `st:navigate` + `st:close`; siết `e.origin` ở production (§7.2)
+- [ ] Khoá cuộn · Esc ngoài iframe · `aria-hidden` nền · trả focus (§7.3)
+- [ ] Quyết định khi nào hiện popup (mỗi phiên? 1 lần? có `?pano=` thì bỏ qua?) —
+      popup **không** tự quyết, xem §7.9
+- [ ] Truyền `?lang=` khớp ngôn ngữ trang cha, và gửi `st:lang` khi user đổi
+- [ ] ⚠️ Cân nhắc **pause render 3DVista** trong lúc popup mở — popup che kín màn nên
+      panorama phía dưới vẽ ra cũng không ai thấy, mà vẫn ăn GPU.
+
+**Bên popup**
+
+- [ ] Thay 12 ảnh bằng bản gốc độ phân giải cao của khách (Q-37), giữ đúng tỉ lệ
+      **3:2** — lệch tỉ lệ thì phải sửa `--st-card-h` trong `css/carousel.css`
+- [ ] Bổ sung ảnh cho 8 điểm còn thiếu nếu khách gửi (Q-38 · [`06-data.md`](06-data.md) §6.2)
+- [ ] ⚠️ **Thay số hiệu + toạ độ pin bằng dữ liệu thật** từ `map/map_places.json`
+      (`code` + toạ độ pixel) — hiện mới 2/20 số là thật, còn lại ước lượng bằng mắt.
+      Q-43 · [`06-data.md`](06-data.md) §6.10
+- [ ] Nếu đổi màu nền khung bản đồ thì phải **flatten lại ảnh** lên đúng màu mới,
+      không thì đường nối quay lại ([`06-data.md`](06-data.md) §6.10)
+- [ ] Xác minh chữ ký `VRCore.navigateToPano` rồi xoá vòng thử (§7.6)
+- [ ] Nối `ST.track()` vào `VR360Track.event()`, hoặc để trang cha tự ghi từ
+      `st:navigate` ([`05-flows.md`](05-flows.md) §5.5)
+- [ ] `@font-face` local thay Google Fonts ([`TODO.md`](TODO.md))
+
+---
+
+## 7.9 "Hiện 1 lần" — vì sao popup không tự quyết
+
+Bản trước dùng `localStorage['st.welcome.seen']` để chỉ hiện modal lần đầu (Q12 = b).
+Trong iframe, `localStorage` thuộc **origin của popup**, không phải của trang cha — và
+trang cha mới là nơi biết ngữ cảnh (đang deep-link tới `?pano=`? user vừa vào từ
+quảng cáo? đây là lần thứ mấy?).
+
+Vì vậy logic đó chuyển hẳn sang trang cha:
+
+```js
+if (!localStorage.getItem('st.popup.seen') && !location.search.includes('pano=')) {
+  openPopup();
+  localStorage.setItem('st.popup.seen', '1');
+}
+```
+
+Popup chỉ làm đúng một việc: hiện ra khi được nhúng.
+Cùng lý do, `js/i18n.js` **không** đọc `localStorage` cho ngôn ngữ — trang cha là
+nguồn sự thật duy nhất, nếu popup tự nhớ thì nó sẽ ghi đè lên cái cha vừa truyền vào.

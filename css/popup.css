@@ -1,293 +1,505 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   welcome.css — M1 modal chào mừng + bản đồ + hotspot (YC-1)
+   popup.css — popup CHIẾM TRỌN MÀN HÌNH (D-48).
+
+   Không còn hộp modal canh giữa, không còn lớp nền mờ. Nội dung chính là 3D
+   carousel; kiểu dáng thẻ ở css/carousel.css.
    ═══════════════════════════════════════════════════════════════════════ */
 
-#st-welcome .st-modal-panel {
-  position: relative;
-  width: min(94vw, 1120px);
-  max-height: 92dvh;
+/* ── Toàn màn ────────────────────────────────────────────────────────────
+   Iframe được nhúng phủ kín viewport của trang cha, nên `fixed; inset: 0`
+   ở đây = phủ kín màn hình thật.
+
+   Nền là màu ĐẶC, không phải scrim trong suốt: popup không "nổi lên trên"
+   panorama nữa mà thay thế hẳn nó trong lúc mở. `opacity` vẫn animate được
+   nên lúc vào/ra vẫn thấy panorama phía sau lộ ra qua iframe. */
+#st-popup {
+  position: fixed;
+  inset: 0;
+  z-index: var(--st-z-popup);
   display: flex;
   flex-direction: column;
-  padding: var(--st-s-8) var(--st-s-8) var(--st-s-5);
-  border-radius: var(--st-r-xl);
-  background: #fff;
-  border: 1px solid var(--st-surface-border);
-  box-shadow: var(--st-sh-xl);
-  overflow: hidden;
+  /* TRẮNG PHẲNG. Từng có 2 vệt radial rất nhạt (xanh trên, vàng dưới-phải)
+     để mặt phẳng trắng cỡ full HD đỡ chết cứng — nhưng vệt xanh nằm ngay dưới
+     dải 3 màu ở đỉnh và đọc ra thành một mảng ám xanh, không ra "gradient".
+     Khách yêu cầu bỏ (D-54). Bản 2 dùng ĐÚNG nền này. */
+  background: var(--st-bg);
+  opacity: 0;
+  transition: opacity var(--st-dur-slow) var(--st-ease-out);
+}
+#st-popup.st-open { opacity: 1; }
+
+/* Đóng: mờ + lùi nhẹ. Bản trước morph co về một nút trong dock (D-29) — giờ
+   không còn dock, và nút mở lại (nếu trang cha có) nằm ở document khác nên
+   không đo được rect của nó qua ranh giới iframe. */
+#st-popup.st-closing {
+  opacity: 0;
+  transition: opacity var(--st-dur-base) var(--st-ease);
+}
+#st-popup.st-closing .st-popup-inner {
+  transform: scale(.98);
+  transition: transform var(--st-dur-base) var(--st-ease);
 }
 
-/* ── Header ───────────────────────────────────────────────────────────── */
-.st-welcome-head {
+/* Dải 3 màu nhận diện — chạy hết bề ngang màn hình, không bo góc */
+#st-popup .st-brandline { border-radius: 0; z-index: 3; }
+
+/* ── Khung nội dung ───────────────────────────────────────────────────────
+   Tách khỏi #st-popup để nút × neo theo mép MÀN HÌNH, còn nội dung thì có
+   padding riêng. `min-height: 0` cho phép .st-cr co lại khi màn thấp. */
+.st-popup-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Lề trên/dưới ở mức tối thiểu — mọi pixel tiết kiệm được đều chảy sang
+     carousel, vì #st-popup-deck là phần tử DUY NHẤT co giãn (D-54). */
+  padding: calc(var(--st-sat) + var(--st-s-5)) var(--st-s-6)
+           calc(var(--st-sab) + var(--st-s-4));
+}
+
+.st-popup-close {
+  position: absolute;
+  top: calc(var(--st-sat) + var(--st-s-5));
+  right: var(--st-s-5);
+  z-index: 4;
+  width: 46px; height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-n-100);
+  color: var(--st-n-600);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease);
+}
+.st-popup-close:hover {
+  background: var(--st-n-200);
+  color: var(--st-n-900);
+  transform: rotate(90deg);
+}
+.st-popup-close svg { width: 20px; height: 20px; }
+
+/* ── Header ───────────────────────────────────────────────────────────────
+   Header bám đỉnh, footer bám đáy, carousel ăn HẾT phần giữa.
+
+   Trước D-54 header và footer mỗi bên một `margin-top: auto` để chia đôi
+   khoảng trống — khối nội dung nằm giữa màn, nhưng phần trống đó là trống
+   THẬT: carousel bị chặn ở `flex: 0 1 auto` nên không dùng được. Khách yêu
+   cầu ưu tiên carousel, nên bỏ cặp auto-margin và cho deck co giãn. */
+.st-popup-head {
   flex: none;
   text-align: center;
-  max-width: 720px;
-  margin: 0 auto var(--st-s-5);
+  max-width: 760px;
+  margin: 0 auto var(--st-s-4);
 }
+
+/* Phần tử co giãn DUY NHẤT trong .st-popup-inner. Mọi khoảng trống thừa đều
+   chảy vào đây; css/carousel.css suy cỡ thẻ từ chiều cao thật nhận được. */
+#st-popup-deck { flex: 1 1 auto; min-height: 0; }
 .st-eyebrow {
   display: inline-block;
-  margin-bottom: var(--st-s-3);
-  padding: 4px 12px;
+  margin-bottom: var(--st-s-2);
+  padding: 5px 14px;
   border-radius: var(--st-r-pill);
   background: var(--st-green-50);
   color: var(--st-green-700);
   font: var(--st-t-xs);
   letter-spacing: .12em;
 }
-#st-welcome-title {
+#st-popup-title {
   font: var(--st-t-display);
   color: var(--st-n-900);
-  margin-bottom: var(--st-s-3);
+  margin-bottom: var(--st-s-2);
   text-wrap: balance;
 }
-#st-welcome-sub {
+#st-popup-sub {
   font: var(--st-t-body);
-  font-size: 15.5px;
+  font-size: 16px;
   color: var(--st-n-600);
   text-wrap: pretty;
 }
 
-/* Animation nội dung vào — lệch 60ms mỗi bước */
-#st-welcome.st-open .st-eyebrow      { animation: st-fade-up var(--st-dur-slow) var(--st-ease-out) both; }
-#st-welcome.st-open #st-welcome-title{ animation: st-fade-up var(--st-dur-slow) 60ms var(--st-ease-out) both; }
-#st-welcome.st-open #st-welcome-sub  { animation: st-fade-up var(--st-dur-slow) 120ms var(--st-ease-out) both; }
-#st-welcome.st-open .st-welcome-mapwrap { animation: st-fade-up var(--st-dur-slow) 180ms var(--st-ease-out) both; }
+/* ── Vào màn: phần khung (D-55) ───────────────────────────────────────────
+   Dải 3 màu kéo ngang từ trái sang là nhịp MỞ ĐẦU — nó chạy trước mọi thứ
+   khác và cho người dùng biết "có gì đó vừa mở ra", trong khi phần nội dung
+   còn đang bay lên. Sân khấu carousel vào ở css/carousel.css.
+
+   Quãng đường tăng 14px → 22px và thêm scale: 14px trên nền trắng phẳng gần
+   như không đọc ra là chuyển động. */
+#st-popup.st-open .st-brandline {
+  animation: st-brand-sweep 620ms var(--st-ease-out) backwards;
+}
+@keyframes st-brand-sweep { from { transform: scaleX(0); } }
+
+#st-popup.st-open .st-eyebrow     { animation: st-fade-up 560ms 100ms var(--st-ease-out) backwards; }
+#st-popup.st-open #st-popup-title { animation: st-fade-up 560ms 170ms var(--st-ease-out) backwards; }
+#st-popup.st-open #st-popup-sub   { animation: st-fade-up 560ms 240ms var(--st-ease-out) backwards; }
+#st-popup.st-open .st-popup-close { animation: st-pop-in 460ms 520ms var(--st-ease-spring) backwards; }
+#st-popup.st-open .st-popup-foot  { animation: st-fade-up 560ms 780ms var(--st-ease-out) backwards; }
 @keyframes st-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(22px) scale(.97); }
   to   { opacity: 1; transform: none; }
 }
+@keyframes st-pop-in { from { opacity: 0; transform: scale(.5); } }
 
-/* ── Bản đồ ───────────────────────────────────────────────────────────── */
-.st-welcome-mapwrap {
-  flex: 1 1 auto;
-  min-height: 0;
+/* ── Ô tìm kiếm + nút bản đồ, CÙNG một hàng (D-52 · D-54) ─────────────── */
+.st-search-row {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: var(--st-s-2);
+  width: min(100%, 640px);
+  margin: var(--st-s-3) auto 0;
 }
-/* Kích thước thật do js/welcome.js:fitMap() gán (width/height px).
-   aspect-ratio ở đây chỉ là fallback trước khi JS chạy. */
-#st-welcome-map {
+.st-search {
   position: relative;
-  width: 100%;
-  aspect-ratio: 1000 / 620;
-  border-radius: var(--st-r-lg);
-  overflow: visible;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
 }
-.st-map-svg {
+.st-search > svg {
   position: absolute;
-  inset: 0;
+  left: 15px;
+  width: 18px; height: 18px;
+  color: var(--st-n-400);
+  pointer-events: none;
+}
+.st-search input {
   width: 100%;
-  height: 100%;
-  border-radius: var(--st-r-lg);
+  height: 46px;
+  padding: 0 44px;
+  border: 1.5px solid var(--st-n-200);
+  border-radius: var(--st-r-pill);
+  background: var(--st-n-50);
+  color: var(--st-n-900);
+  font: var(--st-t-body);
+  transition: border-color var(--st-dur-fast) var(--st-ease),
+              background var(--st-dur-fast) var(--st-ease);
 }
-/* Biến thể ?map=real — nền là ảnh bản đồ 3D thật */
-#st-welcome-map.st-map-real .st-map-svg { display: none; }
-#st-welcome-map.st-map-real {
-  background: var(--st-n-50) center/contain no-repeat;
-  box-shadow: inset 0 0 0 1px var(--st-surface-border);
-  border-radius: var(--st-r-lg);
+.st-search input::placeholder { color: var(--st-n-400); }
+.st-search input:focus-visible {
+  border-color: var(--st-green-500);
+  background: #fff;
+  box-shadow: var(--st-sh-focus);
 }
+/* `type="search"` tự mọc nút xoá riêng của trình duyệt, chồng lên nút của ta */
+.st-search input::-webkit-search-decoration,
+.st-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
 
-/* ── Hotspot ──────────────────────────────────────────────────────────── */
-.st-hotspot {
+.st-search-clear {
   position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: 38px; height: 38px;
-  transform: translate(-50%,-50%);
-  display: grid;
+  right: 9px;
+  width: 30px; height: 30px;
+  display: none;
   place-items: center;
   border-radius: var(--st-r-circle);
-  background: #fff;
-  color: var(--st-green-600);
-  box-shadow: 0 0 0 2.5px var(--st-green-600), var(--st-sh-md);
-  transition: transform var(--st-dur-fast) var(--st-ease-spring),
-              background var(--st-dur-fast) var(--st-ease),
-              color var(--st-dur-fast) var(--st-ease);
+  background: var(--st-n-200);
+  color: var(--st-n-600);
 }
-.st-hotspot svg { width: 20px; height: 20px; }
-/* Vùng bấm 44px */
-.st-hotspot::before {
-  content: "";
-  position: absolute;
-  left: 50%; top: 50%;
-  transform: translate(-50%,-50%);
-  width: 44px; height: 44px;
-  border-radius: var(--st-r-circle);
-}
-.st-hotspot:hover, .st-hotspot:focus-visible {
-  transform: translate(-50%,-50%) scale(1.16);
-  background: var(--st-green-600);
-  color: #fff;
-  z-index: 3;
-}
-.st-hotspot.st-going {
-  transform: translate(-50%,-50%) scale(1.3);
-  opacity: 0;
-  transition: transform 260ms var(--st-ease-out), opacity 260ms var(--st-ease);
-}
+.st-search-clear svg { width: 14px; height: 14px; }
+.st-search.st-on .st-search-clear { display: grid; }
 
-/* "Điểm nên xem" — hint NHẸ (Q9): ring vàng pulse, không xếp hạng */
-.st-hotspot.st-must::after {
-  content: "";
-  position: absolute;
-  inset: -7px;
-  border-radius: var(--st-r-circle);
-  border: 2px solid var(--st-gold-400);
-  opacity: .8;
-  animation: st-ring 2.4s var(--st-ease) infinite;
-  pointer-events: none;
-}
-@keyframes st-ring {
-  0%   { transform: scale(.86); opacity: .85; }
-  70%  { transform: scale(1.5); opacity: 0; }
-  100% { opacity: 0; }
-}
-
-/* Xuất hiện so le — chi tiết tạo "ấn tượng mạnh" */
-#st-welcome.st-open .st-hotspot {
-  animation: st-hs-in 420ms var(--st-ease-spring) both;
-  animation-delay: calc(320ms + var(--i) * 55ms);
-}
-@keyframes st-hs-in {
-  from { opacity: 0; transform: translate(-50%,-50%) scale(.3); }
-  to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-}
-
-/* ── Mini-card khi hover (bù cho việc bỏ preview panel · Q10=a) ───────── */
-.st-hotspot-card {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  z-index: 6;
-  width: 244px;
-  margin-top: -30px;
-  transform: translate(-50%, -100%) translateY(4px);
-  padding: var(--st-s-3) var(--st-s-4) var(--st-s-3);
-  border-radius: var(--st-r-md);
-  background: #fff;
-  border: 1px solid var(--st-surface-border);
-  box-shadow: var(--st-sh-md);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--st-dur-fast) var(--st-ease),
-              transform var(--st-dur-fast) var(--st-ease);
-}
-.st-hotspot-card.st-on { opacity: 1; transform: translate(-50%,-100%) translateY(0); }
-/* lật xuống dưới khi hotspot sát mép trên */
-.st-hotspot-card.st-flip { margin-top: 30px; transform: translate(-50%, 0) translateY(-4px); }
-.st-hotspot-card.st-flip.st-on { transform: translate(-50%, 0) translateY(0); }
-.st-hotspot-card::after {
-  content: "";
-  position: absolute;
-  left: 50%; bottom: -6px;
-  width: 12px; height: 12px;
-  transform: translateX(-50%) rotate(45deg);
-  background: #fff;
-  border-right: 1px solid var(--st-surface-border);
-  border-bottom: 1px solid var(--st-surface-border);
-}
-.st-hotspot-card.st-flip::after {
-  bottom: auto; top: -6px;
-  border: 0;
-  border-left: 1px solid var(--st-surface-border);
-  border-top: 1px solid var(--st-surface-border);
-}
-.st-hc-name { font: var(--st-t-h3); color: var(--st-n-900); margin: 6px 0 3px; }
-.st-hc-blurb {
-  font: var(--st-t-sm);
-  color: var(--st-n-500);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.st-hc-go {
-  display: flex; align-items: center; gap: 5px;
-  margin-top: var(--st-s-2);
-  font: var(--st-t-xs);
-  letter-spacing: .04em;
-  color: var(--st-green-600);
-  text-transform: uppercase;
-}
-.st-hc-go svg { width: 13px; height: 13px; }
-
-/* Tooltip đơn giản cho mobile (không dùng mini-card) */
-.st-hotspot-tip {
-  position: absolute;
-  left: var(--x); top: var(--y);
-  z-index: 6;
-  transform: translate(-50%,-100%) translateY(-26px);
-  padding: 5px 10px;
-  border-radius: var(--st-r-sm);
-  background: var(--st-n-900);
-  color: #fff;
-  font: var(--st-t-xs);
-  font-weight: 600;
+/* Nút bản đồ đứng cạnh ô tìm — cùng chiều cao, cùng bo tròn, để hai thứ đọc
+   ra là MỘT hàng công cụ chứ không phải một ô nhập và một nút lạc chỗ. */
+.st-head-map {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-green-50);
+  color: var(--st-green-700);
+  font: var(--st-t-btn);
+  font-size: 14px;
   white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--st-dur-fast) var(--st-ease);
+  transition: background var(--st-dur-fast) var(--st-ease), color var(--st-dur-fast) var(--st-ease);
 }
-.st-hotspot-tip.st-on { opacity: 1; }
+.st-head-map:hover { background: var(--st-green-600); color: #fff; }
+.st-head-map svg { width: 17px; height: 17px; }
 
-/* ── Danh sách điểm (chỉ mobile) ──────────────────────────────────────── */
-#st-welcome-list { display: none; }
-#st-welcome-list li { display: block; }
-.st-wl-item {
+/* Ở trạng thái danh sách đã có nút "Xem khu vực này trên bản đồ" ngay trên
+   đầu danh sách — hai nút bản đồ khác phạm vi cùng lúc là dễ bấm nhầm. */
+#st-popup.st-state-list .st-head-map { display: none; }
+
+#st-popup.st-open .st-search-row { animation: st-fade-up 560ms 310ms var(--st-ease-out) backwards; }
+
+/* ── Chỗ đặt carousel ─────────────────────────────────────────────────────
+   ⚠️ KHÔNG animate #st-popup-deck bằng transform: nó là cha của .st-cr-stage
+   (mang `perspective`) — một transform ở đây tạo containing block mới và làm
+   phẳng toàn bộ chiều sâu 3D của thẻ.
+
+   Từ D-55 khối này KHÔNG có animation nào: .st-cr-stage nằm bên trong nó tự
+   bay lên + phóng ra, còn thẻ và ảnh có nhịp riêng — chồng thêm một lớp fade
+   ở đây chỉ làm cả cụm mờ đi đúng lúc nó đang cần rõ nhất.
+   Tất cả ở css/carousel.css, mục "VÀO MÀN". */
+
+/* Thẻ ở bậc ±2/±3 cố ý tràn ra ngoài mép màn hình và bị cắt — tín hiệu "còn
+   nữa, quẹt tiếp đi". #st-popup không đặt overflow:hidden được (sẽ làm phẳng
+   cây 3D), nhưng `body { overflow: hidden }` ở base.css đã cắt sẵn. */
+
+/* ══ TRẠNG THÁI B — danh sách điểm của một khu vực (D-52) ═══════════════
+   Carousel và danh sách chiếm CÙNG một chỗ trong flex column: chỉ một trong
+   hai hiện tại một thời điểm, nên không cần position:absolute. */
+#st-popup.st-state-list #st-popup-deck { display: none; }
+.st-list[hidden] { display: none; }
+
+.st-list {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  animation: st-fade-up var(--st-dur-base) var(--st-ease-out) both;
+}
+
+.st-list-top {
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--st-s-3);
-  width: 100%;
-  min-height: 56px;
-  padding: 9px var(--st-s-3);
-  border-radius: var(--st-r-md);
-  text-align: left;
-  transition: background var(--st-dur-fast) var(--st-ease);
+  margin-bottom: var(--st-s-4);
 }
-.st-wl-item:active { background: var(--st-green-50); }
-.st-wl-ic {
+.st-list-back, .st-list-map {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex: none;
-  width: 40px; height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--st-r-circle);
-  color: var(--st-green-600);
-  box-shadow: inset 0 0 0 1.75px var(--st-green-600);
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-n-100);
+  color: var(--st-n-700);
+  font: var(--st-t-btn);
+  font-size: 14px;
+  transition: background var(--st-dur-fast) var(--st-ease), color var(--st-dur-fast) var(--st-ease);
 }
-.st-wl-ic svg { width: 19px; height: 19px; }
-.st-wl-item.st-must .st-wl-ic { box-shadow: inset 0 0 0 1.75px var(--st-green-600), 0 0 0 3px var(--st-gold-200); }
-.st-wl-text { flex: 1 1 auto; min-width: 0; }
-.st-wl-name {
-  display: block;
-  font: var(--st-t-h3);
+.st-list-back:hover { background: var(--st-n-200); }
+.st-list-map { background: var(--st-green-50); color: var(--st-green-700); margin-left: auto; }
+.st-list-map:hover { background: var(--st-green-100); }
+.st-list-back svg, .st-list-map svg { width: 17px; height: 17px; }
+
+.st-list-head { min-width: 0; text-align: center; flex: 1 1 auto; }
+.st-list-title {
+  font: var(--st-t-h1);
   color: var(--st-n-900);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.st-wl-cat { display: block; font: var(--st-t-xs); font-weight: 600; letter-spacing: .04em;
-             text-transform: uppercase; color: var(--st-n-500); }
-.st-wl-go { flex: none; width: 18px; height: 18px; color: var(--st-n-400); }
+.st-list-title:focus-visible { box-shadow: none; }
+.st-list-count { font: var(--st-t-sm); color: var(--st-n-500); }
+
+/* ── Lưới THẺ ẢNH (D-56) ──────────────────────────────────────────────────
+   Trước là lưới DÒNG: ảnh nhỏ trái · chữ giữa · nút xanh phải. Mỗi dòng ba
+   mảng màu, 12 dòng chồng nhau ra một cái bảng — trong khi thứ người dùng
+   đang chọn là CẢNH. Giờ mỗi điểm là một thẻ ảnh phủ kín, chữ đè lên đáy,
+   giống hệt thẻ carousel ở màn trước và ô wall của bản 2. */
+.st-list-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+  align-content: start;           /* 3 thẻ thì bám đỉnh, không giãn ra full */
+  gap: var(--st-s-3);
+  padding: 3px;                   /* chừa chỗ cho focus ring không bị cắt */
+  /* Fade đáy để biết còn cuộn được — danh sách 12 điểm luôn tràn ở màn thấp */
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
+}
+
+.st-li {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--st-r-lg);
+  background: var(--st-n-200);
+  text-align: left;
+  isolation: isolate;
+  /* Cùng công thức với .st-wall-tile bên bản 2: trên nền trắng, ảnh nào có
+     trời/tường sáng sẽ chảy tràn vào nền nếu không có viền mảnh. */
+  box-shadow: inset 0 0 0 1px var(--st-n-200), 0 2px 10px rgba(18,19,18,.10);
+  transition: transform var(--st-dur-base) var(--st-ease-out),
+              box-shadow var(--st-dur-base) var(--st-ease);
+  /* Vào màn so le theo thứ tự trong lưới; --i do js/popup.js ghi inline.
+     `min(…, 9)` chặn đuôi: renderList() chạy lại mỗi lần gõ vào ô tìm kiếm,
+     không chặn thì thẻ thứ 20 phải đợi 760ms mới hiện — gõ nhanh sẽ thấy
+     danh sách như đang bị treo. */
+  animation: st-li-in 460ms var(--st-ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 9) * 38ms);
+}
+@keyframes st-li-in { from { opacity: 0; transform: translateY(16px) scale(.96); } }
+
+.st-li:hover, .st-li:focus-visible {
+  transform: translateY(-3px);
+  z-index: 2;
+  box-shadow: inset 0 0 0 2px var(--st-green-500),
+              0 12px 28px rgba(18,19,18,.22);
+}
+.st-li:focus-visible { outline: none; }
+.st-li.st-going { opacity: 0; transform: scale(1.06); transition: all 260ms var(--st-ease); }
+
+.st-li-img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  transition: transform 520ms var(--st-ease-out);
+}
+.st-li:hover .st-li-img { transform: scale(1.07); }
+
+/* Ô giữ chỗ cho 8 điểm chưa có ảnh (Q-38) — số hiệu bản đồ trên nền brand,
+   thay vì một mảng xám trơn trông như ảnh lỗi. */
+.st-li-noimg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(140deg, var(--st-green-100), var(--st-gold-200));
+  color: var(--st-green-800);
+  font: 700 34px/1 var(--st-font-display);
+}
+
+.st-li-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+              rgba(6,12,20,.06) 0%,
+              rgba(6,12,20,.30) 44%,
+              rgba(6,12,20,.86) 100%);
+}
+
+/* Số hiệu bản đồ — cùng con số với pin trên bản đồ 2D, đặt ở góc để người
+   dùng nối được thẻ này với pin bên kia. */
+.st-li-no {
+  position: absolute;
+  top: var(--st-s-3);
+  left: var(--st-s-3);
+  min-width: 26px;
+  padding: 3px 8px;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.92);
+  color: var(--st-n-900);
+  font: var(--st-t-xs);
+  text-align: center;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.st-li-must {
+  position: absolute;
+  top: var(--st-s-3);
+  right: var(--st-s-3);
+  display: grid;
+  place-items: center;
+  width: 26px; height: 26px;
+  border-radius: var(--st-r-circle);
+  background: var(--st-gold-300);
+  color: var(--st-n-900);
+}
+.st-li-must svg { width: 13px; height: 13px; }
+
+.st-li-body {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: var(--st-s-4);
+  color: #fff;
+}
+.st-li-cat {
+  display: block;
+  font: var(--st-t-xs);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.74);
+}
+.st-li-name {
+  display: block;
+  margin-top: 3px;
+  font: var(--st-t-h2);
+  font-size: 17px;
+  text-shadow: 0 1px 12px rgba(0,0,0,.55);
+}
+/* Blurb và CTA chỉ hiện khi rê vào — 12 thẻ cùng khoe mô tả một lúc thì
+   không còn đọc được cái nào. Cùng cách làm với .st-wt-sub của bản 2. */
+.st-li-blurb, .st-li-cta {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height var(--st-dur-base) var(--st-ease),
+              opacity var(--st-dur-base) var(--st-ease),
+              margin-top var(--st-dur-base) var(--st-ease);
+}
+.st-li-blurb {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-top: 0;
+  font: var(--st-t-sm);
+  color: rgba(255,255,255,.78);
+}
+.st-li-cta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 0;
+  font: var(--st-t-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--st-gold-300);
+}
+.st-li-cta svg { width: 14px; height: 14px; flex: none; }
+.st-li:hover .st-li-blurb, .st-li:focus-visible .st-li-blurb { max-height: 42px; margin-top: 5px; opacity: 1; }
+.st-li:hover .st-li-cta,   .st-li:focus-visible .st-li-cta   { max-height: 22px; margin-top: 9px; opacity: 1; }
+
+.st-list-empty {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  font: var(--st-t-body);
+  color: var(--st-n-500);
+}
+.st-list-empty[hidden] { display: none; }
+
+/* Badge đếm điểm trên thẻ khu vực — dùng lại .st-cr-badge nhưng đổi màu vì
+   nó không còn nghĩa "nên xem" nữa. */
+.st-cr-badge.st-cr-count {
+  background: rgba(6,12,20,.62);
+  color: #fff;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
 
 /* ── Footer ───────────────────────────────────────────────────────────── */
-.st-welcome-foot {
+.st-popup-foot {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--st-s-4);
-  margin-top: var(--st-s-4);
+  margin-top: 0;
+  padding-top: var(--st-s-3);
 }
 .st-legend {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   font: var(--st-t-sm);
   color: var(--st-n-500);
 }
+/* Phải trông GIỐNG HỆT .st-cr-badge trên thẻ — chú giải mà khác hình thứ nó
+   đang chú giải thì người dùng không nối được hai thứ với nhau. */
 .st-legend-dot {
-  width: 11px; height: 11px;
+  display: grid;
+  place-items: center;
+  width: 22px; height: 22px;
   border-radius: var(--st-r-circle);
-  border: 2px solid var(--st-gold-400);
+  background: var(--st-gold-300);
+  color: var(--st-n-900);
 }
+.st-legend-dot svg { width: 13px; height: 13px; }
+
+#st-popup-skip { font-size: 14px; }

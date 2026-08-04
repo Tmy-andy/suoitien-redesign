@@ -1,13 +1,21 @@
 # suoitien-vr360redes — Rules cho Claude
 
-Prototype re-design UI cho tour VR360 Suối Tiên (https://suoitien.trip360.vn/).
-Stack demo: **HTML + CSS + JS thuần**, không build tool, không framework.
+Project này **LÀ CÁI POPUP** — không phải bản re-design cả trang VR.
+
+`index.html` là một trang HTML độc lập, được nhúng vào trang VR thật
+(https://suoitien.trip360.vn/) bằng một `<iframe>` phủ kín viewport. Popup **chiếm
+trọn màn hình** — không phải hộp modal canh giữa, không có lớp nền mờ. Nó nói chuyện
+với trang cha qua `js/bridge.js`.
+
+Stack: **HTML + CSS + JS thuần**, không build tool, không framework.
+Phạm vi này chốt ngày 2026-08-03 (YC-10 · D-46) — trước đó project từng dựng cả
+header, dock nút, 2 overlay chỉ đường/danh sách. **Tất cả đã gỡ.**
 
 ## RULE #1 — docs/ luôn phải được cập nhật (BẮT BUỘC)
 
 `docs/` là source of truth của project này. Sau **mỗi** lần thay đổi code
-(thêm/xóa/sửa component, modal, flow, token màu, tên file), phải cập nhật docs
-**trong cùng lượt làm việc đó** — không để "làm sau".
+(thêm/xóa/sửa component, flow, token màu, tên file, message của bridge), phải cập
+nhật docs **trong cùng lượt làm việc đó** — không để "làm sau".
 
 Các file bắt buộc phải có và phải khớp với code thực tế:
 
@@ -17,75 +25,114 @@ Các file bắt buộc phải có và phải khớp với code thực tế:
 | `docs/00-requirements.md` | Yêu cầu gốc của khách + các câu hỏi/giải đáp đã chốt |
 | `docs/01-architecture.md` | Structure thư mục, từng file làm gì, thứ tự load, buộc có Sơ đồ phụ thuộc module (mermaid graph TD) |
 | `docs/02-design-system.md` | Token màu, typography, spacing, radius, shadow, icon, nguồn gốc (Figma / site) |
-| `docs/03-components.md` | Từng component/button: id, class, vị trí, state, responsive |
-| `docs/04-modals.md` | Chi tiết **tất cả** modal/overlay: id, trigger, nội dung, z-index, ARIA, animation, cách đóng |
-| `docs/05-flows.md` | Luồng người dùng + sequence diagram (mermaid), logic điều hướng, state machine |
-| `docs/06-data.md` | Schema các file dữ liệu (catalog/destinations/hotspots), field, ví dụ |
-| `docs/07-integration.md` | Cách ghép prototype vào bản 3DVista thật (VRCore, floorplan, base href) |
+| `docs/03-components.md` | Từng component: selector, state, responsive |
+| `docs/04-modals.md` | Chi tiết popup: id, trigger, nội dung, z-index, ARIA, animation, cách đóng |
+| `docs/05-flows.md` | Luồng người dùng + sequence diagram (mermaid), logic điều hướng |
+| `docs/06-data.md` | Schema các file dữ liệu, field, ví dụ, nguồn gốc ảnh |
+| `docs/07-integration.md` | **Hợp đồng iframe** — trang cha phải viết gì, bridge nhận/gửi gì, các giới hạn của iframe |
 | `docs/08-decisions.md` | Decision log: quyết định, lý do, ngày, phương án đã loại |
+| `docs/09-variant2.md` | Spec của **bản 2** (`index2.html` — VR Wall + Infinite Slider) |
 | `docs/TODO.md` | Todo list, cập nhật liên tục: `[ ] / [~] / [x]` + ngày + owner |
 
 ## RULE #2 — Quy ước viết docs
 
-- Tiếng Việt. Ngày ghi tuyệt đối (`2026-07-30`), không ghi "hôm qua/tuần sau".
+- Tiếng Việt. Ngày ghi tuyệt đối (`2026-08-03`), không ghi "hôm qua/tuần sau".
 - Mỗi file mở đầu bằng `> Cập nhật: YYYY-MM-DD`.
-- Mọi mô tả UI phải kèm **selector thật** (`#st-welcome`, `.st-hotspot`) để trace được về code.
+- Mọi mô tả UI phải kèm **selector thật** (`#st-popup`, `.st-cr-card`) để trace được
+  về code.
 - Không docs những gì đọc code là biết ngay; docs phần **vì sao** và **luồng đi**.
-- `docs/TODO.md`: việc mới thêm vào cuối, việc xong đánh `[x]` + ngày, không xóa (để có history).
+- `docs/TODO.md`: việc mới thêm vào cuối, việc xong đánh `[x]` + ngày, không xóa
+  (để có history).
+- Quyết định bị đảo ngược thì **đánh dấu ⚫ tại chỗ**, không xoá — người đọc sau cần
+  biết đã từng cân nhắc gì và vì sao đổi ý.
 
 ## RULE #3 — Code
 
-- Không thêm dependency ngoài (CDN, npm). Font/icon inline hoặc SVG.
-- Không sửa gì trong `vr-360/` (bản export 3DVista là read-only trên site thật).
-- Prefix `st-` cho mọi id/class mới để không đụng CSS của 3DVista.
-- Giữ nguyên các seam đã có trên site thật: `window.VRCore`, `#fp-overlay`, `#fp-fabs`.
+- Không thêm dependency ngoài (CDN, npm) trong bản chạy. Icon inline SVG.
+  *(Ngoại lệ đang tồn tại: Google Fonts — xem `docs/TODO.md`.)*
+- Prefix `st-` cho mọi id/class để không đụng CSS của 3DVista/floorplan khi ghép.
+- Popup **không được biết** nó đang nằm trong iframe, trừ `js/bridge.js`. Mọi lời gọi
+  ra ngoài đi qua `ST.bridge`.
+- `html, body { background: transparent }` là **bắt buộc** dù `#st-popup` có nền đặc:
+  lúc vào/ra popup fade `opacity`, đúng những frame đó phải nhìn xuyên qua thấy
+  panorama của trang cha.
 - Mọi thứ mô phỏng (mock) phải comment rõ `// MOCK:` để dev biết chỗ cần nối API thật.
+- `host-demo.html` **không phải deliverable** — nó mô phỏng trang cha để test, và là
+  bản mẫu chép được cho bên tích hợp.
+
+## Kiến trúc rút gọn
+
+**HAI BẢN SONG SONG** để khách chọn (D-50) — không phải hai phiên bản của một thứ:
+
+```
+index.html    ← BẢN 1: màn chào + 3D carousel (1 tầng, bấm thẻ đi VR ngay)
+index2.html   ← BẢN 2: VR Wall 9 khu vực → Infinite Slider → VR (2 tầng)
+host-demo.html ← trang cha mô phỏng, DEV ONLY (có nút chuyển bản)
+
+CHUNG:  css/tokens · css/base · css/map2d
+        js/data · js/i18n · js/a11y · js/bridge · js/map2d
+        assets/img/cards/  12 ảnh banner .webp (~930 KB)
+        assets/map/park-2400.webp  bản đồ 2D (391 KB)
+BẢN 1:  css/carousel · css/popup · css/responsive
+        js/carousel · js/popup
+BẢN 2:  css/wall · css/slider · css/responsive2
+        js/wall · js/slider · js/popup2
+```
+
+Cả hai dùng chung `js/bridge.js` → trang cha đổi bản chỉ là đổi `src` của iframe,
+không sửa một dòng nào. Bấm chọn một điểm ở bản nào cũng ra
+`ST.bridge.navigate(dest)` → trang cha điều hướng tour tới panorama tương ứng.
 
 ## Bối cảnh kỹ thuật (đã verify 2026-07-30)
 
-### Trang VR — https://suoitien.trip360.vn/
+### Trang VR — https://suoitien.trip360.vn/ (đây là TRANG CHA)
 
 - Engine: **3DVista** (`vr-360/lib/tdvplayer.js` + `vr-360/script.js`), `<base href="vr-360/">`.
 - Seam điều hướng: `packages/vr-core/index.js` → `window.VRCore`
   (`ensureTourLoaded`, `mountViewer`, `navigateToPano`, `getCurrentPanoInfo`, `getCurrentPanoId`).
-- Overlay bản đồ hiện có: `js/floorplan.js` + `js/floorplan.dc.html` (React/DC, 173 KB) + `js/floorplan.css`.
-- Dữ liệu: `data/catalog.json` (158 destinations: `name`, `type`, `icon`, `pano`), `map/img/map.jpg` (~1.2 MB),
-  `map/map_{places,places_content,panos,graph,geo,locales}.json`.
+  → `js/bridge.js` gọi thẳng vào đây khi cùng origin; khác origin thì `postMessage`.
+- Dữ liệu: `data/catalog.json` (158 destinations: `name`, `type`, `icon`, `pano`).
+- `floorplan.css` chiếm **z-index 10000–10009** → thẻ `<iframe>` ở trang cha phải đặt
+  cao hơn. Bên trong popup thì thang z-index để thấp là đúng (document riêng).
 - Font trang VR: `Be Vietnam Pro`.
 - Analytics: `js/vr360-tracking.js` → `/backend/analytics/track.php`.
-- **5 cụm control hiện có** (từ ảnh khách gửi): ⓐ VN+share trên-phải · ⓑ sidebar trái
-  (THAM QUAN/ẨM THỰC/FARM/DỊCH VỤ/VỊ TRÍ/LIÊN HỆ) · ⓒ Chỉ đường+Điểm đến dưới-trái ·
-  ⓓ **VR/compass/sound/fullscreen dưới-GIỮA** (pill trắng, icon circle viền xanh) ·
-  ⓔ 2 nút tròn phải-giữa. → Xem `docs/00-requirements.md` §0.3.
 
-### Site chính — https://suoitien.vn/ (NGUỒN CHUẨN cho màu & font)
+### Site chính — https://suoitien.vn/ (NGUỒN CHUẨN cho màu, font & ẢNH)
 
 CSS: `halink-content/themes/halink-c5/public/theme/css/style.css`
 
 | Hex | Vai trò |
 |---|---|
-| `#128125` | **Xanh lá thương hiệu** — navbar, submenu, heading (dùng 54 lần) |
-| `#DEA800` | **Vàng** — nền topbar |
-| `#EB0029` | **Đỏ** — chữ nút "Mua vé" |
-| `#E7313B` | Đỏ — `box-shadow: 0 2px 0` dưới navbar |
-| `#FBD255` | Vàng nhạt — nền nút "Mua vé" |
-| `#D6282E` `#F53D2D` `#FF7B01` `#65A723` `#148225` | phụ |
+| `#128125` | **Xanh lá thương hiệu** — dùng 54 lần trên site |
+| `#DEA800` | **Vàng** — nền topbar; ở popup là badge "Nên xem" |
+| `#EB0029` | **Đỏ** — chữ nút "Mua vé"; ở popup là 1/3 dải nhận diện trên đỉnh panel |
 
-- Font: **`Arima Madurai`** (Google Fonts, w100–700, **có subset `vietnamese`**).
-  → Dùng hệ 2 font, xem `docs/02-design-system.md` §2.2 và D-23.
-- Navbar: `border-radius: 50px`, `width: 90%`, logo **ở giữa**, chữ trắng bold UPPERCASE,
-  có **đường đỏ 2px + vệt gradient đỏ→trắng→đỏ** dưới đáy (chi tiết nhận diện, phải clone).
-- Menu: **84 mục, 3 cấp**, href thật — xem `docs/06-data.md` §6.6.
-- Link: mua vé `/chon-ve` · bản đồ `/ban-do` · farm `stf.suoitien.vn` ·
-  logo `/halink-content/uploads/logosuoitien.png`.
+- Font: **`Arima Madurai`** (tiêu đề) + **`Be Vietnam Pro`** (body) — hệ 2 font, D-23.
+- **12 ảnh banner** của carousel tải từ đây → `docs/06-data.md` §6.8 ghi URL gốc từng ảnh.
 
-### Chốt quan trọng từ khách (2026-07-30)
+## Chốt quan trọng từ khách
 
-- Prototype **chỉ dựng phần cần thay đổi**: header + modal welcome + dock nút. Overlay
-  chỉ đường/danh sách **đã hoàn thiện, không dựng lại**.
+- **2026-08-03 (YC-10):** project chỉ còn cái popup, nhúng iframe vào trang khác.
+  Iframe phủ full viewport · bridge thử VRCore trực tiếp rồi rơi về postMessage ·
+  ngôn ngữ do trang cha truyền vào.
+- **2026-08-03 (YC-11):** popup **chiếm trọn màn hình**, bỏ hẳn hộp modal + nền mờ
+  (D-48). Carousel còn **3 thẻ**: 1 thẻ giữa to + 1 preview mỗi bên (D-49).
+- **2026-08-03 (YC-12):** dựng thêm **bản 2** `index2.html` theo `note.md` §137 —
+  VR Wall (9 khu vực) → Infinite Slider → VR 360. **Song song, không thay thế bản 1**
+  (D-50 · `docs/09-variant2.md`). Khách sẽ chọn 1 trong 2.
+- **2026-08-03 (YC-13):** mọi ảnh phải `object-fit: cover` · bản 1 đổi thẻ carousel từ
+  ĐIỂM sang **KHU VỰC** + thêm ô tìm kiếm và danh sách (D-52) · **cả hai bản** thêm
+  *"Xem trên bản đồ 2D"* với pin số hiệu, lọc theo khu vực đang xem (D-51).
+- **2026-08-04 (YC-14):** cả hai bản dùng **CHUNG một nền trắng phẳng** — bỏ 2 vệt
+  radial ở `#st-popup`, và bản 2 **hết nền tối** (đảo ngược D-50 #4; riêng slider vẫn
+  tối). Nút *"Xem trên bản đồ 2D"* chuyển từ footer lên cạnh ô tìm kiếm. Cỡ thẻ
+  carousel suy từ **chiều cao sân khấu**, không còn hằng số `vh` — thẻ giữa to hơn
+  21–46% (D-54).
+- **2026-08-03 (YC-9):** bỏ hẳn bản đồ + hotspot, thay bằng **3D carousel ảnh banner**;
+  click ảnh → nhảy tới panorama tương ứng.
 - Tone **light/airy**, không dark-glass. Bỏ hẳn màu `#1769ff`.
-- Modal welcome: click hotspot **nhảy thẳng**, hiện **1 lần**, đóng thì **morph co về
-  1 nút trong dock** (bấm mở lại).
-- Header **slide lên** khi tương tác, có tab `#st-nav-peek` mũi tên kép nhấp nhô để mở lại.
-- **Cần bản EN** → i18n từ đầu (`data-i18n` + `COPY.vi/en`).
-- Link navbar `href="#"` + toast, nhưng **lưu URL thật** kèm cờ `LINKS_LIVE`.
+- Nền popup là **một màu trắng phẳng**, không gradient — dưới 8% alpha trên vùng rộng
+  đọc ra là vết bẩn, không phải sắc độ (D-54). Áp dụng cho **cả hai bản**.
+- Bấm thẻ **nhảy thẳng**, không có bước xác nhận (Q10 = a).
+- **Cần bản EN** → i18n từ đầu (`data-i18n` + `COPY.vi/en`). Popup **không** có nút
+  chuyển ngôn ngữ — nếu có, nó sẽ lệch với nút VN/EN của trang cha.

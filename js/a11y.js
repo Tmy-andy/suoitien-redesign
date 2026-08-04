@@ -1,6 +1,20 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   a11y.js — focus trap, Esc, scroll lock, nhớ/trả focus.
-   Viết 1 lần, mọi modal dùng chung.  Xem docs/04-modals.md §4.2
+   a11y.js — focus trap + Esc cho popup.
+
+   Bản cũ còn có lockScroll/unlockScroll và rememberFocus/restoreFocus —
+   cả hai đều mất nghĩa khi popup là một document riêng trong iframe:
+     • khoá cuộn: `body` của popup vốn đã `overflow: hidden`; còn việc khoá
+       cuộn của TRANG CHA thì popup không với tới được (khác document).
+       → trách nhiệm của trang cha, xem docs/07-integration.md §7.3.
+     • trả focus: focus trước khi popup mở nằm ở document của trang cha,
+       `document.activeElement` trong đây không nhìn thấy nó.
+       → cũng là trách nhiệm của trang cha.
+
+   ⚠️ GIỚI HẠN không sửa được từ trong iframe (docs/07-integration.md §7.3):
+     • Esc chỉ bắt được khi focus đang Ở TRONG iframe. Người dùng bấm ra
+       ngoài rồi bấm Esc thì trang cha phải tự nghe.
+     • `aria-modal` không che được nội dung trang cha khỏi screen reader —
+       nó chỉ có tác dụng trong cùng một cây accessibility.
    ═══════════════════════════════════════════════════════════════════════ */
 window.ST = window.ST || {};
 
@@ -14,8 +28,6 @@ window.ST = window.ST || {};
   ].join(',');
 
   var escStack = [];      /* Esc chỉ kích hoạt handler TRÊN CÙNG */
-  var focusStack = [];
-  var lockCount = 0;
 
   function visible(el) {
     return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
@@ -31,24 +43,7 @@ window.ST = window.ST || {};
     if (top) { e.preventDefault(); top(); }
   });
 
-  var A = {
-    init: function () { /* listener Esc đã gắn ở trên */ },
-
-    lockScroll: function () {
-      lockCount++;
-      if (lockCount > 1) return;
-      var sw = window.innerWidth - document.documentElement.clientWidth;
-      document.documentElement.classList.add('st-locked');
-      if (sw > 0) document.documentElement.style.setProperty('padding-right', sw + 'px');
-    },
-
-    unlockScroll: function () {
-      lockCount = Math.max(0, lockCount - 1);
-      if (lockCount > 0) return;
-      document.documentElement.classList.remove('st-locked');
-      document.documentElement.style.removeProperty('padding-right');
-    },
-
+  ST.a11y = {
     /** Bẫy Tab trong panel. Trả về hàm release(). */
     trap: function (panel) {
       function onKey(e) {
@@ -58,6 +53,8 @@ window.ST = window.ST || {};
         var first = list[0], last = list[list.length - 1];
         var active = document.activeElement;
 
+        /* Không có bẫy này thì Tab ở thẻ cuối sẽ nhảy RA KHỎI iframe, sang
+           trang cha — người dùng bàn phím mất dấu popup mà không hiểu vì sao. */
         if (e.shiftKey && (active === first || !panel.contains(active))) {
           e.preventDefault(); last.focus();
         } else if (!e.shiftKey && (active === last || !panel.contains(active))) {
@@ -76,50 +73,6 @@ window.ST = window.ST || {};
       };
     },
 
-    rememberFocus: function () {
-      focusStack.push(document.activeElement);
-    },
-
-    restoreFocus: function () {
-      var el = focusStack.pop();
-      if (el && typeof el.focus === 'function' && document.contains(el) && visible(el)) {
-        el.focus();
-      }
-    },
-
-    focusables: focusables,
-
-    /** Roving tabindex cho nhóm nút (mũi tên di chuyển) — dùng cho hotspot */
-    roving: function (container, selector) {
-      function items() {
-        return Array.prototype.slice.call(container.querySelectorAll(selector));
-      }
-      function setIndex(list, i) {
-        list.forEach(function (el, j) { el.tabIndex = j === i ? 0 : -1; });
-      }
-      var list = items();
-      if (!list.length) return function () {};
-      setIndex(list, 0);
-
-      function onKey(e) {
-        var keys = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'];
-        if (keys.indexOf(e.key) === -1) return;
-        var l = items();
-        var cur = l.indexOf(document.activeElement);
-        if (cur === -1) return;
-        e.preventDefault();
-        var next = cur;
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % l.length;
-        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur - 1 + l.length) % l.length;
-        else if (e.key === 'Home') next = 0;
-        else if (e.key === 'End') next = l.length - 1;
-        setIndex(l, next);
-        l[next].focus();
-      }
-      container.addEventListener('keydown', onKey);
-      return function release() { container.removeEventListener('keydown', onKey); };
-    }
+    focusables: focusables
   };
-
-  ST.a11y = A;
 })();

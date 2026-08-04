@@ -1,6 +1,25 @@
-> Cập nhật: 2026-08-01 (v4 — thêm MAP_META + WAYFIND cho M2/M3 · D-43)
+> Cập nhật: 2026-08-03 (v8 — thêm §6.10: bản đồ 2D + pin · D-51)
 
 # 06 — Data
+
+> ⚠️ **`js/data.js` đã thu nhỏ mạnh ngày 2026-08-03 (D-46).** Còn 4 thứ:
+> `DESTINATIONS` (20 điểm) · `CARDS` (12 thẻ carousel) · **`GROUPS` (9 khu vực — §6.9)**
+> · **`MAP` + `MAP_META` (bản đồ 2D và 20 pin — §6.10)** · `CATEGORIES` (5 nhóm), cộng
+> 5 helper `get()` / `group()` / `catLabel()` / `imgOf()` / `deaccent()`.
+>
+> **Đã gỡ** (theo các phần UI tương ứng): `NAV_MENU` 84 mục · `DOCK_BUTTONS` ·
+> `DOCK_BUTTONS_FULL` · `POPOVER_ITEMS` · `TICKET` · `CTA` · `LINKS` · `LINKS_LIVE` ·
+> `SOCIAL` · `CONTACT` · `MAP_META` · `WAYFIND` · `RESERVED_ZONES` · `SCOPE` ·
+> `CATEGORY_META` · `TYPE_ICON` · `iconOf()` · `metaOf()` · `deaccent()` · `keys()` ·
+> `indexOf()`.
+>
+> Các mục dưới đây tả những thứ đó vẫn giữ lại **làm lịch sử và làm nguồn tra khi cần
+> dựng lại** — đặc biệt §6.6 (84 mục menu THẬT) và §6.7 (6 nguồn dữ liệu của M2/M3) là
+> dữ liệu thật, mất công lấy, không nên vứt. Khôi phục code:
+> `git show 9e5d46e:js/data.js`.
+>
+> Phần **vẫn đúng 100%** với code hiện tại: `DESTINATIONS` (§6.2) · `CARDS` (§6.2) ·
+> **§6.8 nguồn 12 ảnh banner**.
 
 Toàn bộ dữ liệu prototype nằm trong `js/data.js` dưới namespace `ST.data`.
 Không fetch, không JSON ngoài → mở `file://` chạy được (Q2).
@@ -139,30 +158,45 @@ ST.data.USE_LIVE_CATALOG = false;
 ST.data.TOTAL_REAL = 158;   // dùng cho label "4/158", "hơn 150 điểm"
 ```
 
-### `ST.data.HOTSPOTS` — array, thứ tự = thứ tự stagger animation
+### `ST.data.CARDS` — array, thứ tự = thứ tự chạy vòng của carousel ⭐ (D-44)
+
+Thay `HOTSPOTS` của bản trước. Nguồn gốc từng ảnh: §6.8.
 
 ```js
-HOTSPOTS = [
-  { key:'cong',    x:14, y:78, xm:22, ym:86, must:false },
-  { key:'farm',    x:22, y:46, xm:18, ym:66, must:false },
-  { key:'casau',   x:40, y:22, xm:38, ym:22, must:false },
-  { key:'tuyet',   x:52, y:38, xm:56, ym:38, must:true  },
-  { key:'phuthuy', x:62, y:58, xm:70, ym:56, must:true  },
-  { key:'bien',    x:42, y:72, xm:34, ym:74, must:true  },
-  { key:'tauluon', x:76, y:44, xm:78, ym:46, must:false },
-  { key:'tulinh',  x:84, y:70, xm:80, ym:66, must:false }
+CARDS = [
+  { key:'cong',     img:'assets/img/cards/cong.webp' },
+  { key:'cungvang', img:'assets/img/cards/cungvang.webp' },
+  { key:'tuyet',    img:'assets/img/cards/tuyet.webp',   must:true },
+  { key:'casau',    img:'assets/img/cards/casau.webp' },
+  { key:'bien',     img:'assets/img/cards/bien.webp',    must:true },
+  { key:'kylan',    img:'assets/img/cards/kylan.webp' },
+  { key:'phuthuy',  img:'assets/img/cards/phuthuy.webp', must:true },
+  { key:'amcung',   img:'assets/img/cards/amcung.webp' },
+  { key:'tulinh',   img:'assets/img/cards/tulinh.webp' },
+  { key:'diabay',   img:'assets/img/cards/diabay.webp' },
+  { key:'vongxoay', img:'assets/img/cards/vongxoay.webp' },
+  { key:'farm',     img:'assets/img/cards/farm.webp' }
 ];
 ```
 
 | Field | Kiểu | Ý nghĩa |
 |---|---|---|
-| `key` | string | Trỏ vào `DESTINATIONS` |
-| `x`, `y` | number 0–100 | Toạ độ **%** trên bản đồ landscape (`viewBox 0 0 1000 640`) |
-| `xm`, `ym` | number 0–100 | Toạ độ **%** trên bản đồ portrait mobile (`viewBox 0 0 640 800`) |
-| `must` | boolean | `true` → có ring pulse vàng "✦ nên xem" |
+| `key` | string | Trỏ vào `DESTINATIONS` — tên, nhóm, blurb, `pano` đều lấy từ đó |
+| `img` | string | Đường dẫn tương đối tới ảnh **760×507 (3:2)**, webp |
+| `must` | boolean | `true` → badge vàng `★ Nên xem` (Q9, hint nhẹ) |
 
-> Dùng `%` chứ không px → đổi kích thước/viewBox bản đồ không phải sửa toạ độ.
-> `// MOCK:` toạ độ đặt theo cảm giác bố cục, **không đúng vị trí địa lý thật**.
+**Thứ tự** xếp theo nhịp thị giác (cổng → cung điện → tuyết → thú → nước → …), **không**
+theo bảng chữ cái và **không** theo vị trí địa lý — carousel không còn là bản đồ nữa.
+
+**Tỉ lệ 3:2 là ràng buộc hai chiều:** `css/carousel.css` đặt `aspect-ratio: 3 / 2` cho
+`.st-cr-card` và chia `--st-card-maxw` cho `1.5` để ra chiều cao (D-54). Thay ảnh tỉ lệ
+khác mà quên sửa **cả hai** chỗ đó thì ảnh sẽ bị `object-fit: cover` cắt mất phần quan
+trọng.
+
+> **Vì sao 12 mà không phải cả 20 destination:** chỉ 12 điểm tìm được ảnh banner đủ
+> đẹp trên `suoitien.vn`. `xelua` · `taxi` · `tauluon` · `massage` · `coixay` ·
+> `vrgame` · `thuyenrong` · `thuyenbay` không có trang riêng với ảnh hero dùng được —
+> chúng vẫn nằm trong `DESTINATIONS` và vẫn tìm thấy qua M3 (danh sách điểm đến).
 
 ### `ST.data.NAV_MENU` — array (✅ **84 mục THẬT**, 3 cấp, href thật)
 
@@ -325,7 +359,7 @@ MAP_META = {
 | Field | Ý nghĩa |
 |---|---|
 | `no` | Số in trên pin của bản đồ giấy. Hiện lên đầu tên trong M3 và trong pin của M2 |
-| `x` `y` | **% của khung 1000×620** — đổi ảnh nền không phải sửa logic, cùng cách với `HOTSPOTS` |
+| `x` `y` | **% của khung 1000×620** — đổi ảnh nền không phải sửa logic. (Từ D-44 chỉ còn M2 dùng; modal welcome đã bỏ bản đồ) |
 | `real` | `true` = số hiệu đọc được từ ảnh khách gửi. Chỉ **6/20** điểm có: 1, 2, 22A, 40, 48, 101 |
 
 ⚠️ **14 số còn lại và TOÀN BỘ `x`/`y` là MOCK.** Bản thật lấy `code` + toạ độ pixel
@@ -365,7 +399,8 @@ COPY = {
   vi: {
     nav:      { /* label EN cho 84 mục — chỉ những mục cần dịch */ },
     topbar:   { addr, hotline, email, lang },
-    welcome:  { eyebrow, titles:{a,b,c}, subtitle, legend, skip, mapLabel },
+    welcome:  { eyebrow, titles:{a,b,c}, subtitle, legend, skip, goHint,
+                mustBadge, deckLabel, prev, next },   // 4 khoá cuối: carousel (D-44)
     dock:     { route, places, reopen, vr, gyro, sound, fullscreen, more },
     popover:  { help, share, rotate, lang },
     share:    { title, copyBtn, copied, manualCopy, qrNote },
@@ -506,9 +541,8 @@ Grep `// MOCK:` trong `js/` sẽ ra hết. Danh sách đầy đủ:
 |---|---|---|
 | Panorama là ảnh/gradient tĩnh | `viewer.js` | 3DVista player qua `VRCore.mountViewer()` |
 | `viewer.goTo()` | `viewer.js` | `VRCore.navigateToPano(tour, dest.pano)` |
-| Bản đồ SVG stylized (welcome) | `index.html` `#st-welcome-map` | `map/img/map.jpg` + toạ độ từ `map_geo.json` |
 | Bản đồ SVG stylized (M2) | `index.html` `.st-rt-map` | Đổi `<svg>` → `<img src="map/img/map.jpg">`, **không phải sửa JS** (pin tính theo %) |
-| Toạ độ hotspot `%` | `data.js` HOTSPOTS | Toạ độ pixel từ `map_places.json` |
+| 12 ảnh banner tải sẵn | `assets/img/cards/*.webp` | Ảnh do khách cấp (hoặc chính 12 ảnh này, khách đã sở hữu bản quyền) — §6.8 |
 | Số hiệu + toạ độ pin `%` | `data.js` MAP_META | `code` + toạ độ pixel từ `map_places.json` — 14/20 số hiện là bịa |
 | `blurb` mô tả điểm | `data.js` | `map_places_content.json` |
 | `hero` ảnh = null | `data.js` | Ảnh thumbnail thật |
@@ -536,7 +570,7 @@ Grep `// MOCK:` trong `js/` sẽ ra hết. Danh sách đầy đủ:
 | ~~Logo placeholder SVG~~ | PNG thật, verify 200 OK |
 | ~~Nội dung dropdown mock~~ | 75 mục con thật, 3 cấp |
 | ~~10 `type` làm chip filter~~ | 6 nhóm thật từ UI (D-28) |
-| ~~Bản đồ chỉ có SVG~~ | Thêm biến thể `?map=real` dùng bản đồ 3D thật của khách |
+| ~~Bản đồ SVG tự vẽ~~ | 12 ảnh banner THẬT của công viên trong 3D carousel (D-44, §6.8) |
 | ~~Chỉ tiếng Việt~~ | `COPY.vi` + `COPY.en` (Q4) |
 
 ---
@@ -658,3 +692,188 @@ Hai overlay clone đang chạy bằng dữ liệu tự chế. Bảng dưới là
 liệu thật ngay, giao diện không đổi) → cuối cùng mới thay phần tính đường đi. Ba
 hàm `distance` / `buildSteps` / `pathD` cố tình gom một chỗ trong `route.js` để
 bước cuối chỉ đụng đúng 3 hàm đó.
+
+---
+
+## 6.8 Ảnh banner của 3D carousel ⭐ MỚI (D-44, 2026-08-03)
+
+Khách chốt: *"Lấy ảnh từ nguồn này https://suoitien.vn/"*. 12 ảnh dưới đây tải về từ
+site chính, **không hotlink** (RULE #3 — prototype phải xem được khi không có mạng, và
+có tấm gốc nặng 17 MB).
+
+### Xử lý
+
+```
+gốc (.jpg/.png/.webp, 116 KB – 17 MB)
+  → resize 760×507, fit cover, position centre   ← trừ `bien`, xem ghi chú
+  → webp q78
+  → assets/img/cards/<key>.webp
+```
+
+Tổng sau xử lý: **~930 KB / 12 ảnh** (gốc ~38 MB). Lệnh dùng `sharp-cli` cài global —
+là **công cụ dev một lần**, không phải dependency của bản demo.
+
+### Bảng nguồn
+
+Tiền tố chung: `https://suoitien.vn/halink-content/uploads/`
+
+| key | File gốc | Lấy từ trang | Nhãn trên site |
+|---|---|---|---|
+| `cong` | `ZqPoL1721372111.png` | `/cong-trinh-van-hoa-lich-su` | CỔNG THIÊN TIÊN MÔN |
+| `cungvang` | `GO1eA1721807623.jpg` | `/kham-pha` | Cung vàng điện ngọc |
+| `tuyet` | `QSoy91721543358.jpg` | `/kham-pha` | Lâu Đài Tuyết |
+| `casau` | `Oh0dz1721549115.jpg` | `/kham-pha` | VƯƠNG QUỐC CÁ SẤU |
+| `bien` | `U5GrK1728966906.webp` | `/bien-tien-dong-ngoc-nu-2` | *(ảnh thân bài)* |
+| `kylan` | `lFlRk1721549911.jpg` | `/kham-pha` | Kỳ lân cung |
+| `phuthuy` | `zbPyc1721536795.jpg` | `/kham-pha` | Lâu Đài Pháp Thuật |
+| `amcung` | `Cwxyr1721617249.jpg` | `/kham-pha` | Âm cung đệ nhất cung đình tửu |
+| `tulinh` | `thum.jpg` | `/kham-pha` | DU THUYỀN TỨ LINH |
+| `diabay` | `volKR1721379881.png` | `/cam-giac-manh` | Đĩa bay hành tinh lạ |
+| `vongxoay` | `R0ChC1721456855.png` | `/cam-giac-manh` | Vòng xoay vũ trụ |
+| `farm` | `banner-farm-1-1.jpg` | `/` (trang chủ) | *(banner Trang Trại 4.0)* |
+
+> **`bien` cắt từ mép TRÊN, không phải giữa.** Ảnh gốc là một infographic dọc rất dài;
+> cắt giữa ra đúng đoạn chữ. Chỉ dải trên cùng mới là ảnh chụp công viên nước.
+> Cùng lý do, `farm` **không** dùng ảnh thân bài `/suoi-tien-farm` (cũng là infographic
+> dọc) mà lấy banner ngang ở trang chủ.
+
+### Trước khi bàn giao — phải hỏi khách
+
+| Việc | Vì sao |
+|---|---|
+| Xác nhận quyền dùng 12 ảnh này trong tour VR | Ảnh lấy từ site của chính khách nên gần như chắc chắn OK, nhưng cần khách nói rõ |
+| Xin bản gốc độ phân giải cao | Vài tấm đã bị site nén sẵn; phóng lên màn 2× sẽ thấy nhiễu |
+| Bổ sung ảnh cho 8 điểm còn thiếu | Xem ghi chú ở `ST.data.CARDS` §6.2 — đủ 20 ảnh thì carousel phủ hết bộ highlight |
+
+---
+
+## 6.9 `ST.data.GROUPS` — 9 khu vực của BẢN 2 ⭐ MỚI (D-50)
+
+Chỉ `index2.html` dùng. Mỗi phần tử là một **ô trong VR Wall**, đồng thời là một **bộ
+lọc của Infinite Slider**.
+
+```js
+GROUPS = [
+  { key:'all', size:'lg', cover:'cong',
+    vi:'Khám phá toàn Suối Tiên', en:'Explore all of Suoi Tien',
+    subVi:'Hơn 150 điểm trong một hành trình',
+    subEn:'150+ spots in one journey',
+    keys:['cong','cungvang','tuyet','casau','bien','kylan',
+          'phuthuy','amcung','tulinh','diabay','vongxoay','farm'] },
+  …
+];
+```
+
+| Field | Kiểu | Ý nghĩa |
+|---|---|---|
+| `key` | string | Định danh; dùng cho chip lọc và `data-g` của ô |
+| `size` | `'lg'\|'md'\|'sm'` | Ô chiếm mấy cell trong grid 4×3 — [`09`](09-variant2.md) §9.2 |
+| `cover` | string | Key của destination lấy ảnh làm nền tĩnh |
+| `keys` | string[] | Các điểm thuộc nhóm. Ô cross-fade giữa **3 ảnh đầu**; slider dùng **cả danh sách** |
+| `vi` `en` | string | Tên nhóm |
+| `subVi` `subEn` | string | Một câu mô tả, chỉ hiện khi hover ô |
+
+### Bảng nhóm
+
+| key | size | n | cover |
+|---|---|---|---|
+| `all` | lg | 12 | `cong` |
+| `noibat` | md | 5 | `cungvang` |
+| `thrill` | md | 3 | `vongxoay` |
+| `culture` | sm | 3 | `amcung` |
+| `kientruc` | sm | 4 | `tuyet` |
+| `family` | sm | 3 | `tulinh` |
+| `water` | sm | 2 | `bien` |
+| `wild` | sm | **1** | `casau` |
+| `food` | sm | **1** | `farm` |
+
+**Thứ tự trong mảng LÀ thứ tự chảy vào grid** — chỉ `all` được đặt tay
+(`grid-column: 1/span 2; grid-row: 1/span 2`), 8 ô sau tự xếp. Đổi thứ tự ở đây là đổi
+bố cục mosaic mà không đụng CSS.
+
+> ⚠️ **MOCK — cần khách duyệt (Q-41).** Cách chia nhóm là tự đặt theo `cat` + cảm nhận;
+> Suối Tiên chưa có phân loại chính thức.
+>
+> `wild` và `food` chỉ có 1 điểm vì mới có 12 ảnh — Q-38 giải quyết.
+>
+> **Một điểm được phép nằm ở nhiều nhóm** (Cung Vàng vừa `culture` vừa `kientruc`,
+> Cổng vừa `all` vừa `noibat` vừa `culture`). Đó là chủ ý — người dùng tìm theo nhiều
+> đường khác nhau — không phải lỗi dữ liệu.
+
+### 2 helper đi kèm
+
+| Hàm | Dùng làm gì |
+|---|---|
+| `D.group(key)` | Tra nhóm; không thấy thì trả `GROUPS[0]` (`all`) thay vì `null` — gọi chỗ nào cũng an toàn |
+| `D.imgOf(key)` | Tra ngược ảnh của một destination từ `CARDS`. Trả `''` nếu điểm chưa có ảnh |
+| `D.deaccent(s)` | Bỏ dấu tiếng Việt cho ô tìm kiếm — gõ `lau dai` ra `Lâu Đài Tuyết` |
+
+---
+
+## 6.10 `ST.data.MAP` + `MAP_META` — bản đồ 2D và pin ⭐ MỚI (D-51)
+
+Dùng chung cả hai bản (`js/map2d.js`).
+
+```js
+D.MAP = { src: 'assets/map/park-2400.webp', w: 2400, h: 1208 };
+
+D.MAP_META = {
+  cong:  { no:'1',   x:16.9, y:53.4, real:true },
+  casau: { no:'22A', x:87.5, y:34.7, real:true },
+  …
+};
+```
+
+| Field | Ý nghĩa |
+|---|---|
+| `no` | Số hiệu in trên bản đồ giấy của công viên, hiện giữa pin |
+| `x` `y` | **% của ảnh bản đồ** → đổi ảnh (giữ khung hình) không phải sửa gì |
+| `real` | `true` = số hiệu ĐỌC ĐƯỢC từ ảnh khách gửi. Chỉ **2/20** có |
+
+`data.js` trộn thẳng vào `DESTINATIONS` để nơi dùng chỉ cần `d.no` / `d.x` / `d.y`,
+không phải tra chéo 2 bảng. Điểm nào chưa có toạ độ thì `d.no` là `undefined` và
+`map2d.js` tự bỏ qua, không vẽ pin trống.
+
+`D.MAP.w` / `.h` phải khớp ảnh: `map2d.js` tính tỉ lệ cover/contain từ hai số này.
+
+### Ảnh bản đồ — nguồn và cách xử lý
+
+Nguồn: thư mục `Ban Do Suoi Tien/` khách gửi, 3 file:
+
+| File | Dùng? |
+|---|---|
+| `ban-do-suoi-tien-new_KO SO.png` (14 MB) | ✅ **chọn cái này** |
+| `Ban do suoi tien_CO SO/ban-do-suoi-tien-JPG.jpg` (13 MB) | ❌ đã có số in sẵn |
+| `Ban do suoi tien_CO SO/ban-do-suoi-tien-PNG.png` (12 MB) | ❌ như trên |
+
+Chọn bản **KHÔNG SỐ** vì pin do ta vẽ đè — dùng bản có số thì hai lớp số chồng nhau.
+
+```
+5954×4654  →  trim viền trong suốt  →  5523×2781
+           →  resize 2400×1208
+           →  flatten lên #0f172a          ← BẮT BUỘC, xem dưới
+           →  webp q82  =  391 KB
+```
+
+> **Vì sao phải `flatten`.** Công viên là hình bất quy tắc nên ảnh có vùng trong suốt ở
+> các góc. `object-fit: cover` chỉ phủ kín *bounding box* — phần trong suốt bên trong
+> vẫn để lộ nền khung và tạo một đường nối rõ rệt. Flatten lên **đúng màu nền của khung
+> xem** (`--st-n-900` = `#0f172a`, và `css/map2d.css` đặt
+> `.st-map-view { background: var(--st-n-900) }`) thì không còn đường nối nào.
+>
+> Đổi màu nền khung mà quên flatten lại ảnh = đường nối quay lại ngay.
+
+### ⚠️ MOCK — phần yếu nhất
+
+Chỉ **2/20 số hiệu** đọc được từ ảnh khách gửi:
+
+| key | `no` | Nguồn |
+|---|---|---|
+| `cong` | `1` | ✅ ảnh khách gửi — "1-CỔNG THIÊN TIÊN MÔN" ở ô *Điểm bắt đầu* |
+| `casau` | `22A` | ✅ ảnh khách gửi — "22A-VƯƠNG QUỐC CÁ SẤU" ở ô *Điểm đến* |
+
+18 số còn lại và **toàn bộ `x`/`y`** là đặt bằng cách đối chiếu bằng mắt ảnh bản đồ với
+ảnh khách gửi. **Đủ để trình bày, chưa đủ để chỉ đường thật.**
+
+Bản thật đọc `map/map_places.json` (`code` + toạ độ pixel trên `map.jpg`) — cùng nguồn
+mà overlay "Chỉ đường" của trip360 đang dùng. Cần xác nhận trước khi production (Q-43).

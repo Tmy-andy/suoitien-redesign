@@ -1,0 +1,361 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   carousel.css — 3D coverflow carousel (D-44)
+   Cặp với js/carousel.js. Prefix `.st-cr-` để tách hẳn khỏi phần khung popup.
+
+   PHÂN CÔNG JS ↔ CSS:
+     JS  chỉ ghi 2 biến trên mỗi thẻ — --st-o (offset CÓ DẤU tới thẻ giữa)
+         và --st-oa (trị tuyệt đối) — cộng z-index và class .st-active.
+     CSS suy TOÀN BỘ transform/opacity/blur từ 2 biến đó.
+   Nhờ vậy muốn chỉnh cảm giác 3D (góc nghiêng, độ sâu, khoảng cách thẻ) thì
+   sửa duy nhất ở đây, không phải đụng vào JS.
+
+   Transition transform vẫn chạy dù --st-o là custom property không kiểu:
+   đổi biến → giá trị computed của `transform` đổi → trình duyệt nội suy
+   giữa 2 ma trận. (Không @property được vì phải chạy được ở Safari cũ.)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.st-cr {
+  /* Bố cục 5 thẻ (1 giữa + 2 preview mỗi bên · D-55) — ở ≥1280px.
+     Hẹp hơn thì responsive.css ẩn bậc ±2, quay về 3 thẻ như D-49.
+
+     CỠ THẺ SUY TỪ CHIỀU CAO SÂN KHẤU, không từ `vh` (D-54).
+     Bản trước dùng `min(clamp(…vw…), 66vh)`: hằng số `66vh` phải chọn đủ nhỏ
+     để an toàn ở màn THẤP nhất, nên ở màn cao nó bỏ phí cả trăm pixel. Giờ
+     sân khấu là phần tử co giãn, thẻ cao đúng bằng nó (trừ chỗ cho bóng đổ)
+     và `aspect-ratio` lo bề ngang → thẻ luôn to hết mức khung cho phép, ở mọi
+     kích thước, không cần hằng số chiều cao nào.
+
+     `--st-card-step` giờ là % BỀ NGANG CỦA CHÍNH THẺ (translateX % ăn theo
+     kích thước phần tử) nên không cần biết thẻ rộng bao nhiêu px. */
+  --st-card-step: 66%;    /* dịch ngang mỗi bậc, theo bề ngang thẻ */
+  --st-card-z:    200px;  /* lùi sâu mỗi bậc */
+  --st-card-rot:  33deg;  /* nghiêng mỗi bậc */
+  --st-card-maxw: min(46vw, 820px);   /* chặn theo bề ngang màn */
+  --st-shadow-room: 34px;             /* chỗ chừa cho bóng đổ dưới thẻ */
+
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--st-s-3);
+}
+
+/* Khung neo cho 2 nút ‹ › (xem lý do ở index.html chỗ .st-cr-viewport).
+   `flex: 1 1 auto` để nó — và sân khấu bên trong — ăn hết chiều cao còn lại. */
+.st-cr-viewport { position: relative; flex: 1 1 auto; min-height: 0; }
+
+/* ── Sân khấu 3D ────────────────────────────────────────────────────────
+   KHÔNG đặt overflow/mask ở đây: cả hai đều ép trình duyệt "flatten" cây 3D,
+   thẻ sẽ mất chiều sâu. Việc cắt rìa để `body { overflow: hidden }` lo. */
+.st-cr-stage {
+  position: relative;
+  height: 100%;
+  perspective: 1500px;
+  perspective-origin: 50% 46%;
+  transform-style: preserve-3d;
+  touch-action: pan-y;             /* quẹt ngang là của carousel */
+  cursor: grab;
+}
+.st-cr-stage:active { cursor: grabbing; }
+
+/* ── Thẻ ──────────────────────────────────────────────────────────────── */
+.st-cr-card {
+  /* ── BỐN BẬC TÁCH RIÊNG (D-55) ───────────────────────────────────────
+     Với 3 thẻ, mỗi đại lượng nhân thẳng với --st-o là đủ. Với 5 thẻ thì
+     KHÔNG: nhân tuyến tính cho bậc ±2 ra thẻ nằm ngoài mép màn (2 × 66% =
+     132% bề ngang thẻ) và nghiêng 66° — gần như nhìn nghiêng cạnh giấy.
+
+     Nên tách làm 4 biến, mặc định = bậc tuyến tính, rồi ghi đè riêng cho
+     bậc ±2 bằng selector [data-oa="2"] (js/carousel.js ghi sẵn attribute
+     đó — custom property KHÔNG chọn được bằng selector).
+
+     Riêng --st-turn ở bậc ±2 cố tình bằng ±1: thẻ xa nghiêng ĐÚNG BẰNG thẻ
+     gần, thành một chồng mặt phẳng SONG SONG lùi dần. Đó là dáng coverflow
+     thật; nghiêng tăng dần thì thẻ ngoài cùng biến thành một vệt. */
+  --st-spread: var(--st-o);      /* dịch ngang */
+  --st-depth:  var(--st-oa);     /* lùi sâu + thu nhỏ + mờ */
+  --st-turn:   var(--st-o);      /* nghiêng */
+  --st-hs:     1;                /* hệ số phóng khi hover, xem dưới */
+
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* CẢ HAI giới hạn phải diễn đạt qua CHIỀU CAO, rồi để `aspect-ratio` suy bề
+     ngang. Đặt `height` + `max-width` song song thì cả hai chiều đều bị ràng
+     buộc và trình duyệt BỎ QUA `aspect-ratio` — thẻ méo (đo được 720×729 ở
+     màn 1920, tức 0.99 thay vì 1.5).
+
+       giới hạn theo sân khấu :  100% − chỗ cho bóng đổ
+       giới hạn theo bề ngang  :  --st-card-maxw / 1.5
+     `min()` của hai cái đó là chiều cao đúng; bề ngang tự ra 3:2. */
+  height: min(calc(100% - var(--st-shadow-room)),
+              calc(var(--st-card-maxw) / 1.5));
+  aspect-ratio: 3 / 2;
+  width: auto;
+  border-radius: var(--st-r-lg);
+  overflow: hidden;
+  background: var(--st-n-200);
+  text-align: left;
+  will-change: transform, opacity;
+  transform:
+    translate(-50%, -50%)
+    translateX(calc(var(--st-spread) * var(--st-card-step)))
+    translateZ(calc(var(--st-depth) * var(--st-card-z) * -1))
+    rotateY(calc(var(--st-turn) * var(--st-card-rot) * -1))
+    scale(calc((1 - var(--st-depth) * .085) * var(--st-hs)));
+  /* Chiều sâu KHÔNG diễn tả bằng opacity nữa (D-55). Với 3 thẻ thì `.7` không
+     sao vì thẻ rìa nằm trên nền trắng trơn. Với 5 thẻ thì bậc ±1 và ±2 CHỒNG
+     LÊN NHAU: thẻ mờ 70% biến thành cửa kính, nhìn xuyên qua thấy thẻ sau —
+     ảnh chụp ở 1920 đọc ra thành ảnh bị nhoè, không ra "thẻ ở xa".
+     Giữ thẻ gần đặc, dồn việc "lùi ra sau" cho brightness + scale + translateZ. */
+  opacity: calc(1 - var(--st-depth) * .075);
+  box-shadow: var(--st-sh-lg);
+  /* Quãng đường của thẻ dài bằng cả bề ngang của chính nó → cần `--st-ease-flow`
+     chứ không phải expo-out (lý do ở css/tokens.css).
+     `transition-delay` theo BẬC làm thẻ ngoài chạy sau thẻ trong một nhịp — cả
+     dải trôi thành một làn sóng thay vì 5 mảnh nhảy cùng lúc. */
+  transition: transform 720ms var(--st-ease-flow),
+              opacity   720ms var(--st-ease-flow),
+              box-shadow var(--st-dur-base) var(--st-ease);
+  transition-delay: calc(var(--st-oa) * 34ms);
+}
+
+/* Bậc ±2: nén lại cho vừa màn (1,84 bậc thay vì 2) và nghiêng bằng bậc ±1. */
+.st-cr-card[data-oa="2"] {
+  --st-spread: calc(var(--st-o) * .92);
+  --st-depth:  1.62;
+  --st-turn:   calc(var(--st-o) * .5);
+}
+.st-cr-card.st-active { box-shadow: var(--st-sh-xl), 0 0 0 3px var(--st-green-500); }
+
+/* Thẻ bên rìa mờ nhẹ để mắt bám vào thẻ giữa. brightness rẻ hơn blur nhiều
+   lần và không tạo thêm lớp raster khi 5 thẻ cùng chuyển động.
+   Bậc ±2 tối thêm một nấc — nếu bằng bậc ±1 thì 4 thẻ preview đọc ra là một
+   hàng ngang đều nhau, mất hẳn cảm giác chiều sâu. */
+.st-cr-card:not(.st-active) { filter: brightness(.80) saturate(.88); }
+.st-cr-card[data-oa="2"] { filter: brightness(.66) saturate(.80); }
+.st-cr-card:not(.st-active):hover { filter: none; opacity: 1; }
+
+/* Hover thẻ GIỮA — phóng nhẹ cả thẻ. Không viết `transform` ở đây được: nó sẽ
+   đè cả chuỗi 3D ở trên. Nhân vào biến --st-hs đang nằm sẵn trong `scale()`. */
+.st-cr-card.st-active:hover { --st-hs: 1.028; }
+
+.st-cr-card:focus-visible { box-shadow: var(--st-sh-xl), 0 0 0 4px var(--st-gold-400); }
+
+/* ── Ảnh + lớp phủ chữ ────────────────────────────────────────────────── */
+.st-cr-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Ảnh thật của khu vui chơi rất bão hoà; hạ nhẹ để chữ trắng còn đọc được
+     và để 5 thẻ cạnh nhau không thành một mảng màu chói. */
+  filter: saturate(.96);
+  transition: transform 500ms var(--st-ease-out);
+}
+
+/* ── Parallax khi rê vào thẻ giữa (D-55) ────────────────────────────────
+   Mượn nguyên cơ chế của ô wall bên index2 (css/wall.css .st-wt-img):
+   js/carousel.js ghi --px/--py theo vị trí con trỏ, CSS gộp chúng vào cùng
+   một `transform` với scale. Ảnh đã `inset: 0; width/height: 100%` nên phải
+   phóng TRƯỚC rồi mới dịch — 1.045 là mức vừa đủ để dịch 2,5% không lòi mép.
+
+   Vì sao lặp lại ở bản 1: khách muốn hai bản có cùng "tay nghề" chuyển động,
+   nhưng hai component không dùng chung markup (thẻ 3D ≠ ô grid) nên không
+   gộp CSS được — chỉ gộp được ý tưởng. */
+.st-cr-card.st-active .st-cr-img {
+  transform: translate(var(--px, 0%), var(--py, 0%)) scale(1.045);
+}
+.st-cr-card.st-active:hover .st-cr-img {
+  transform: translate(var(--px, 0%), var(--py, 0%)) scale(1.10);
+}
+/* Rê vào thẻ giữa thì lớp phủ đậm thêm — chữ và dòng CTA bật hẳn lên. */
+.st-cr-card.st-active .st-cr-veil {
+  opacity: .86;
+  transition: opacity var(--st-dur-base) var(--st-ease);
+}
+.st-cr-card.st-active:hover .st-cr-veil { opacity: 1; }
+
+.st-cr-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+              rgba(6,12,20,0)   38%,
+              rgba(6,12,20,.42) 62%,
+              rgba(6,12,20,.88) 100%);
+}
+
+.st-cr-body {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: var(--st-s-4);
+  color: #fff;
+}
+.st-cr-cat {
+  display: inline-block;
+  margin-bottom: 5px;
+  padding: 3px 9px;
+  border-radius: var(--st-r-pill);
+  background: rgba(255,255,255,.20);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font: var(--st-t-xs);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.st-cr-name {
+  font: var(--st-t-h2);
+  /* Thẻ 560px thì 20px cố định trông lọt thỏm — cho chữ lớn theo thẻ. */
+  font-size: clamp(19px, 1.55vw, 25px);
+  text-shadow: 0 1px 12px rgba(0,0,0,.5);
+  /* Tên dài nhất ("Âm Cung Đệ Nhất Cung Đình Tửu") vẫn phải gọn 2 dòng */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Dòng "Bấm để đến đây →" chỉ nằm ở thẻ giữa — thẻ rìa nghiêng 30–90° đọc
+   không ra, để chữ ở đó chỉ làm rối. */
+.st-cr-go {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+  overflow: hidden;
+  font: var(--st-t-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--st-gold-300);
+  transition: max-height var(--st-dur-base) var(--st-ease),
+              opacity var(--st-dur-base) var(--st-ease),
+              margin-top var(--st-dur-base) var(--st-ease);
+}
+.st-cr-card.st-active .st-cr-go { max-height: 20px; margin-top: 7px; opacity: 1; }
+.st-cr-go svg { width: 13px; height: 13px; }
+
+/* Badge "nên xem" — hint NHẸ (Q9), không phải xếp hạng */
+.st-cr-badge {
+  position: absolute;
+  top: var(--st-s-3);
+  left: var(--st-s-3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-gold-300);
+  color: var(--st-n-900);
+  font: var(--st-t-xs);
+  box-shadow: var(--st-sh-sm);
+}
+.st-cr-badge svg { width: 12px; height: 12px; }
+
+/* ── Nút ‹ › ──────────────────────────────────────────────────────────── */
+.st-cr-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 200;
+  width: 46px; height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--st-r-circle);
+  background: var(--st-surface);
+  color: var(--st-green-700);
+  box-shadow: var(--st-sh-md);
+  transform: translateY(-50%);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease),
+              transform var(--st-dur-fast) var(--st-ease);
+}
+.st-cr-nav:hover { background: var(--st-green-600); color: #fff; transform: translateY(-50%) scale(1.06); }
+.st-cr-nav svg { width: 22px; height: 22px; }
+.st-cr-prev { left: 0; }
+.st-cr-next { right: 0; }
+
+/* ── Chấm chỉ vị trí ──────────────────────────────────────────────────── */
+.st-cr-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+.st-cr-dot {
+  width: 7px; height: 7px;
+  border-radius: var(--st-r-pill);
+  background: var(--st-n-300);
+  transition: width var(--st-dur-base) var(--st-ease-spring),
+              background var(--st-dur-fast) var(--st-ease);
+}
+.st-cr-dot:hover { background: var(--st-green-300); }
+.st-cr-dot.st-on { width: 22px; background: var(--st-green-600); }
+
+/* ── Chuyển cảnh khi bấm chọn ─────────────────────────────────────────── */
+.st-cr-card.st-going {
+  transform:
+    translate(-50%, -50%)
+    translateX(calc(var(--st-o) * var(--st-card-step)))
+    scale(1.14);
+  opacity: 0;
+  transition: transform 300ms var(--st-ease-out), opacity 300ms var(--st-ease);
+}
+
+/* ══ VÀO MÀN (D-55) ═══════════════════════════════════════════════════════
+   Bản trước chỉ có mỗi opacity: cả dải thẻ hiện ra tại chỗ, không có gì
+   chuyển động — mở popup xong nhìn như trang đã đứng đó từ trước. Khách bảo
+   "chưa đẹp, muốn sống động hơn".
+
+   Ràng buộc vẫn còn nguyên: KHÔNG animate `transform` của .st-cr-card, vì
+   transform của nó đang do --st-o lái và chồng animation vào sẽ giật ngay
+   bậc chuyển đầu tiên. Cách đi vòng — animate 3 thứ QUANH nó:
+
+     1. .st-cr-stage  bay lên + phóng ra   ← cả sân khấu, 1 lớp composite
+     2. .st-cr-card   chỉ opacity, so le TỪ GIỮA RA (delay theo --st-oa)
+     3. .st-cr-img    Ken Burns 1.16 → 1   ← thứ tạo cảm giác "sống"
+
+   Tất cả dùng `backwards` chứ không `both`: hết animation là trả quyền lại
+   cho CSS nền: `.st-cr-img` còn phải nhận transform parallax khi hover, mà
+   `forwards` sẽ đóng băng nó ở giá trị cuối. */
+#st-popup.st-open .st-cr-stage {
+  animation: st-cr-stage-in 820ms var(--st-ease-out) 120ms backwards;
+}
+@keyframes st-cr-stage-in { from { opacity: 0; transform: translateY(38px) scale(.9); } }
+
+#st-popup.st-open .st-cr-card {
+  animation: st-cr-in 620ms var(--st-ease-out) backwards;
+  /* Thẻ giữa trước, rồi lan dần ra rìa — mắt bắt đúng thứ cần chọn trước tiên */
+  animation-delay: calc(240ms + var(--st-oa) * 130ms);
+}
+@keyframes st-cr-in { from { opacity: 0; } }
+
+#st-popup.st-open .st-cr-img {
+  animation: st-cr-kenburns 1200ms var(--st-ease-out) 180ms backwards;
+}
+@keyframes st-cr-kenburns { from { transform: scale(1.16); } }
+
+#st-popup.st-open .st-cr-nav {
+  animation: st-cr-nav-in 520ms var(--st-ease-spring) 660ms backwards;
+}
+@keyframes st-cr-nav-in { from { opacity: 0; transform: translateY(-50%) scale(.6); } }
+
+#st-popup.st-open .st-cr-dots {
+  animation: st-fade-up var(--st-dur-slow) 720ms var(--st-ease-out) backwards;
+}
+
+/* ── Giảm chuyển động ─────────────────────────────────────────────────────
+   js/carousel.js đã tắt autoplay; ở đây tắt nốt phần nội suy để việc bấm ‹ ›
+   là nhảy tức thì thay vì trôi 620ms. */
+@media (prefers-reduced-motion: reduce) {
+  .st-cr-card, .st-cr-img, .st-cr-dot { transition: none; }
+  #st-popup.st-open .st-cr-card,
+  #st-popup.st-open .st-cr-stage,
+  #st-popup.st-open .st-cr-img,
+  #st-popup.st-open .st-cr-nav,
+  #st-popup.st-open .st-cr-dots { animation: none; }
+}
