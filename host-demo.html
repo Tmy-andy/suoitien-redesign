@@ -2,211 +2,224 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DEMO — trang cha nhúng popup Suối Tiên VR360</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suối Tiên VR360 — Popup chọn điểm bắt đầu</title>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     ⚠️ FILE NÀY KHÔNG PHẢI DELIVERABLE.
+     BẢN 1 — CAROUSEL KHU VỰC → DANH SÁCH → VR 360
 
-     Nó mô phỏng trang VR thật (trip360) để thử popup trong đúng điều kiện
-     iframe: nền phía sau, bridge 2 chiều, nút mở lại, đổi ngôn ngữ.
-     Deliverable là `index.html` + `css/` + `js/` + `assets/`.
+     Trang này LÀ CHÍNH CÁI POPUP, chiếm trọn màn hình, nhúng vào trang VR
+     bằng một <iframe> phủ kín viewport:
 
-     Đồng thời nó là BẢN MẪU CHÉP ĐƯỢC cho bên tích hợp: phần <script> dưới
-     cùng chính là toàn bộ những gì trang cha phải viết (~40 dòng).
-     Xem docs/07-integration.md
+         <iframe src=".../index.html?lang=vi"
+                 style="position:fixed; inset:0; width:100%; height:100%;
+                        border:0; background:transparent; z-index:10050"></iframe>
+
+     rồi nghe postMessage `st:navigate` / `st:close`.
+     → Hợp đồng đầy đủ: docs/07-integration.md
+     → Trang cha mô phỏng: host-demo.html (có nút chuyển sang BẢN 2)
+
+     Ba trạng thái (docs/04-modals.md §4.2):
+       A. carousel 9 KHU VỰC   → bấm thẻ ra danh sách khu vực đó
+       B. danh sách điểm       → bấm 1 điểm đi VR
+       M. bản đồ 2D (phủ lên)  → pin chỉ gồm các điểm đang lọc
+
+     Mở thẳng file này bằng double-click cũng chạy — bridge thành no-op.
      ══════════════════════════════════════════════════════════════════════ -->
 
-<style>
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; font: 400 15px/1.5 system-ui, sans-serif; }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@400;500;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 
-  /* Nền giả lập panorama 360° của 3DVista — chỉ để thấy scrim có ăn không */
-  #fake-vr {
-    position: fixed; inset: 0;
-    background:
-      radial-gradient(ellipse 80% 55% at 50% 8%,  #cfeeff 0%, #8fd4f0 45%, #5bb7dc 100%),
-      linear-gradient(180deg, #5bb7dc 0%, #7cc47f 52%, #3f8f4e 100%);
-  }
-  #fake-vr::after {
-    content: "";
-    position: absolute; inset: 0;
-    background:
-      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 90px),
-      radial-gradient(circle at 22% 62%, rgba(255,255,255,.28) 0 60px, transparent 61px),
-      radial-gradient(circle at 74% 70%, rgba(255,255,255,.22) 0 90px, transparent 91px);
-  }
-  #fake-vr span {
-    position: absolute; left: 50%; top: 44%;
-    transform: translate(-50%,-50%);
-    font: 700 clamp(20px,4vw,44px)/1.2 system-ui, sans-serif;
-    color: rgba(255,255,255,.72);
-    letter-spacing: .06em;
-    text-shadow: 0 2px 20px rgba(0,0,0,.25);
-    white-space: nowrap;
-  }
-
-  /* Thanh điều khiển của "trang cha" */
-  #host-bar {
-    position: fixed; left: 50%; bottom: 20px;
-    transform: translateX(-50%);
-    z-index: 100;
-    display: flex; gap: 8px; align-items: center;
-    padding: 10px 12px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.94);
-    box-shadow: 0 8px 28px rgba(0,0,0,.22);
-  }
-  #host-bar button {
-    border: 0; cursor: pointer;
-    padding: 9px 15px;
-    border-radius: 999px;
-    background: #128125; color: #fff;
-    font: 600 14px/1 system-ui, sans-serif;
-  }
-  #host-bar button.ghost { background: #f1f5f9; color: #334155; }
-  #host-bar code { font: 500 12px/1 ui-monospace, monospace; color: #64748b; }
-
-  /* Nhật ký message — để thấy bridge bắn ra cái gì */
-  #host-log {
-    position: fixed; right: 12px; top: 12px;
-    z-index: 100;
-    width: 340px; max-height: 46vh; overflow: auto;
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: rgba(15,23,42,.92); color: #cbd5e1;
-    font: 500 11.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
-    box-shadow: 0 8px 28px rgba(0,0,0,.3);
-  }
-  #host-log h4 { margin: 0 0 6px; font: 700 11px/1.4 ui-monospace, monospace;
-                 color: #fff; letter-spacing: .08em; text-transform: uppercase; }
-  #host-log div { padding: 2px 0; border-top: 1px solid rgba(255,255,255,.1); }
-  #host-log b { color: #4ade80; font-weight: 600; }
-
-  /* ══ ĐÂY LÀ PHẦN BÊN TÍCH HỢP PHẢI CHÉP ══════════════════════════════
-     Iframe phủ kín viewport. Chỉ 5 dòng.
-
-     `background: transparent` vẫn bắt buộc dù popup có nền đặc: lúc vào/ra nó
-     fade opacity, và đúng những frame đó phải nhìn xuyên qua thấy panorama.
-     Bỏ dòng này thì popup "bật" ra từ một tấm màn trắng. */
-  #st-popup-frame {
-    position: fixed; inset: 0;
-    width: 100%; height: 100%;
-    border: 0;
-    background: transparent;
-    z-index: 10050;                 /* > 10009 mà floorplan.css đang chiếm */
-  }
-  #st-popup-frame[hidden] { display: none; }
-</style>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/carousel.css">
+<link rel="stylesheet" href="css/popup.css">
+<link rel="stylesheet" href="css/map2d.css">
+<link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
 
-<div id="fake-vr"><span>[ panorama 360° giả lập ]</span></div>
+<!-- ══════════════════════════════════════════════════════════════════════
+     SPRITE ICON — inline, không phải file rời.
+     `<use href="file.svg#id">` bị CORS chặn khi mở `file://`; inline là cách
+     duy nhất chạy được cả `file://` lẫn `http://`.
+     Hệ nét mảnh: stroke 1.75, không fill (D-16). Ngoại lệ `i-star`: ở cỡ 12px
+     trong badge, sao nét mảnh chỉ còn là vệt xám không đọc ra hình.
+     ══════════════════════════════════════════════════════════════════════ -->
+<svg id="st-icons" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+<defs>
+<g id="i-close" transform="translate(0.05 0.05)"><path d="M6 6l12 12M18 6L6 18"/></g>
+<g id="i-chevron-left"><path d="m15 6-6 6 6 6"/></g>
+<g id="i-chevron-right"><path d="m9 6 6 6-6 6"/></g>
+<g id="i-arrow-right" transform="translate(0.5 0)"><path d="M4 12h15m-6-6 6 6-6 6"/></g>
+<g id="i-arrow-left" transform="translate(-0.5 0)"><path d="M20 12H5m6-6-6 6 6 6"/></g>
+<g id="i-search" transform="translate(0.1 0.1)"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></g>
+<g id="i-map" transform="translate(0.05 -0.06)"><path d="M9 20 3 17.5v-13L9 7l6-2.5 6 2.5v13L15 17Z"/><path d="M9 7v13M15 4.5v13"/><circle cx="12" cy="11" r="1.6"/></g>
+<g id="i-vr" transform="translate(0.05 -0.15)"><rect x="2.5" y="7.5" width="19" height="9" rx="3.2"/><path d="M9.6 16.5 12 13.4l2.4 3.1"/><circle cx="7" cy="12" r="1"/><circle cx="17" cy="12" r="1"/></g>
+<g id="i-plus"><path d="M12 5.2v13.6M5.2 12h13.6"/></g>
+<g id="i-minus"><path d="M5.2 12h13.6"/></g>
+<g id="i-expand" transform="translate(0.05 0.05)"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></g>
+<g id="i-star" fill="currentColor" stroke="none"><path d="M12 3.4l2.63 5.33 5.88.86-4.25 4.15 1 5.86L12 16.83l-5.26 2.77 1-5.86L3.5 9.59l5.88-.86Z"/></g>
+</defs>
+</svg>
 
-<div id="host-bar">
-  <button id="btn-open">Mở popup</button>
-  <button id="btn-variant" class="ghost">Bản 1 · Carousel</button>
-  <button id="btn-lang" class="ghost">Đổi VI / EN</button>
-  <code id="cur-lang">lang=vi</code>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     #st-popup CHIẾM TRỌN MÀN HÌNH (D-48) — không hộp modal, không nền mờ.
+     Vẫn giữ role="dialog" aria-modal: xét hành vi nó vẫn là modal.
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="st-popup" role="dialog" aria-modal="true"
+     aria-labelledby="st-popup-title" aria-describedby="st-popup-sub">
+
+  <span class="st-brandline" aria-hidden="true"></span>
+
+  <button class="st-popup-close" type="button" data-st-close data-i18n-aria="close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+  </button>
+
+  <div class="st-popup-inner">
+
+    <div class="st-popup-head">
+      <span class="st-eyebrow" data-i18n="popup.eyebrow"></span>
+      <h1 id="st-popup-title" tabindex="-1"></h1>
+      <p id="st-popup-sub" data-i18n="popup.subtitle"></p>
+
+      <!-- Ô tìm kiếm (D-52) + nút bản đồ (D-54) trên CÙNG một hàng.
+           Gõ vào ô tìm là nhảy thẳng sang trạng thái danh sách, tìm trên TOÀN
+           BỘ 20 điểm chứ không giới hạn trong khu vực đang xem. -->
+      <div class="st-search-row">
+        <div class="st-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
+          <input type="search" id="st-search-input" autocomplete="off"
+                 data-i18n-aria="list.searchLbl" data-i18n-ph="list.searchPh">
+          <button type="button" class="st-search-clear" data-i18n-aria="list.clear">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+          </button>
+        </div>
+        <button type="button" class="st-head-map" data-open-map="all">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
+          <span data-i18n="map.open"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ TRẠNG THÁI A — 3D carousel 9 KHU VỰC ═════════════════════════
+         Thẻ, chấm và vùng live do js/carousel.js sinh; đây là bộ khung.
+         Từ D-52 mỗi thẻ là một KHU VỰC (D.GROUPS), không phải một điểm. -->
+    <div id="st-popup-deck" class="st-cr">
+      <!-- .st-cr-viewport chỉ để neo 2 nút ‹ › vào đúng tầm cao thẻ. Không neo
+           vào .st-cr được (nó cao bằng cả vùng còn lại của màn nên nút trôi
+           lên trên), cũng không đặt nút BÊN TRONG .st-cr-stage được (stage là
+           preserve-3d, nút sẽ thành mặt phẳng trong không gian 3D). -->
+      <div class="st-cr-viewport">
+        <div class="st-cr-stage" role="group" aria-roledescription="carousel"
+             data-i18n-aria="popup.deckLabel"></div>
+
+        <button class="st-cr-nav st-cr-prev" type="button" data-cr-nav="prev"
+                data-i18n-aria="popup.prev">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-left"/></svg>
+        </button>
+        <button class="st-cr-nav st-cr-next" type="button" data-cr-nav="next"
+                data-i18n-aria="popup.next">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+        </button>
+      </div>
+
+      <div class="st-cr-dots"></div>
+      <p class="st-cr-live st-sr-only" aria-live="polite"></p>
+    </div>
+
+    <!-- ══ TRẠNG THÁI B — danh sách điểm của một khu vực ════════════════ -->
+    <section id="st-list" class="st-list" hidden aria-hidden="true">
+      <header class="st-list-top">
+        <button type="button" class="st-list-back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+          <span data-i18n="list.back"></span>
+        </button>
+        <div class="st-list-head">
+          <h2 class="st-list-title" tabindex="-1"></h2>
+          <span class="st-list-count"></span>
+        </div>
+        <button type="button" class="st-list-map" data-open-map="area">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
+          <span data-i18n="map.openArea"></span>
+        </button>
+      </header>
+
+      <ul class="st-list-grid"></ul>
+      <p class="st-list-empty" hidden data-i18n="list.empty"></p>
+    </section>
+
+    <div class="st-popup-foot">
+      <span class="st-legend">
+        <i class="st-legend-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-star"/></svg></i>
+        <span data-i18n="popup.legend"></span>
+      </span>
+      <button id="st-popup-skip" class="st-linkbtn" type="button" data-st-close>
+        <span data-i18n="popup.skip"></span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-right"/></svg>
+      </button>
+    </div>
+  </div>
 </div>
 
-<div id="host-log"><h4>postMessage nhận được</h4></div>
 
-<script>
-/* ══════════════════════════════════════════════════════════════════════════
-   TOÀN BỘ CODE TRANG CHA CẦN — chép từ đây xuống.
-   ══════════════════════════════════════════════════════════════════════════ */
-(function () {
-  'use strict';
+<!-- ══════════════════════════════════════════════════════════════════════
+     BẢN ĐỒ 2D (D-51) — phủ lên popup. Markup DÙNG CHUNG với index2.html,
+     sửa ở đây thì phải sửa cả bên đó. Pin do js/map2d.js sinh.
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="st-map" hidden aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="st-map-top">
+    <div class="st-map-head">
+      <span class="st-map-sub" data-i18n="map.sub"></span>
+      <span class="st-map-title"></span>
+    </div>
+    <span class="st-map-count"></span>
+    <button type="button" class="st-map-x" data-map-act="close" data-i18n-aria="close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+    </button>
+  </div>
 
-  /* Hai bản popup dùng CHUNG hợp đồng bridge — đổi bản chỉ là đổi `src`,
-     không phải sửa một dòng nào của trang cha. Đó chính là điều đang được
-     chứng minh ở đây. Khi deploy thì chốt một file và bỏ nút "Bản 1 / Bản 2".
-       index.html  — màn chào + 3D carousel      (D-44 / D-48 / D-49)
-       index2.html — VR Wall + Infinite Slider   (D-50, note.md §137)         */
-  var VARIANTS = [
-    { src: 'index.html',  label: 'Bản 1 · Carousel' },
-    { src: 'index2.html', label: 'Bản 2 · Wall + Slider' }
-  ];
-  var variant = 0;
-  var POPUP_SRC = VARIANTS[variant].src;   // đổi thành URL thật khi deploy
-  var lang = 'vi';
-  var frame = null;
+  <div class="st-map-view">
+    <div class="st-map-canvas">
+      <img class="st-map-img" alt="" decoding="async">
+      <div class="st-map-pins"></div>
+    </div>
 
-  function openPopup() {
-    if (frame) {                       // đã có sẵn → chỉ hiện lại, không tải lại
-      frame.hidden = false;
-      frame.contentWindow.postMessage({ type: 'st:open' }, '*');
-      return;
-    }
-    frame = document.createElement('iframe');
-    frame.id = 'st-popup-frame';
-    frame.title = 'Chọn điểm bắt đầu tour 360°';
-    frame.src = POPUP_SRC + '?lang=' + lang;
-    document.body.appendChild(frame);
+    <div class="st-map-card" hidden></div>
 
-    /* Khoá cuộn của TRANG CHA — popup không với tới được document này. */
-    document.documentElement.style.overflow = 'hidden';
-  }
+    <div class="st-map-tools">
+      <button type="button" class="st-map-fit" data-map-act="fit" data-i18n-aria="map.fit">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-expand"/></svg>
+      </button>
+      <button type="button" data-map-act="in" data-i18n-aria="map.zoomIn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"/></svg>
+      </button>
+      <button type="button" data-map-act="out" data-i18n-aria="map.zoomOut">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-minus"/></svg>
+      </button>
+    </div>
 
-  function closePopup() {
-    if (!frame) return;
-    frame.hidden = true;                        // giữ lại để mở nhanh lần sau
-    document.documentElement.style.overflow = '';
-  }
+    <p class="st-map-hint" data-i18n="map.hint"></p>
+  </div>
+</div>
 
-  window.addEventListener('message', function (e) {
-    var d = e.data;
-    if (!d || typeof d.type !== 'string' || d.type.indexOf('st:') !== 0) return;
-    log(d);
+<!-- Panel debug — chỉ hiện với ?debug=1 -->
+<div id="st-debug" hidden></div>
 
-    if (d.type === 'st:navigate') {
-      /* d.direct === true nghĩa là popup đã tự gọi VRCore rồi (cùng origin),
-         ở đây chỉ cần ghi analytics. Nếu false thì trang cha phải tự đi. */
-      if (!d.direct && window.VRCore) {
-        VRCore.navigateToPano(window.tour, d.pano);
-      }
-      /* Popup sẽ tự gửi tiếp `st:close` sau khi chạy xong animation đóng. */
-    }
 
-    if (d.type === 'st:close') closePopup();
-  });
-
-  /* Esc khi focus đang Ở TRANG CHA — popup không nghe được vì nó là document
-     khác. Trang cha phải tự bắt. */
-  document.addEventListener('keydown', function (e) {
-    if ((e.key === 'Escape' || e.key === 'Esc') && frame && !frame.hidden) closePopup();
-  });
-
-  /* ── phần dưới chỉ phục vụ demo ─────────────────────────────────────── */
-  document.getElementById('btn-open').addEventListener('click', openPopup);
-  document.getElementById('btn-lang').addEventListener('click', function () {
-    lang = lang === 'vi' ? 'en' : 'vi';
-    document.getElementById('cur-lang').textContent = 'lang=' + lang;
-    if (frame) frame.contentWindow.postMessage({ type: 'st:lang', lang: lang }, '*');
-  });
-
-  /* Đổi bản: phải TẠO LẠI iframe vì `src` khác nhau — postMessage không đổi
-     được document đang chạy trong đó. */
-  document.getElementById('btn-variant').addEventListener('click', function () {
-    variant = (variant + 1) % VARIANTS.length;
-    POPUP_SRC = VARIANTS[variant].src;
-    this.textContent = VARIANTS[variant].label;
-    if (frame) { frame.remove(); frame = null; }
-    openPopup();
-  });
-
-  function log(d) {
-    var box = document.getElementById('host-log');
-    var row = document.createElement('div');
-    var extra = JSON.stringify(d);
-    row.innerHTML = '<b>' + d.type + '</b> ' + extra.replace(/^\{[^,]*,?/, '{');
-    box.appendChild(row);
-    box.scrollTop = box.scrollHeight;
-  }
-
-  openPopup();                                  // demo: mở luôn khi vào trang
-})();
-</script>
+<!-- ══ JS — classic script, không module: biến global, mở file:// chạy được ══
+     Thứ tự phụ thuộc:
+       data → i18n → a11y → bridge → carousel → map2d → popup (cuối cùng)
+     `carousel.js` và `map2d.js` phải TRƯỚC `popup.js`: popup gọi
+     ST.carousel.create() / ST.map2d.create() ngay trong lượt bootstrap. -->
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/a11y.js"></script>
+<script src="js/bridge.js"></script>
+<script src="js/carousel.js"></script>
+<script src="js/map2d.js"></script>
+<script src="js/popup.js"></script>
 </body>
 </html>

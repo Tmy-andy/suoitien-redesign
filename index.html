@@ -3,28 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Suối Tiên VR360 — Popup chọn điểm bắt đầu</title>
+<title>Suối Tiên VR360 — Popup v2: VR Wall + Infinite Slider</title>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     BẢN 1 — CAROUSEL KHU VỰC → DANH SÁCH → VR 360
+     PHƯƠNG ÁN 2 — VR WALL + INFINITE SLIDER  (note.md §137 · D-50)
 
-     Trang này LÀ CHÍNH CÁI POPUP, chiếm trọn màn hình, nhúng vào trang VR
-     bằng một <iframe> phủ kín viewport:
+         VR WALL tổng quan  →  INFINITE SLIDER khám phá  →  VR 360 chi tiết
 
-         <iframe src=".../index.html?lang=vi"
-                 style="position:fixed; inset:0; width:100%; height:100%;
-                        border:0; background:transparent; z-index:10050"></iframe>
+     Đây là bản THỨ HAI để khách so sánh, KHÔNG thay thế `index.html`
+     (bản 1 = màn chào + 3D carousel). Hai bản dùng chung `js/bridge.js`
+     nên trang cha chỉ cần đổi `src` của iframe, không sửa dòng code nào.
 
-     rồi nghe postMessage `st:navigate` / `st:close`.
-     → Hợp đồng đầy đủ: docs/07-integration.md
-     → Trang cha mô phỏng: host-demo.html (có nút chuyển sang BẢN 2)
+     Nhúng y hệt bản 1 — xem docs/07-integration.md:
+         <iframe src=".../index2.html?lang=vi"
+                 style="position:fixed;inset:0;width:100%;height:100%;
+                        border:0;background:transparent;z-index:10050"></iframe>
 
-     Ba trạng thái (docs/04-modals.md §4.2):
-       A. carousel 9 KHU VỰC   → bấm thẻ ra danh sách khu vực đó
-       B. danh sách điểm       → bấm 1 điểm đi VR
-       M. bản đồ 2D (phủ lên)  → pin chỉ gồm các điểm đang lọc
-
-     Mở thẳng file này bằng double-click cũng chạy — bridge thành no-op.
+     Mở thẳng file này bằng double-click cũng chạy (bridge thành no-op).
      ══════════════════════════════════════════════════════════════════════ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,20 +28,15 @@
 
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/carousel.css">
-<link rel="stylesheet" href="css/popup.css">
+<link rel="stylesheet" href="css/wall.css">
+<link rel="stylesheet" href="css/slider.css">
 <link rel="stylesheet" href="css/map2d.css">
-<link rel="stylesheet" href="css/responsive.css">
+<link rel="stylesheet" href="css/responsive2.css">
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     SPRITE ICON — inline, không phải file rời.
-     `<use href="file.svg#id">` bị CORS chặn khi mở `file://`; inline là cách
-     duy nhất chạy được cả `file://` lẫn `http://`.
-     Hệ nét mảnh: stroke 1.75, không fill (D-16). Ngoại lệ `i-star`: ở cỡ 12px
-     trong badge, sao nét mảnh chỉ còn là vệt xám không đọc ra hình.
-     ══════════════════════════════════════════════════════════════════════ -->
+<!-- Sprite icon inline — 8 icon (bản 1 dùng 5, bản này thêm i-vr, i-search, i-chevrons-left).
+     `<use href="file.svg#id">` bị CORS chặn khi mở file:// nên phải inline. -->
 <svg id="st-icons" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
 <defs>
 <g id="i-close" transform="translate(0.05 0.05)"><path d="M6 6l12 12M18 6L6 18"/></g>
@@ -55,8 +45,8 @@
 <g id="i-arrow-right" transform="translate(0.5 0)"><path d="M4 12h15m-6-6 6 6-6 6"/></g>
 <g id="i-arrow-left" transform="translate(-0.5 0)"><path d="M20 12H5m6-6-6 6 6 6"/></g>
 <g id="i-search" transform="translate(0.1 0.1)"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></g>
-<g id="i-map" transform="translate(0.05 -0.06)"><path d="M9 20 3 17.5v-13L9 7l6-2.5 6 2.5v13L15 17Z"/><path d="M9 7v13M15 4.5v13"/><circle cx="12" cy="11" r="1.6"/></g>
 <g id="i-vr" transform="translate(0.05 -0.15)"><rect x="2.5" y="7.5" width="19" height="9" rx="3.2"/><path d="M9.6 16.5 12 13.4l2.4 3.1"/><circle cx="7" cy="12" r="1"/><circle cx="17" cy="12" r="1"/></g>
+<g id="i-map" transform="translate(0.05 -0.06)"><path d="M9 20 3 17.5v-13L9 7l6-2.5 6 2.5v13L15 17Z"/><path d="M9 7v13M15 4.5v13"/><circle cx="12" cy="11" r="1.6"/></g>
 <g id="i-plus"><path d="M12 5.2v13.6M5.2 12h13.6"/></g>
 <g id="i-minus"><path d="M5.2 12h13.6"/></g>
 <g id="i-expand" transform="translate(0.05 0.05)"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></g>
@@ -65,110 +55,106 @@
 </svg>
 
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     #st-popup CHIẾM TRỌN MÀN HÌNH (D-48) — không hộp modal, không nền mờ.
-     Vẫn giữ role="dialog" aria-modal: xét hành vi nó vẫn là modal.
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="st-popup" role="dialog" aria-modal="true"
-     aria-labelledby="st-popup-title" aria-describedby="st-popup-sub">
+<div id="st-pop2" role="dialog" aria-modal="true" aria-labelledby="st-wall-title">
 
   <span class="st-brandline" aria-hidden="true"></span>
 
-  <button class="st-popup-close" type="button" data-st-close data-i18n-aria="close">
+  <button class="st-p2-close" type="button" data-st-close data-i18n-aria="close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
   </button>
 
-  <div class="st-popup-inner">
+  <!-- ══════════════════════════════════════════════════════════════════
+       TRẠNG THÁI 1 — VR WALL: 9 ô cảnh động, mỗi ô là một KHU VỰC.
+       Ô do js/wall.js sinh từ D.GROUPS; đây chỉ là bộ khung.
+       ══════════════════════════════════════════════════════════════════ -->
+  <section class="st-wall" id="st-wall">
 
-    <div class="st-popup-head">
-      <span class="st-eyebrow" data-i18n="popup.eyebrow"></span>
-      <h1 id="st-popup-title" tabindex="-1"></h1>
-      <p id="st-popup-sub" data-i18n="popup.subtitle"></p>
+    <header class="st-wall-head">
+      <span class="st-eyebrow" data-i18n="wall.eyebrow"></span>
+      <h1 id="st-wall-title" tabindex="-1" data-i18n="wall.title"></h1>
+      <p id="st-wall-sub" data-i18n="wall.subtitle"></p>
+    </header>
 
-      <!-- Ô tìm kiếm (D-52) + nút bản đồ (D-54) trên CÙNG một hàng.
-           Gõ vào ô tìm là nhảy thẳng sang trạng thái danh sách, tìm trên TOÀN
-           BỘ 20 điểm chứ không giới hạn trong khu vực đang xem. -->
-      <div class="st-search-row">
-        <div class="st-search">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
-          <input type="search" id="st-search-input" autocomplete="off"
-                 data-i18n-aria="list.searchLbl" data-i18n-ph="list.searchPh">
-          <button type="button" class="st-search-clear" data-i18n-aria="list.clear">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
-          </button>
-        </div>
-        <button type="button" class="st-head-map" data-open-map="all">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
-          <span data-i18n="map.open"></span>
-        </button>
-      </div>
-    </div>
+    <div class="st-wall-grid" id="st-wall-grid"
+         role="group" data-i18n-aria="wall.gridLabel"></div>
 
-    <!-- ══ TRẠNG THÁI A — 3D carousel 9 KHU VỰC ═════════════════════════
-         Thẻ, chấm và vùng live do js/carousel.js sinh; đây là bộ khung.
-         Từ D-52 mỗi thẻ là một KHU VỰC (D.GROUPS), không phải một điểm. -->
-    <div id="st-popup-deck" class="st-cr">
-      <!-- .st-cr-viewport chỉ để neo 2 nút ‹ › vào đúng tầm cao thẻ. Không neo
-           vào .st-cr được (nó cao bằng cả vùng còn lại của màn nên nút trôi
-           lên trên), cũng không đặt nút BÊN TRONG .st-cr-stage được (stage là
-           preserve-3d, nút sẽ thành mặt phẳng trong không gian 3D). -->
-      <div class="st-cr-viewport">
-        <div class="st-cr-stage" role="group" aria-roledescription="carousel"
-             data-i18n-aria="popup.deckLabel"></div>
-
-        <button class="st-cr-nav st-cr-prev" type="button" data-cr-nav="prev"
-                data-i18n-aria="popup.prev">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-left"/></svg>
-        </button>
-        <button class="st-cr-nav st-cr-next" type="button" data-cr-nav="next"
-                data-i18n-aria="popup.next">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-right"/></svg>
-        </button>
-      </div>
-
-      <div class="st-cr-dots"></div>
-      <p class="st-cr-live st-sr-only" aria-live="polite"></p>
-    </div>
-
-    <!-- ══ TRẠNG THÁI B — danh sách điểm của một khu vực ════════════════ -->
-    <section id="st-list" class="st-list" hidden aria-hidden="true">
-      <header class="st-list-top">
-        <button type="button" class="st-list-back">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-left"/></svg>
-          <span data-i18n="list.back"></span>
-        </button>
-        <div class="st-list-head">
-          <h2 class="st-list-title" tabindex="-1"></h2>
-          <span class="st-list-count"></span>
-        </div>
-        <button type="button" class="st-list-map" data-open-map="area">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
-          <span data-i18n="map.openArea"></span>
-        </button>
-      </header>
-
-      <ul class="st-list-grid"></ul>
-      <p class="st-list-empty" hidden data-i18n="list.empty"></p>
-    </section>
-
-    <div class="st-popup-foot">
-      <span class="st-legend">
-        <i class="st-legend-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-star"/></svg></i>
-        <span data-i18n="popup.legend"></span>
-      </span>
-      <button id="st-popup-skip" class="st-linkbtn" type="button" data-st-close>
-        <span data-i18n="popup.skip"></span>
+    <!-- Thanh công cụ (note.md §198). Đã bỏ 2 mục so với note:
+         · "Xem bản đồ"          — bản đồ đã gỡ từ D-44, không có gì để mở
+         · "Khám phá theo chủ đề" — chính là cái wall đang hiện, tự trỏ vào mình -->
+    <nav class="st-wall-bar">
+      <button type="button" data-act="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
+        <span data-i18n="wall.search"></span>
+      </button>
+      <!-- <button type="button" data-open-map="all">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
+        <span data-i18n="map.open"></span>
+      </button> -->
+      <button type="button" class="st-primary" data-act="journey">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg>
+        <span data-i18n="wall.journey"></span>
+      </button>
+      <button type="button" class="st-ghost" data-act="skip">
+        <span data-i18n="wall.skip"></span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-right"/></svg>
       </button>
+    </nav>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       TRẠNG THÁI 2 — INFINITE SLIDER: một điểm gần trọn màn, hai bên hé lộ
+       điểm trước/sau. Panel + chip do js/slider.js sinh.
+       ══════════════════════════════════════════════════════════════════ -->
+  <section class="st-sld" id="st-sld" hidden aria-hidden="true">
+
+    <div class="st-sld-bg" aria-hidden="true"></div>
+
+    <div class="st-sld-top">
+      <button type="button" class="st-sld-back">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+        <span data-i18n="slider.back"></span>
+      </button>
+
+      <div class="st-sld-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="search" autocomplete="off"
+               data-i18n-aria="slider.searchLabel"
+               data-i18n-ph="slider.searchPh">
+        <button type="button" class="st-sld-clear" data-i18n-aria="slider.clear">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+        </button>
+      </div>
     </div>
-  </div>
+
+    <div class="st-sld-stage">
+      <div class="st-sld-track" role="group" aria-roledescription="carousel"
+           data-i18n-aria="slider.trackLabel"></div>
+
+      <p class="st-sld-empty" hidden data-i18n="slider.empty"></p>
+
+      <button class="st-sld-nav st-sld-prev" type="button" data-sld-nav="prev"
+              data-i18n-aria="slider.prev">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-left"/></svg>
+      </button>
+      <button class="st-sld-nav st-sld-next" type="button" data-sld-nav="next"
+              data-i18n-aria="slider.next">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+      </button>
+    </div>
+
+    <div class="st-sld-bot">
+      <div class="st-sld-chips"></div>
+      <button type="button" class="st-sld-map" data-open-map="area">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
+        <span data-i18n="map.openArea"></span>
+      </button>
+      <span class="st-sld-counter"></span>
+    </div>
+
+    <p class="st-sld-live st-sr-only" aria-live="polite"></p>
+  </section>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     BẢN ĐỒ 2D (D-51) — phủ lên popup. Markup DÙNG CHUNG với index2.html,
-     sửa ở đây thì phải sửa cả bên đó. Pin do js/map2d.js sinh.
-     ══════════════════════════════════════════════════════════════════════ -->
 <div id="st-map" hidden aria-hidden="true" role="dialog" aria-modal="true">
   <div class="st-map-top">
     <div class="st-map-head">
@@ -205,21 +191,19 @@
   </div>
 </div>
 
-<!-- Panel debug — chỉ hiện với ?debug=1 -->
 <div id="st-debug" hidden></div>
 
 
-<!-- ══ JS — classic script, không module: biến global, mở file:// chạy được ══
-     Thứ tự phụ thuộc:
-       data → i18n → a11y → bridge → carousel → map2d → popup (cuối cùng)
-     `carousel.js` và `map2d.js` phải TRƯỚC `popup.js`: popup gọi
-     ST.carousel.create() / ST.map2d.create() ngay trong lượt bootstrap. -->
+<!-- ══ JS ══════════════════════════════════════════════════════════════════
+     Dùng lại nguyên `data.js` · `i18n.js` · `a11y.js` · `bridge.js` của bản 1.
+     Riêng phần hiển thị là 3 file mới: wall → slider → popup2 (cuối cùng). -->
 <script src="js/data.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/a11y.js"></script>
 <script src="js/bridge.js"></script>
-<script src="js/carousel.js"></script>
 <script src="js/map2d.js"></script>
-<script src="js/popup.js"></script>
+<script src="js/wall.js"></script>
+<script src="js/slider.js"></script>
+<script src="js/popup2.js"></script>
 </body>
 </html>
