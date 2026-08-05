@@ -24,8 +24,9 @@
 
 #st-pop2 .st-brandline { border-radius: 0; z-index: 60; }
 
-/* Nút × sống ở CẢ HAI trạng thái nhưng nền dưới nó khác nhau: wall trắng,
-   slider là ảnh tối. Mặc định theo wall, đảo lại khi sang slider. */
+/* Nút × sống ở CẢ HAI trạng thái. ⚫ Trước D-61 nó phải đảo sang "kính mờ trên
+   nền tối" khi sang slider vì màn đó là ảnh tối; giờ hai màn cùng nền trắng
+   nên chỉ còn một dáng. */
 .st-p2-close {
   position: absolute;
   top: calc(var(--st-sat) + var(--st-s-5));
@@ -42,13 +43,6 @@
               transform var(--st-dur-fast) var(--st-ease);
 }
 .st-p2-close:hover { background: var(--st-n-200); color: var(--st-n-900); transform: rotate(90deg); }
-#st-pop2.st-state-slider .st-p2-close {
-  background: rgba(255,255,255,.16);
-  color: #fff;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-#st-pop2.st-state-slider .st-p2-close:hover { background: rgba(255,255,255,.3); color: #fff; }
 .st-p2-close svg { width: 20px; height: 20px; }
 
 /* Lớp "mở cổng" khi bấm 1 ô — js/popup2.js:gateOpen() dựng rồi tự xoá.
@@ -381,6 +375,21 @@
 .st-wall-bar .st-primary:hover { background: var(--st-green-500); color: #fff; }
 .st-wall-bar .st-ghost { background: none; color: var(--st-n-500); }
 .st-wall-bar .st-ghost:hover { background: var(--st-n-100); color: var(--st-n-900); }
+
+/* Nút "Xem trên bản đồ 2D" (D-61) — xanh tonal, ĐÚNG dáng nó có bên slider
+   (`.st-sld-map`). Cùng một hành động thì phải cùng một hình dáng ở cả hai
+   màn, nếu không người dùng phải học lại nó lần thứ hai.
+   Không dùng dáng nút chính: bản đồ là lối đi PHỤ, hành động chính vẫn là
+   "Bắt đầu hành trình". */
+/* Phải viết kèm `.st-wall-bar` như `.st-primary` ngay trên: luật chung
+   `.st-wall-bar button` có thêm một selector phần tử nên nó THẮNG một class
+   trần — bảng màu sẽ lặng lẽ không ăn. */
+.st-wall-bar .st-wall-map {
+  background: var(--st-green-50);
+  color: var(--st-green-700);
+  box-shadow: inset 0 0 0 1px var(--st-green-100);
+}
+.st-wall-bar .st-wall-map:hover { background: var(--st-green-600); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
   .st-wt-img, .st-wall-tile { transition: none; }

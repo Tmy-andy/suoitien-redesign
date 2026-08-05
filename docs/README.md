@@ -1,5 +1,6 @@
-> Cập nhật: 2026-08-04 (v14 — D-57 chốt MỘT bản, gỡ bản 1 + host-demo; D-58 dựng lại
-> bản mobile)
+> Cập nhật: 2026-08-05 (v16 — D-61: nền sáng cho mọi khổ, desktop thành thẻ ngang, nút
+> bản đồ 2D trở lại wall. v15 — D-60: màn chi tiết trên mobile thành thẻ nền trắng,
+> autoplay 2,5s)
 
 # Suối Tiên VR360 — Popup chọn điểm bắt đầu · Docs
 
@@ -30,10 +31,13 @@ Vì vậy vài tên còn hậu tố **"2"** — `#st-pop2` · `js/popup2.js` ·
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Docs | ✅ **v14** (2026-08-04) |
+| Docs | ✅ **v16** (2026-08-05) |
 | Design tokens | ✅ 3 màu brand + hệ 2 font lấy thật từ `suoitien.vn/…/style.css` |
 | **VR Wall 9 ô → Infinite Slider → VR**, có tìm/lọc | ✅ **xong** — D-50 |
 | **Bản mobile** — trang cuộn, thanh dính đáy, bottom sheet | ✅ **xong** — D-58 ⭐ |
+| **Màn chi tiết trên mobile** — thẻ nền trắng, autoplay 2,5s | ✅ **xong** — D-60 ⭐ |
+| **Nền sáng cho MỌI khổ** — desktop thành thẻ ngang, hết màn tối | ✅ **xong** — D-61 ⭐ |
+| **Bản đồ 2D mở được từ cả wall lẫn slider** | ✅ **xong** — D-51 · D-61 |
 | **Bản đồ 2D + pin số hiệu** (lọc theo khu vực đang xem) | ✅ **xong** — D-51 |
 | **Bridge popup ↔ trang cha** (`js/bridge.js`) | ✅ **xong** — D-46 |
 | i18n VI/EN, ngôn ngữ do trang cha truyền vào | ✅ **xong** |
@@ -56,6 +60,12 @@ Vì vậy vài tên còn hậu tố **"2"** — `#st-pop2` · `js/popup2.js` ·
   844 ngang · 820 tablet · 1440 desktop. Bất biến: ô không tràn ngang · ảnh không hụt
   mép ô · chữ header không chạm nút × · nút không vỡ chữ nhiều dòng · ‹ › không đè khối
   chữ · cụm zoom không đè thẻ bản đồ · không ô nào trùng ảnh ô kề. **Sạch cả 7 khổ.**
+- **Slider trên điện thoại** (D-60) — 7 khổ: thẻ nằm trọn sân khấu · CTA không giao với
+  ảnh · ‹ › không giao với thẻ · nền thẻ đúng `#fff` · nhịp đo được 2,5s (điện thoại) /
+  6s (desktop) · chạm rồi vẫn tự chạy tiếp.
+- **Nền sáng mọi khổ + nút bản đồ** (D-61) — 7 khổ tới 1920×1080: `.st-sld-bg` và
+  `.st-sld-shade` không còn trong DOM · thẻ trắng + nút × dáng sáng ở mọi khổ · nút bản
+  đồ không đè chip/bộ đếm · **nút bản đồ ở wall bấm được và mở đúng `#st-map` có pin**.
 
 ### ⭐ Phạm vi (2026-08-03 · YC-10 · D-46)
 

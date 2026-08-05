@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-04 (v17 — YC-16: chốt MỘT bản + dựng lại mobile · D-57/D-58)
+> Cập nhật: 2026-08-05 (v19 — YC-18: desktop cũng nền sáng, nút bản đồ 2D trở lại · D-61)
 
 # TODO
 
@@ -395,6 +395,71 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ## ⏭️ Việc tiếp theo (SAU PIVOT 2026-08-03) — phần còn sống
 
+### ✅ Vòng YC-18 (2026-08-05) — desktop cũng nền sáng + nút bản đồ 2D
+
+**Nền sáng cho mọi khổ (D-61)**
+
+- [x] Gỡ hẳn `.st-sld-bg` khỏi `index.html` + `css/slider.css` + `js/slider.js`
+      (`layout()` không còn ghi `background-image`) — 2026-08-05
+- [x] Gỡ `.st-sld-shade` — không còn chữ nào nằm trên ảnh nên lớp gradient hết việc — 2026-08-05
+- [x] Viết lại `css/slider.css` theo bảng màu sáng: thanh trên, thẻ, chữ, ‹ ›, chip,
+      nút bản đồ, bộ đếm, ô trống — 2026-08-05
+- [x] Desktop thành **thẻ NGANG**: ảnh trái `60%` giữ `3:2` (chính nó quyết chiều cao
+      thẻ), chữ phải căn giữa theo chiều dọc — 2026-08-05
+- [x] Chia bố cục theo **`orientation`** thay vì `max-width`; `responsive2.css` chỉ còn
+      lo hướng xếp + các con số — 2026-08-05
+- [x] Xoá khối "bảng màu dùng chung" 115 dòng của D-60 (giờ là mặc định) + 2 khối
+      `@media (hover: none)` chỉ để thu phạm vi `brightness` — 2026-08-05
+- [x] Gỡ override `#st-pop2.st-state-slider .st-p2-close` (kính mờ) ở `wall.css` — 2026-08-05
+- [x] Chip đang chọn từ vàng `--st-gold-300` sang xanh brand — trên nền trắng vàng nhạt
+      hơn cả chip thường — 2026-08-05
+
+**Nút bản đồ 2D (D-61)**
+
+- [x] Thanh dưới slider tách thành 3 cụm: chip (`flex: 1 1 auto`) · nút bản đồ (xanh
+      tonal + vạch ngăn `::before`) · bộ đếm. Vạch ngăn tự tắt khi 2 hàng ở mobile — 2026-08-05
+- [x] Thêm `.st-wall-map` vào thanh công cụ wall (`data-open-map="all"`, 0 dòng JS
+      mới); mobile thành **icon vuông** cạnh ô tìm; `≤379` giữ 2 cột hàng đầu — 2026-08-05
+- [x] Dùng lại khoá i18n `map.open` (có từ D-51, chết từ D-57) + `data-i18n-aria` cho
+      bản icon-only — 2026-08-05
+- [x] Playwright 7 khổ × 10 bất biến, gồm **bấm nút bản đồ ở wall phải mở được
+      `#st-map` có pin** → sạch — 2026-08-05
+
+### ✅ Vòng YC-17 (2026-08-05) — màn chi tiết trên điện thoại: nền trắng + thẻ
+
+**Nền + bảng màu (D-60)**
+
+- [x] Tắt `.st-sld-bg` (ảnh blur + tối) trên khổ điện thoại → lộ `--st-bg` trắng — 2026-08-05
+- [x] Đổi sang bảng màu sáng cho **toàn bộ** control của slider: nút quay lại · ô tìm +
+      placeholder + nút xoá · chip (chip đang chọn từ vàng sang xanh brand) · nút bản
+      đồ · bộ đếm · chữ "không có kết quả" — 2026-08-05
+- [x] Trả nút × về dáng sáng (`wall.css` cố ý đảo nó sang kính mờ khi vào slider) — 2026-08-05
+
+**Thẻ (D-60)**
+
+- [x] Cảnh thành thẻ: `.st-sld-img` hết `position: absolute`, `.st-sld-info` xuống dưới
+      ảnh trên nền trắng, bỏ `.st-sld-shade` — 2026-08-05
+- [x] Ảnh nhỏ lại: `--sld-w` `92vw → 78vw`, cao `clamp(170px, 32vh, 300px)` — 2026-08-05
+- [x] **Nút hết bị ảnh đè**: CTA xuống vùng trắng của thẻ · ‹ › ra hẳn lề `--sld-x`,
+      nền trắng + viền — 2026-08-05
+- [x] Thẻ căn giữa sân khấu, cao theo nội dung, `max-height: 100%` + ảnh co để CTA
+      không bao giờ bị cắt — 2026-08-05
+- [x] Cảnh rìa dùng `opacity` thay `brightness`; thu luật `brightness(.65)` trong
+      `@media (hover: none)` về `min-width: 600px` — 2026-08-05
+- [x] Điện thoại **nằm ngang**: thẻ NGANG (ảnh trái 42% / chữ phải), lấy lại dòng mô tả — 2026-08-05
+- [x] ≤379px: ‹ › còn 32px · CTA bỏ mũi tên đuôi (chữ đang vỡ 2 dòng) — 2026-08-05
+
+**Tự chạy 2,5s (D-60)**
+
+- [x] `AUTO_MS_SM = 2500` cho điện thoại, desktop giữ 6000; `autoMs()` đọc `matchMedia`
+      đúng chuỗi @media của bố cục thẻ — 2026-08-05
+- [x] `setInterval` → chuỗi `setTimeout` để nhịp đổi theo khi xoay máy — 2026-08-05
+- [x] Transition của cảnh `620 → 460ms` trên điện thoại — 2026-08-05
+- [x] Sửa 2 bẫy làm autoplay chết trên cảm ứng: `mouseenter` giả (chỉ nghe khi
+      `hover: hover`) và `focusin` do chạm (chỉ dừng khi `:focus-visible`) — 2026-08-05
+- [x] Không tự trượt khi ngón tay đang đặt trên cảnh (`dragging` vào `tick()`) — 2026-08-05
+- [x] Playwright 7 khổ: 5 bất biến hình học + nhịp đo thật + chạm-rồi-vẫn-chạy → sạch — 2026-08-05
+
 ### ✅ Vòng YC-16 (2026-08-04) — chốt một bản + dựng lại mobile
 
 **Dọn (D-57)**
@@ -584,6 +649,8 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 | Ngày | Việc |
 |---|---|
+| 2026-08-05 (v11) | **Desktop cũng nền sáng + trả lại nút bản đồ (YC-18).** (a) Gỡ hẳn `.st-sld-bg` và `.st-sld-shade` khỏi HTML/CSS/JS — nền đen là thứ cuối cùng còn sót của bố cục cũ. (b) Bảng màu sáng + cấu trúc thẻ thành **mặc định** ở `css/slider.css`; desktop thành **thẻ ngang** (ảnh trái 60% giữ 3:2, chính nó quyết chiều cao thẻ). (c) `responsive2.css` chỉ còn lo hướng xếp, và chia theo **`orientation`** thay vì `max-width` — iPad dọc 768 rộng hơn iPhone ngang 844 nhưng cần bố cục dọc; xoá 115 dòng "bảng màu dùng chung" của D-60. (d) Thanh dưới slider tách 3 cụm có vạch ngăn; **thêm nút bản đồ 2D vào thanh công cụ wall** (icon vuông trên mobile), dùng lại khoá i18n `map.open` chết từ D-57, 0 dòng JS mới. (e) Playwright 7 khổ × 10 bất biến → sạch. D-61. |
+| 2026-08-05 (v10) | **Màn chi tiết trên điện thoại (YC-17).** Slider từ "cổng ảnh phủ màn, nền blur tối, chữ đè lên ảnh" thành **thẻ trên nền trắng**: ảnh `78vw × clamp(170px,32vh,300px)` ở trên, chữ + CTA ở dưới trên nền trắng, ‹ › ra hẳn lề nên hết cảnh nút chìm vào ảnh, cảnh rìa dùng `opacity` thay `brightness`. Cả bảng màu của slider đổi sang sáng (kể cả nút × vốn bị `wall.css` đảo sang kính mờ). Điện thoại nằm ngang thành **thẻ ngang** dùng chung bảng màu, lấy lại được dòng mô tả. Autoplay **6000 → 2500ms** trên điện thoại (`setTimeout` chuỗi để đổi được khi xoay máy) + sửa 2 bẫy `mouseenter`/`focusin` giả làm slideshow chết sau cú chạm đầu tiên. Playwright 7 khổ → sạch; ảnh chụp bắt thêm lỗi CTA vỡ 2 dòng ở khổ 320. D-60. |
 | 2026-08-04 (v9) | **Chốt MỘT bản + dựng lại mobile (YC-16).** (a) Khách chọn VR Wall + Slider → gỡ `css/carousel.css` · `css/popup.css` · `css/responsive.css` · `js/carousel.js` · `js/popup.js` · `host-demo.html`, gỡ 21 khoá i18n chết + `D.mustOf` + cờ `must` + `--st-ease-flow`. Giữ nguyên tên có hậu tố "2" và ghi rõ vì sao (decision log đang trỏ tới tên cũ ở ~40 chỗ). (b) **Dựng lại toàn bộ `responsive2.css`**: `.st-wall` thành trang cuộn thay vì cuộn lồng, ô theo `aspect-ratio`, ô lớn thành thẻ hero, thanh công cụ `sticky` 2 hàng (≤379 xếp dọc), header căn trái, landscape 3 cột, slider gọn còn 2 hàng dưới, bản đồ thành bottom sheet có `--st-card-h` đo thật. (c) Lôi ra 3 lỗi có sẵn: `--st-t-h3` không tồn tại · `g.cover` chưa bao giờ được đọc nên ô hero trùng ảnh ô kế · @media bản đồ nằm ở hai file. (d) Playwright 7 khổ × 4 màn, 9 bất biến hình học → sạch. D-57 · D-58. |
 | 2026-08-04 (v8) | **Chuyển động + ảnh nguồn + danh sách (YC-15).** (a) Carousel 5 thẻ với 4 biến bậc tách riêng; độ mờ thôi làm việc diễn tả chiều sâu; autoplay `3600 → 3000ms`, transition `620 → 720ms` + `--st-ease-flow`; parallax thẻ giữa. (b) Dựng lại animation vào màn cho **cả hai bản** — bản 2 trước đây "chưa có" thật ra là có mà bị lớp fade khung nuốt mất. (c) **Truy ra nguyên nhân "ảnh vỡ": 9/12 ảnh gốc trên site chỉ 600×600**, bản cũ còn phóng lên 760 ngay từ khâu dựng asset → đổi nguồn sang trang chi tiết, 9/12 lên ≥900px, tổng `930 KB → 1,32 MB`. (d) Danh sách điểm từ dòng sang thẻ ảnh 4:3 (D-56). (e) Sửa `--st-n-800` — token không tồn tại. (f) Mobile thẻ `78vw → 92vw`. D-55 · D-56. |
 | 2026-08-04 (v7) | **Nền trắng phẳng 2 bản + carousel to hơn (YC-14).** (a) Bỏ 2 vệt radial ở `#st-popup`; `#st-pop2` + `.st-wall` đổi từ nền tối sang `--st-bg` — **đảo ngược D-50 #4**, kèm kê lại viền ô (`inset 1px --st-n-200`), độ mờ hover (`.42 → .62`), eyebrow, tiêu đề, nút thanh công cụ, nút `×` (có override kính mờ ở slider). (b) Nút bản đồ chuyển từ `.st-foot-map` (footer) lên `.st-search-row` cạnh ô tìm; xoá hẳn `.st-foot-actions`. (c) Viết lại `css/carousel.css`: cỡ thẻ suy từ chiều cao sân khấu thay vì hằng số `66vh`, bỏ cặp auto-margin — thẻ giữa `547 → 662px` ở 1440×900, `560 → 820px` ở 1920. Playwright 7 viewport → PASS, 0 lỗi console. D-54. |

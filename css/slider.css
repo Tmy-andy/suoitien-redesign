@@ -1,10 +1,27 @@
 /* ═══════════════════════════════════════════════════════════════════════
    slider.css — Infinite Attraction Slider (D-50). Cặp với js/slider.js.
-   Trạng thái 2 của popup. Tinh chỉnh mobile ở css/responsive2.css.
+   Trạng thái 2 của popup.
+
+   ── NỀN SÁNG, MỖI CẢNH LÀ MỘT THẺ (D-61 · 2026-08-05) ────────────────────
+   ⚫ Bản trước là "cổng trải nghiệm": ảnh phủ gần trọn màn, chữ trắng ĐÈ lên
+   ảnh, nền là chính ảnh đó blur 34px + tối. Khách: *"nhìn nền đen lệch tông
+   quá"* — và đúng: wall trắng, bản đồ trắng, chỉ mỗi màn này tối, nên bấm một
+   ô khu vực xong là rơi vào một màn khác hẳn về tông.
+
+   Giờ cả ba màn cùng một nền trắng phẳng (D-54) và cùng một ngôn ngữ THẺ:
+   ảnh + khối chữ trên nền trắng, không có chữ nào nằm đè lên ảnh.
+
+       Màn ngang (mặc định ở đây): ảnh TRÁI · chữ PHẢI
+       Màn dọc  (`css/responsive2.css`): ảnh TRÊN · chữ DƯỚI
+
+   Chia theo HƯỚNG MÀN chứ không theo bề ngang: iPad dọc 768×1024 rộng hơn
+   iPhone ngang 844×390 nhưng cần đúng bố cục của iPhone dọc.
+
+   Tinh chỉnh theo khổ máy: css/responsive2.css (nạp sau file này).
    ═══════════════════════════════════════════════════════════════════════ */
 
 .st-sld {
-  --sld-w:   84vw;      /* bề ngang một cảnh — 8vw mỗi bên để hé cảnh kế */
+  --sld-w:   84vw;      /* bề ngang một thẻ — 8vw mỗi bên để hé thẻ kế */
   --sld-x:   8vw;
 
   position: absolute;
@@ -24,26 +41,14 @@
 }
 .st-sld[hidden] { display: none; }
 
-/* ── Nền: chính ảnh đang xem, blur + tối ────────────────────────────────
-   note.md §85 nói vừa "ảnh toàn màn hình" vừa "hai bên hé lộ" — nghe mâu
-   thuẫn. Cách gỡ: nền là ảnh hiện tại phủ kín viewport (thoả vế 1), các cảnh
-   nằm TRÊN nó dưới dạng cổng có hé hai bên (thoả vế 2). */
-.st-sld-bg {
-  position: absolute;
-  inset: -6%;
-  background: center/cover no-repeat var(--st-n-900);
-  filter: blur(34px) brightness(.42) saturate(1.1);
-  transform: scale(1.06);
-  transition: background-image 600ms var(--st-ease);
-}
-.st-sld-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(6,12,20,.5) 0%, rgba(6,12,20,.2) 40%, rgba(6,12,20,.72) 100%);
-}
+/* ⚫ `.st-sld-bg` (ảnh hiện tại, blur + tối, phủ kín viewport) đã GỠ HẲN khỏi
+   HTML/CSS/JS ở D-61 — nó chính là cái "nền đen" khách nói. Không thay bằng
+   vệt gradient nhạt nào: dưới 8% alpha trên vùng rộng thì mắt đọc ra vết bẩn
+   chứ không ra sắc độ (D-54). Nền của slider = nền của `#st-pop2` = trắng. */
 
-/* ── Thanh trên: quay lại · tìm kiếm ──────────────────────────────────── */
+/* ── Thanh trên: quay lại · tìm kiếm ────────────────────────────────────
+   Cùng dáng với `.st-wall-bar button` bên wall.css — hai màn nối nhau nên
+   nút "Tất cả khu vực" phải trông như họ hàng với nút vừa bấm ở màn trước. */
 .st-sld-top {
   position: relative;
   z-index: 20;
@@ -61,14 +66,14 @@
   min-height: 42px;
   padding: 10px 16px;
   border-radius: var(--st-r-pill);
-  background: rgba(255,255,255,.12);
-  color: #fff;
+  background: var(--st-n-100);
+  color: var(--st-n-700);
   font: var(--st-t-btn);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  transition: background var(--st-dur-fast) var(--st-ease);
+  box-shadow: inset 0 0 0 1px var(--st-n-200);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease);
 }
-.st-sld-back:hover { background: rgba(255,255,255,.24); }
+.st-sld-back:hover { background: var(--st-green-50); color: var(--st-green-700); }
 .st-sld-back svg { width: 17px; height: 17px; }
 
 .st-sld-search {
@@ -81,7 +86,7 @@
   position: absolute;
   left: 13px;
   width: 17px; height: 17px;
-  color: rgba(255,255,255,.6);
+  color: var(--st-n-400);
   pointer-events: none;
 }
 .st-sld-search input {
@@ -90,14 +95,13 @@
   padding: 0 38px 0 38px;
   border: 0;
   border-radius: var(--st-r-pill);
-  background: rgba(255,255,255,.12);
-  color: #fff;
+  background: var(--st-n-100);
+  color: var(--st-n-900);
   font: var(--st-t-sm);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px var(--st-n-200);
 }
-.st-sld-search input::placeholder { color: rgba(255,255,255,.5); }
-.st-sld-search input:focus-visible { background: rgba(255,255,255,.2); box-shadow: 0 0 0 2px var(--st-green-400); }
+.st-sld-search input::placeholder { color: var(--st-n-400); }
+.st-sld-search input:focus-visible { background: var(--st-n-0); box-shadow: var(--st-sh-focus); }
 .st-sld-clear {
   position: absolute;
   right: 8px;
@@ -105,8 +109,8 @@
   display: none;
   place-items: center;
   border-radius: var(--st-r-circle);
-  background: rgba(255,255,255,.18);
-  color: #fff;
+  background: var(--st-n-300);
+  color: var(--st-n-700);
 }
 .st-sld-clear svg { width: 13px; height: 13px; }
 .st-sld.st-searching .st-sld-clear { display: grid; }
@@ -128,54 +132,66 @@
   touch-action: pan-y;
 }
 
+/* ── Một cảnh = một THẺ ─────────────────────────────────────────────────
+   Thẻ CAO BAO NHIÊU THÌ CAO và căn giữa sân khấu, không kéo từ đỉnh xuống đáy
+   như bản cổng cũ. `translate(x, -50%)` gộp bước căn giữa vào đúng cái
+   transform mà `--o` đang lái — tách ra `top: calc(50% - …)` thì phải biết
+   trước chiều cao thẻ, mà chiều cao ở đây do nội dung quyết. */
 .st-sld-panel {
   position: absolute;
-  top: 0; bottom: 0;
+  top: 50%;
   left: var(--sld-x);
   width: var(--sld-w);
+  height: auto;
+  max-height: 100%;
+  display: flex;
   overflow: hidden;
   border-radius: var(--st-r-xl);
-  background: var(--st-n-800);
+  background: var(--st-n-0);
   cursor: pointer;
-  /* Cảnh rìa lùi lại và tối đi — "hé lộ" chứ không tranh chỗ với cảnh giữa */
+  /* Cùng công thức với ô wall: trên nền trắng, viền mảnh + bóng nhẹ mới tách
+     được thẻ khỏi nền; bóng đậm kiểu nền tối (`0 24px 60px rgba(0,0,0,.5)`)
+     cho ra một vũng xám. */
+  box-shadow: inset 0 0 0 1px var(--st-n-200), 0 14px 40px rgba(18,19,18,.16);
   transform:
-    translateX(calc(var(--o) * var(--sld-w)))
-    scale(calc(1 - var(--oa) * .07));
-  opacity: calc(1 - var(--oa) * .35);
-  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    translate(calc(var(--o) * var(--sld-w)), -50%)
+    scale(calc(1 - var(--oa) * .06));
+  /* Thẻ rìa lùi lại bằng ĐỘ MỜ, không bằng `brightness()`: trên nền sáng, một
+     thẻ trắng bị giảm sáng ra mảng xám bẩn chứ không ra "ở xa hơn". */
+  opacity: calc(1 - var(--oa) * .55);
   transition: transform 620ms var(--st-ease-out),
               opacity 620ms var(--st-ease),
               box-shadow var(--st-dur-base) var(--st-ease);
 }
-.st-sld-panel.st-active { cursor: default; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
-.st-sld-panel:not(.st-active) { filter: brightness(.55) saturate(.8); }
-.st-sld-panel:not(.st-active):hover { filter: brightness(.8); opacity: .9; }
+.st-sld-panel.st-active {
+  cursor: default;
+  box-shadow: inset 0 0 0 1px var(--st-n-200), 0 22px 60px rgba(18,19,18,.20);
+}
+.st-sld-panel:not(.st-active):hover { opacity: .72; }
 
 .st-sld-img {
-  position: absolute;
-  inset: 0;
-  width: 100%; height: 100%;
+  /* Ảnh chiếm 60% bề ngang thẻ và giữ đúng 3:2 của ảnh nguồn → chính nó quyết
+     chiều cao thẻ, và không bị cắt thêm lần nào. Khối chữ `stretch` cao theo. */
+  flex: 0 1 auto;
+  width: 60%;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 3 / 2;
   object-fit: cover;
-  transform: scale(1.02);
-  transition: transform 900ms var(--st-ease-out);
 }
-.st-sld-panel.st-active .st-sld-img { transform: scale(1.06); }
 
 /* Điểm CHƯA CÓ ẢNH (D-59) — gradient brand thay cho `<img>`.
-   KHÔNG dùng xám trơn: `.st-sld-shade` phủ đè lên, xám dưới lớp shade ra một
-   mảng chết trông y như ảnh tải hỏng. Cùng công thức với ô wall chưa có ảnh,
-   để hai màn đọc ra là "chưa có ảnh" chứ không phải "hai lỗi khác nhau". */
+   Cùng công thức với ô wall chưa có ảnh, để hai màn đọc ra là "chưa có ảnh"
+   chứ không phải "hai lỗi khác nhau". */
 .st-sld-noimg {
   background:
     radial-gradient(120% 90% at 78% 12%, rgba(255,255,255,.14), transparent 60%),
     linear-gradient(152deg, var(--st-green-800), var(--st-green-700) 54%, var(--st-green-400));
-  transform: none;
 }
-.st-sld-panel.st-active .st-sld-noimg { transform: none; }
 
-/* Nhãn "chưa có ảnh". Đặt Ở TRÊN, không ở dưới cùng khối chữ: dưới đó là
-   vùng người dùng đọc để QUYẾT ĐỊNH đi hay không, chèn một lời xin lỗi vào đó
-   làm loãng đúng chỗ quan trọng nhất. Ở trên nó chỉ là một ghi chú. */
+/* Nhãn "chưa có ảnh" — nằm trên chính vùng ảnh, không chen vào khối chữ:
+   khối chữ là chỗ người dùng đọc để QUYẾT ĐỊNH đi hay không, chèn một lời xin
+   lỗi vào đó làm loãng đúng chỗ quan trọng nhất. */
 .st-sld-nophoto {
   position: absolute;
   top: var(--st-s-4);
@@ -184,89 +200,88 @@
   padding: 6px 12px;
   border-radius: var(--st-r-pill);
   background: rgba(6,12,20,.34);
-  color: rgba(255,255,255,.86);
+  color: rgba(255,255,255,.92);
   font: var(--st-t-xs);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-/* Cảnh rìa chỉ còn cái tên — nhãn này cũng đi theo luật đó */
+/* Thẻ rìa chỉ còn ảnh + tên — nhãn này cũng đi theo luật đó */
 .st-sld-panel:not(.st-active) .st-sld-nophoto { display: none; }
 
-.st-sld-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg,
-              rgba(6,12,20,0) 34%,
-              rgba(6,12,20,.5) 62%,
-              rgba(6,12,20,.92) 100%);
-}
-
-/* Chọn xong → cảnh phóng ra rồi mờ, như đi xuyên qua cổng */
+/* Chọn xong → thẻ phóng ra rồi mờ, như đi xuyên qua cổng */
 .st-sld-panel.st-going {
-  transform: translateX(calc(var(--o) * var(--sld-w))) scale(1.18);
+  transform: translate(calc(var(--o) * var(--sld-w)), -50%) scale(1.18);
   opacity: 0;
   transition: transform 420ms var(--st-ease-out), opacity 420ms var(--st-ease);
 }
 
-/* ── Chữ trong cảnh ───────────────────────────────────────────────────── */
+/* ── Khối chữ ─────────────────────────────────────────────────────────── */
 .st-sld-info {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding: clamp(var(--st-s-5), 3vw, var(--st-s-12));
-  color: #fff;
-  max-width: 720px;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(var(--st-s-5), 2.4vw, var(--st-s-12));
+  color: var(--st-n-700);
 }
 .st-sld-cat {
   display: inline-block;
-  margin-bottom: var(--st-s-2);
+  margin-bottom: var(--st-s-3);
   padding: 4px 11px;
   border-radius: var(--st-r-pill);
-  background: rgba(255,255,255,.2);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: var(--st-green-50);
+  color: var(--st-green-700);
   font: var(--st-t-xs);
   letter-spacing: .1em;
   text-transform: uppercase;
 }
 .st-sld-name {
   font: var(--st-t-display);
-  font-size: clamp(24px, 3vw, 44px);
-  line-height: 1.12;
-  text-shadow: 0 2px 20px rgba(0,0,0,.6);
+  font-size: clamp(24px, 2.4vw, 40px);
+  line-height: 1.14;
+  color: var(--st-n-900);
   margin-bottom: var(--st-s-2);
+  text-wrap: balance;
 }
 .st-sld-blurb {
   font: var(--st-t-body);
-  font-size: clamp(14px, 1.15vw, 17px);
-  color: rgba(255,255,255,.82);
+  font-size: clamp(14px, 1.05vw, 17px);
+  color: var(--st-n-600);
   text-wrap: pretty;
-  max-width: 56ch;
+  max-width: 46ch;
 }
 .st-sld-go {
   display: inline-flex;
   align-items: center;
   gap: 9px;
   min-height: 48px;
-  margin-top: var(--st-s-4);
+  margin-top: var(--st-s-5);
   padding: 12px 22px;
   border-radius: var(--st-r-pill);
   background: var(--st-green-600);
   color: #fff;
   font: var(--st-t-btn);
-  box-shadow: 0 8px 24px rgba(18,129,37,.45);
+  box-shadow: 0 8px 24px rgba(18,129,37,.30);
   transition: background var(--st-dur-fast) var(--st-ease),
               transform var(--st-dur-fast) var(--st-ease);
 }
 .st-sld-go:hover { background: var(--st-green-500); transform: translateY(-2px); }
-.st-sld-go svg { width: 18px; height: 18px; }
+.st-sld-go svg { width: 18px; height: 18px; flex: none; }
 
-/* Chỉ cảnh giữa mới khoe chữ đầy đủ — cảnh rìa chỉ còn tên */
+/* Chỉ thẻ giữa mới khoe chữ đầy đủ — thẻ rìa chỉ còn tên */
 .st-sld-panel:not(.st-active) .st-sld-blurb,
 .st-sld-panel:not(.st-active) .st-sld-go,
 .st-sld-panel:not(.st-active) .st-sld-cat { display: none; }
-.st-sld-panel:not(.st-active) .st-sld-name { font-size: clamp(15px, 1.3vw, 20px); }
+.st-sld-panel:not(.st-active) .st-sld-name {
+  font-size: clamp(15px, 1.2vw, 19px);
+  line-height: 1.36;   /* ≥1.35 — dấu chồng dấu (Ẩ Ằ Ễ) bị cắt, xem wall.css */
+}
 
-/* ── Nút ‹ › ──────────────────────────────────────────────────────────── */
+/* ── Nút ‹ › ────────────────────────────────────────────────────────────
+   Đứng trong lề `--sld-x`, KHÔNG đè lên thẻ (D-60 · D-61). Trước đây chúng
+   nằm trên ảnh và chìm vào mái ngói đỏ/vàng chói của Suối Tiên. */
 .st-sld-nav {
   position: absolute;
   top: 50%;
@@ -275,86 +290,133 @@
   display: grid;
   place-items: center;
   border-radius: var(--st-r-circle);
-  background: rgba(255,255,255,.16);
-  color: #fff;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: var(--st-n-0);
+  color: var(--st-n-700);
+  /* Viền `--st-n-300` chứ không `200` như thẻ: nút này đứng trên nền trắng
+     trơn, viền nhạt hơn nữa là nó tan vào nền. */
+  box-shadow: inset 0 0 0 1px var(--st-n-300), 0 6px 18px rgba(18,19,18,.18);
   transform: translateY(-50%);
   transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease),
               transform var(--st-dur-fast) var(--st-ease);
 }
-.st-sld-nav:hover { background: var(--st-green-600); transform: translateY(-50%) scale(1.07); }
+.st-sld-nav:hover {
+  background: var(--st-green-600);
+  color: #fff;
+  transform: translateY(-50%) scale(1.07);
+}
 .st-sld-nav svg { width: 23px; height: 23px; }
-.st-sld-prev { left: var(--st-s-3); }
-.st-sld-next { right: var(--st-s-3); }
+.st-sld-prev { left: var(--st-s-5); }
+.st-sld-next { right: var(--st-s-5); }
 
-/* ── Thanh dưới: chip nhóm + đếm ──────────────────────────────────────── */
+/* ── Thanh dưới: chip nhóm · bản đồ 2D · bộ đếm ─────────────────────────
+   Ba thứ khác vai nên phải đọc ra là ba cụm, không phải một dãy nút:
+     chip  = LỌC (xám tonal, cuộn ngang)
+     bản đồ = HÀNH ĐỘNG khác (xanh tonal, sau một vạch ngăn)
+     đếm   = thông tin (chữ xám, không phải nút) */
 .st-sld-bot {
   position: relative;
   z-index: 20;
   flex: none;
   display: flex;
   align-items: center;
-  gap: var(--st-s-3);
+  gap: var(--st-s-4);
   padding: var(--st-s-3) var(--st-s-6) calc(var(--st-sab) + var(--st-s-5));
 }
 .st-sld-chips {
+  /* `1 1 auto` chứ không mặc định `0 1 auto`: dải chip luôn ăn hết chỗ trống
+     nên nút bản đồ + bộ đếm luôn nằm sát mép phải, dù nhóm có 3 chip hay 11.
+     Nếu để co theo nội dung, hai thứ đó trôi vào giữa thanh khi ít chip. */
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   gap: 7px;
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 2px;
-  /* 9 chip không vừa 1 dòng ở màn hẹp → cuộn ngang. Fade mép phải để chỗ bị
-     cắt trông có chủ ý, không phải lỗi tràn. */
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
-  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+  /* Kéo dải chip bằng chuột mà quét xanh hết chữ trong các chip thì trông như
+     hỏng. `js/slider.js` lo phần cuộn, dòng này lo phần nhìn. */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Cuộn tới biên rồi thì đừng đẩy tiếp sang trang cha phía sau iframe. */
+  overscroll-behavior-x: contain;
 }
 .st-sld-chips::-webkit-scrollbar { display: none; }
+.st-sld-chips.st-dragging { cursor: grabbing; }
+
+/* Fade ở mép nào CÒN nội dung bị cắt — hai class do `js/slider.js` bật/tắt
+   theo `scrollLeft`. Fade cứng ở mép phải (bản trước) sai hai lần: cuộn tới
+   cuối rồi mà chip cuối vẫn mờ, còn chip đầu bị cắt ở mép trái thì không có
+   dấu hiệu gì. Mờ ở đúng phía CÒN NỮA thì nó là lời mời cuộn tiếp; mờ ở phía
+   đã hết thì nó chỉ là một vệt lỗi. */
+.st-sld-chips.st-fade-r {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+}
+.st-sld-chips.st-fade-l {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28px);
+          mask-image: linear-gradient(90deg, transparent 0, #000 28px);
+}
+.st-sld-chips.st-fade-l.st-fade-r {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28px,
+                                      #000 calc(100% - 28px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 28px,
+                                      #000 calc(100% - 28px), transparent 100%);
+}
 .st-sld-chip {
   flex: none;
   min-height: 36px;
   padding: 8px 14px;
   border-radius: var(--st-r-pill);
-  background: rgba(255,255,255,.10);
-  color: rgba(255,255,255,.78);
+  background: var(--st-n-100);
+  color: var(--st-n-600);
   font: var(--st-t-sm);
   font-weight: 600;
   white-space: nowrap;
   transition: background var(--st-dur-fast) var(--st-ease),
               color var(--st-dur-fast) var(--st-ease);
 }
-.st-sld-chip:hover { background: rgba(255,255,255,.2); color: #fff; }
-.st-sld-chip.st-on { background: var(--st-gold-300); color: var(--st-n-900); }
+.st-sld-chip:hover { background: var(--st-n-200); color: var(--st-n-900); }
+/* Chip đang chọn dùng chính màu brand, như nút chính của wall. Vàng
+   `--st-gold-300` của bản nền tối trên nền trắng thì nhạt hơn cả chip thường. */
+.st-sld-chip.st-on { background: var(--st-green-600); color: #fff; }
 
-/* Nút "Xem khu vực này trên bản đồ" — nằm giữa dải chip và bộ đếm.
-   `flex: none` + `margin-left` để dải chip cuộn được mà nút không bị đẩy đi. */
+/* Nút "Xem khu vực này trên bản đồ" — `flex: none` để dải chip cuộn được mà
+   nút không bị đẩy đi. Vạch ngăn `::before` là thứ tách nó khỏi dải chip: nếu
+   không, chip cuối đang mờ dần ngay sát nó đọc ra thành "nút đè lên chip". */
 .st-sld-map {
+  position: relative;
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 36px;
-  margin-left: var(--st-s-3);
-  padding: 8px 14px;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 16px;
   border-radius: var(--st-r-pill);
-  background: rgba(255,255,255,.14);
-  color: #fff;
-  font: var(--st-t-sm);
-  font-weight: 600;
+  background: var(--st-green-50);
+  color: var(--st-green-700);
+  font: var(--st-t-btn);
   white-space: nowrap;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  transition: background var(--st-dur-fast) var(--st-ease);
+  box-shadow: inset 0 0 0 1px var(--st-green-100);
+  transition: background var(--st-dur-fast) var(--st-ease),
+              color var(--st-dur-fast) var(--st-ease);
 }
-.st-sld-map:hover { background: var(--st-green-600); }
-.st-sld-map svg { width: 16px; height: 16px; }
+.st-sld-map::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--st-s-4) / -2 - 1px);
+  top: 6px; bottom: 6px;
+  width: 1px;
+  background: var(--st-n-200);
+}
+.st-sld-map:hover { background: var(--st-green-600); color: #fff; }
+.st-sld-map svg { width: 17px; height: 17px; flex: none; }
 
 .st-sld-counter {
-  margin-left: var(--st-s-3);
   flex: none;
   font: var(--st-t-sm);
   font-variant-numeric: tabular-nums;
-  color: rgba(255,255,255,.6);
+  color: var(--st-n-500);
 }
 
 .st-sld-empty {
@@ -363,10 +425,10 @@
   display: grid;
   place-items: center;
   font: var(--st-t-body);
-  color: rgba(255,255,255,.66);
+  color: var(--st-n-500);
 }
 .st-sld-empty[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .st-sld, .st-sld-panel, .st-sld-img, .st-sld-bg { transition: none; }
+  .st-sld, .st-sld-panel, .st-sld-img { transition: none; }
 }

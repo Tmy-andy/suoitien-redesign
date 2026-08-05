@@ -62,26 +62,24 @@ Các file bắt buộc phải có và phải khớp với code thực tế:
 
 ## Kiến trúc rút gọn
 
-**HAI BẢN SONG SONG** để khách chọn (D-50) — không phải hai phiên bản của một thứ:
+**MỘT BẢN DUY NHẤT** — khách chốt VR Wall + Infinite Slider ngày 2026-08-04 (D-57);
+bản 1 (màn chào + 3D carousel) và `host-demo.html` **đã gỡ hẳn**:
 
 ```
-index.html    ← BẢN 1: màn chào + 3D carousel (1 tầng, bấm thẻ đi VR ngay)
-index2.html   ← BẢN 2: VR Wall 9 khu vực → Infinite Slider → VR (2 tầng)
-host-demo.html ← trang cha mô phỏng, DEV ONLY (có nút chuyển bản)
+index.html    ← VR Wall 11 khu vực → Infinite Slider → VR (2 tầng)
 
-CHUNG:  css/tokens · css/base · css/map2d
-        js/data · js/i18n · js/a11y · js/bridge · js/map2d
-        assets/img/cards/  12 ảnh banner .webp (~930 KB)
-        assets/map/park-2400.webp  bản đồ 2D (391 KB)
-BẢN 1:  css/carousel · css/popup · css/responsive
-        js/carousel · js/popup
-BẢN 2:  css/wall · css/slider · css/responsive2
-        js/wall · js/slider · js/popup2
+css/tokens · css/base · css/wall · css/slider · css/map2d · css/responsive2
+js/data · js/i18n · js/a11y · js/bridge · js/map2d · js/wall · js/slider · js/popup2
+assets/img/cards/            ảnh banner .webp
+assets/map/park-2400.webp    bản đồ 2D (391 KB)
 ```
 
-Cả hai dùng chung `js/bridge.js` → trang cha đổi bản chỉ là đổi `src` của iframe,
-không sửa một dòng nào. Bấm chọn một điểm ở bản nào cũng ra
-`ST.bridge.navigate(dest)` → trang cha điều hướng tour tới panorama tương ứng.
+Vài tên còn hậu tố **"2"** (`#st-pop2`, `js/popup2.js`, `css/responsive2.css`) — giữ
+nguyên là **cố ý**: tên không hậu tố vừa mới thuộc về bản 1 và decision log nhắc tới
+chúng ~40 chỗ. Xem D-57.
+
+Bấm chọn một điểm ra `ST.bridge.navigate(dest)` → trang cha điều hướng tour tới panorama
+tương ứng. Trang cha chỉ cần một thẻ `<iframe>` phủ kín viewport.
 
 ## Bối cảnh kỹ thuật (đã verify 2026-07-30)
 
@@ -132,6 +130,16 @@ CSS: `halink-content/themes/halink-c5/public/theme/css/style.css`
   parallax khi hover; **dựng lại animation vào màn cho cả hai bản**; danh sách điểm
   đổi từ dòng ngang sang **thẻ ảnh 4:3**; và truy ra *"ảnh vỡ"* là do **9/12 ảnh gốc
   trên suoitien.vn chỉ 600×600** — đã đổi sang ảnh trang chi tiết (D-55 · D-56).
+- **2026-08-05 (YC-17):** **màn chi tiết (slider) trên điện thoại** đổi hẳn mô hình —
+  nền trắng như wall, mỗi cảnh là một **thẻ** (ảnh trên, chữ + nút dưới trên nền
+  trắng), ảnh nhỏ lại, ‹ › ra khỏi ảnh vào lề, autoplay **2,5s** (desktop giữ 6s).
+  Điện thoại nằm ngang dùng chung bảng màu nhưng xếp **thẻ ngang** (D-60).
+- **2026-08-05 (YC-18):** *"nền đen lệch tông quá"* → **desktop cũng vậy**. Nền sáng +
+  cấu trúc thẻ thành **mặc định** ở `css/slider.css` (desktop = thẻ ngang: ảnh trái 60%
+  giữ 3:2 · chữ phải); `.st-sld-bg` + `.st-sld-shade` **gỡ hẳn**. `responsive2.css` chỉ
+  còn lo **hướng xếp**, và chia theo `orientation` chứ không `max-width`. Nút *"Xem trên
+  bản đồ 2D"* **trở lại thanh công cụ wall** (icon vuông trên điện thoại) — đảo ngược
+  chỗ D-57 đã gỡ nó (D-61).
 - **2026-08-03 (YC-9):** bỏ hẳn bản đồ + hotspot, thay bằng **3D carousel ảnh banner**;
   click ảnh → nhảy tới panorama tương ứng.
 - Tone **light/airy**, không dark-glass. Bỏ hẳn màu `#1769ff`.

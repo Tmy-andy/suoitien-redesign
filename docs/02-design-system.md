@@ -1,5 +1,6 @@
-> Cập nhật: 2026-08-04 (v13 — D-57 gỡ `--st-ease-flow`; D-58 thêm `--st-t-h3`,
-> viết lại §2.8 breakpoint)
+> Cập nhật: 2026-08-05 (v15 — D-61: hết chỗ nền tối cuối cùng, thêm cặp tonal xanh cho
+> hành động phụ, chip đang chọn đổi từ vàng sang xanh brand. v14 — D-60: §2.8 breakpoint
+> mobile/landscape đổi sang bố cục thẻ nền trắng)
 
 # 02 — Design System
 
@@ -688,20 +689,28 @@ bản đồ 2D. Chi tiết từng luật: [`09-variant2.md`](09-variant2.md) §9
 | Tên | Điều kiện | Thay đổi chính |
 |---|---|---|
 | **Rất hẹp** | `≤ 379px` | Thanh công cụ wall xếp dọc, nút "bỏ qua" dáng link |
-| **Mobile** | `≤ 599px` | Header căn **trái** · hero `16/10` + ô vuông `1/1` · thanh công cụ 2 hàng · slider `92vw` · bản đồ thành **bottom sheet** |
-| **Tablet + mobile ngang** | `≤ 1023px` | Wall thành **trang cuộn** 2 cột, thanh công cụ `sticky bottom` |
+| **Mobile** | `≤ 599px` | Header căn **trái** · hero `16/10` + ô vuông `1/1` · thanh công cụ 2 hàng (nút bản đồ thành icon vuông) · thẻ slider `78vw` · bản đồ thành **bottom sheet** |
+| **Tablet + mobile ngang** | `≤ 1023px` | Wall thành **trang cuộn** 2 cột, thanh công cụ `sticky bottom` · ‹ › của slider còn 44px |
 | Desktop | `1024–1599px` | Mosaic 4×3 đầy đủ, không cuộn |
 | Wide | `≥ 1600px` | Grid `max-width: 1560px` cho khỏi kéo dãn |
-| Landscape thấp | `max-height: 460px` + ngang | Wall **3 cột**, ẩn eyebrow + subtitle, ‹ › lên `top:26%` |
+| Landscape thấp | `max-height: 460px` + ngang | Wall **3 cột**, ẩn eyebrow + subtitle, thẻ slider bản bỏ túi |
+| **Hướng màn** | `orientation: portrait` | **Trục riêng, không phải một mốc `max-width`** (D-61): thẻ slider đổi từ NGANG (ảnh trái · chữ phải) sang DỌC (ảnh trên · chữ dưới). iPad dọc 768 rộng hơn iPhone ngang 844 — chỉ `orientation` nói đúng chuyện này |
 | Chạm | `hover: none` | Tắt "làm tối ô khác" và hover-transform · thêm `:active` cho mọi thứ bấm được |
 
-**Hai trục, không phải một.** `max-width` quyết định **bố cục**; `hover: none` quyết
-định **tương tác**. Một laptop cảm ứng 1440px cần `:active` nhưng không cần bố cục
-mobile; gộp hai trục làm một là sai cả hai hướng.
+**Ba trục, không phải một.** `max-width` quyết **các con số** (cỡ chữ, padding, cỡ nút);
+`orientation` quyết **hướng xếp thẻ slider** (D-61); `hover: none` quyết **tương tác**.
+Một laptop cảm ứng 1440px cần `:active` nhưng không cần bố cục mobile; một iPad dọc
+768px rộng hơn iPhone ngang 844px nhưng cần bố cục dọc. Gộp các trục làm một là sai theo
+đúng số hướng đã gộp.
 
-**Phần JS có đọc `matchMedia`** — ba chỗ, đều là việc CSS không làm được
+**Phần JS có đọc `matchMedia`** — năm chỗ, đều là việc CSS không làm được
 ([`05-flows.md`](05-flows.md) §5.6): số `<img>` nạp mỗi ô · chiều cao thật của bottom
-sheet · nguồn của một sự kiện con trỏ.
+sheet · nguồn của một sự kiện con trỏ · nhịp tự chạy của slider (2,5s / 6s) · bỏ qua
+`mouseenter` giả trên cảm ứng.
+
+> ⚠️ Chuỗi điều kiện của breakpoint **Mobile + Landscape thấp** bị lặp lại ở
+> `js/slider.js` (`SMALL_MQ`) vì nhịp 2,5s phục vụ đúng cái bố cục thẻ đó. Sửa một chỗ
+> thì sửa cả hai — xem D-60.
 
 Popup `position: fixed; inset: 0` nên bám đúng viewport, không dính bẫy `100vh` của
 thanh công cụ trình duyệt di động — không cần `svh`/`dvh` ở đây.
@@ -795,17 +804,23 @@ Nền tối làm hai việc miễn phí mà nền trắng phải trả tiền:
 | `--st-n-200` | Nền ô **chưa tải xong ảnh**. ⚫ Trước là `--st-n-800` — vừa sai màu (trên nền trắng, chỗ giữ ảnh phải *sáng hơn* ảnh) vừa **trỏ vào một token lúc đó chưa tồn tại**, xem D-55(g) |
 | `--st-green-700` trên `--st-green-50` | Eyebrow `SUỐI TIÊN 360` |
 | `--st-n-900` / `--st-n-600` | `#st-wall-title` / `#st-wall-sub` |
-| `--st-green-600/500` | Nút "Bắt đầu hành trình", "Khám phá VR 360°", hover ‹ ›, viền ô khi hover |
-| `--st-gold-300` | Vòng nhấn khi hover ô · **chip nhóm đang chọn** · dòng CTA trong ô |
-| `--st-n-100` / `--st-n-700` | Nút thanh công cụ `.st-wall-bar button` và `.st-p2-close` |
+| `--st-green-600/500` | Nút "Bắt đầu hành trình", "Khám phá VR 360°", hover ‹ ›, viền ô khi hover, **chip nhóm đang chọn** (D-61) |
+| `--st-green-50` / `--st-green-700` | Cặp "tonal xanh" cho **hành động phụ**: nút bản đồ 2D (cả `.st-wall-map` lẫn `.st-sld-map`) và chip danh mục `.st-sld-cat` (D-61) |
+| `--st-gold-300` | Vòng nhấn khi hover ô · dòng CTA trong ô. ⚫ Từng là màu **chip nhóm đang chọn** — trên nền trắng nó nhạt hơn cả chip thường, đổi sang xanh brand ở D-61 |
+| `--st-n-100` / `--st-n-700` | Nút thanh công cụ `.st-wall-bar button`, `.st-p2-close`, `.st-sld-back`, ô tìm, chip chưa chọn |
 
-### Chỗ DUY NHẤT còn nền tối: slider
+### ⚫ Chỗ cuối cùng còn nền tối: slider — đã hết từ D-61
 
-`.st-slider` giữ nguyên tông tối. Ở đó mỗi cảnh chiếm **gần trọn màn** — lập luận
-"phòng chiếu" của D-50 vẫn đúng cho một ảnh lớn đơn lẻ, chỉ sai cho một lưới 9 ô.
+Cho tới 2026-08-05, `.st-sld` giữ tông tối với lập luận "phòng chiếu" của D-50: mỗi cảnh
+chiếm **gần trọn màn**, mà một ảnh lớn đơn lẻ thì nền tối tôn được — chỉ sai với một
+lưới 9 ô.
 
-Kéo theo **một ngoại lệ phải nhớ**: `.st-p2-close` sáng (`--st-n-100`) ở wall nhưng có
-override về kính mờ khi `#st-pop2.st-state-slider` — nút sáng đè lên ảnh tối sẽ chói.
+Khách bác lập luận đó ở **YC-17 (điện thoại) rồi YC-18 (desktop)**: *"nhìn nền đen lệch
+tông quá"*. Cả ba màn giờ cùng một nền trắng phẳng, và tiền đề của lập luận cũ cũng
+không còn — mỗi cảnh **không** chiếm gần trọn màn nữa mà là một **thẻ** (D-61).
+
+Kéo theo: `#st-pop2.st-state-slider .st-p2-close` — override về kính mờ khi vào slider
+— **đã gỡ**. Nút × giờ chỉ có một dáng, cả wall lẫn slider.
 
 > Ba màu brand vẫn đúng vai như site chính: xanh = hành động, vàng = nhấn mạnh nhẹ, đỏ
 > = chỉ nhận diện (dải 4px trên đỉnh, không dùng làm nút).

@@ -94,6 +94,15 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
         <span data-i18n="wall.search"></span>
       </button>
+      <!-- Lối vào bản đồ 2D từ MÀN TỔNG QUAN (D-61). Trước đó bản đồ chỉ mở
+           được từ trong slider, tức phải chọn một khu vực rồi mới thấy — mà
+           bản đồ chính là thứ để trả lời "khu vực nào ở đâu".
+           `data-open-map="all"` → js/popup2.js:openMap() mở toàn bộ 20 pin. -->
+      <button type="button" class="st-wall-map" data-open-map="all"
+              data-i18n-aria="map.open">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-map"/></svg>
+        <span data-i18n="map.open"></span>
+      </button>
       <button type="button" class="st-primary" data-act="journey">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg>
         <span data-i18n="wall.journey"></span>
@@ -111,7 +120,9 @@
        ══════════════════════════════════════════════════════════════════ -->
   <section class="st-sld" id="st-sld" hidden aria-hidden="true">
 
-    <div class="st-sld-bg" aria-hidden="true"></div>
+    <!-- ⚫ `.st-sld-bg` (ảnh đang xem, blur + tối, phủ kín viewport) đã gỡ ở
+         D-61 — nó là cái "nền đen lệch tông" khách nói. Nền giờ là nền trắng
+         của #st-pop2, dùng chung với wall và bản đồ. -->
 
     <div class="st-sld-top">
       <button type="button" class="st-sld-back">

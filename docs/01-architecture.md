@@ -1,4 +1,6 @@
-> Cập nhật: 2026-08-04 (v13 — D-57 gỡ hẳn bản 1 + host-demo; D-58 dựng lại mobile)
+> Cập nhật: 2026-08-05 (v15 — D-61: nền sáng + thẻ thành mặc định ở `css/slider.css`,
+> nút bản đồ 2D trở lại wall. v14 — D-60 slider trên điện thoại thành thẻ nền trắng,
+> nhịp tự chạy theo khổ màn)
 
 # 01 — Architecture & Structure
 
@@ -17,7 +19,7 @@ suoitien-vr360redes/
 │   ├── base.css               # ⟨chung⟩ reset, html/body TRONG SUỐT, img cover, #st-debug
 │   ├── map2d.css              # #st-map — bản đồ 2D + pin (D-51)
 │   ├── wall.css               # #st-pop2 + mosaic 9 ô — bố cục DESKTOP
-│   ├── slider.css             # .st-sld-* — cảnh gần trọn màn
+│   ├── slider.css             # .st-sld-* — thẻ ngang trên nền trắng (D-61)
 │   └── responsive2.css        # ⭐ TOÀN BỘ @media, nạp CUỐI (kể cả @media của bản đồ)
 │
 ├── js/
@@ -247,7 +249,9 @@ khác; xem D-58(h).
 | Message trao đổi với trang cha | `js/bridge.js` + docs `07-integration.md` §7.5 |
 | Nhịp ô wall tự đổi cảnh | `js/wall.js` → `SWAP_MS` / `SWAP_STAGGER` |
 | Số ảnh nạp mỗi ô | `js/wall.js` → `imgsPerTile()` (mobile 2, desktop 3 · D-58) |
-| Tốc độ tự chạy của slider | `js/slider.js` → `AUTO_MS` (và transition 620ms ở `css/slider.css`) |
+| Tốc độ tự chạy của slider | `js/slider.js` → `AUTO_MS` (desktop) / `AUTO_MS_SM` (điện thoại, D-60) — và transition 620ms ở `css/slider.css`, 460ms ở `css/responsive2.css` |
+| Bố cục THẺ của slider (mọi khổ) | `css/slider.css` = thẻ NGANG mặc định · `css/responsive2.css` `@media (orientation: portrait)` = thẻ DỌC. Nhịp 2,5s bám `SMALL_MQ` trong `js/slider.js` (D-61) |
+| Lối vào bản đồ 2D | `index.html` — bất kỳ nút nào mang `data-open-map="all" \| "area"`; không phải sửa JS (D-61) |
 | **Layout mobile / tablet / landscape** | `css/responsive2.css` — **chỉ** file này (D-58) |
 | Cách chia 9 khu vực | `js/data.js` → `GROUPS` (`size` + `cover` + `keys`) |
 | Bố cục mosaic desktop | thứ tự trong `GROUPS` + `grid-template-rows` ở `css/wall.css` |

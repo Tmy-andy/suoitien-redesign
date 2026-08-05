@@ -1,6 +1,9 @@
-> Cập nhật: 2026-08-04 (v16 — thêm D-55 chuyển động + 5 thẻ + ảnh nguồn, D-56 danh
-> sách thành thẻ ảnh. v15 — D-54: nền trắng phẳng 2 bản, nút bản đồ lên hàng
-> tìm kiếm, thẻ carousel suy từ chiều cao)
+> Cập nhật: 2026-08-05 (v18 — thêm D-61: nền sáng cho cả desktop, thẻ ngang, nút bản đồ
+> 2D ở wall. v17 — D-60: màn chi tiết trên điện thoại nền trắng + thẻ, autoplay 2,5s)
+
+> ⚠️ **D-57 · D-58 · D-59 không có mục riêng ở file này** — chúng được ghi tại chỗ
+> trong `09-variant2.md` §9.1/§9.5 và `06-data.md` ngày 2026-08-04. Code và các doc
+> khác vẫn trỏ tới đúng ba số đó, nên **không tái sử dụng chúng cho quyết định mới**.
 
 # 08 — Decision Log
 
@@ -1872,10 +1875,198 @@ nhưng danh sách cũng cần đọc nó, nên bọc lại thành helper thay v�
 
 ---
 
+## D-60 · ⭐ Màn chi tiết trên điện thoại: nền TRẮNG + mỗi cảnh là một THẺ · 🟢 · 2026-08-05
+
+**Yêu cầu (YC-17):** *"ở bản mobile phần xem chi tiết các địa điểm vr trong từng mục,
+nền cũng phải là nền trắng cho đồng bộ, các ảnh nhỏ lại 1 chút, nút đang bị ảnh nằm đè
+lên nhìn không rõ, ảnh tự động slide show trượt qua sau 2.5s."*
+
+### Cái gì hỏng
+
+Bố cục desktop của slider là một **cổng trải nghiệm**: ảnh phủ gần trọn màn, chữ trắng
+nằm ĐÈ lên ảnh sau một lớp gradient, nền là chính ảnh đó blur + tối. Bóp xuống 390px thì
+ba thứ hỏng cùng lúc, và khách chỉ ra đúng cả ba:
+
+1. **Nó là màn TỐI DUY NHẤT của popup.** Wall trắng (D-54), bản đồ trắng, bấm một ô lại
+   rơi vào màn đen — đọc ra là "sang trang khác", không phải "xem chi tiết khu vực vừa
+   bấm".
+2. **Nút chìm vào ảnh.** CTA "Khám phá VR 360°" và cặp ‹ › đều nằm trên ảnh. Lớp
+   gradient đủ cho khung desktop rộng, không đủ cho khung dọc hẹp — nhất là với ảnh Suối
+   Tiên toàn mái ngói đỏ và tượng vàng chói.
+3. **Chữ bị ép xuống dải hẹp nhất.** Ảnh chiếm gần trọn màn nên tên + mô tả + CTA phải
+   chen vào ~35% đáy màn, chồng lên đúng phần ảnh có chi tiết nhất.
+
+### Làm gì
+
+Mỗi cảnh thành một **thẻ**: ảnh ở trên, chữ và nút ở dưới trên nền trắng. Không còn thứ
+gì đè lên thứ gì.
+
+| | Trước | Sau |
+|---|---|---|
+| Nền màn | `.st-sld-bg` = ảnh blur 34px + `brightness(.42)` | `display: none` → `--st-bg` trắng |
+| Cảnh | Cổng `92vw` cao từ đỉnh xuống đáy sân khấu | Thẻ `78vw`, cao theo nội dung, **căn giữa** sân khấu |
+| Ảnh | Phủ kín cổng (~600px ở iPhone 14) | `clamp(170px, 32vh, 300px)` — 270px ở iPhone 14 |
+| Chữ | Trắng, đè lên ảnh, dưới gradient | `--st-n-900` / `--st-n-600` trên nền trắng |
+| CTA | Trên ảnh | Trong vùng trắng của thẻ |
+| ‹ › | Đè lên ảnh ở `top: 30%`, nền `rgba(6,12,20,.52)` | Ngoài mép thẻ, trong lề `--sld-x`, nền trắng + viền |
+| Cảnh rìa | `filter: brightness(.55)` | `opacity: .5` |
+| Tự chạy | 6000 ms | **2500 ms** (desktop giữ 6000) |
+
+**Bề ngang `92vw → 78vw` không phải để "cho nhỏ lại" mà là điều kiện của việc gỡ nút ra
+khỏi ảnh:** lề `11vw ≈ 43px` ở khổ 390 vừa đủ đặt trọn nút ‹ › 38px bên ngoài thẻ. Ở
+khổ 320 lề chỉ còn 35px → `≤379` thu nút về 32px.
+
+**Chiều cao ảnh suy từ CHIỀU CAO MÀN, không từ `aspect-ratio`.** Bản đầu để `3/2` (đúng
+tỉ lệ ảnh nguồn, không cắt thêm) — đo ra thẻ 397px giữa sân khấu 676px trên iPhone 14,
+tức **140px trắng trên và dưới**, và máy càng cao thì chỗ trống càng nhiều, ngược hẳn
+với cái cần. `clamp(170px, 32vh, 300px)` đưa thẻ lên 465px. Cắt sâu hơn 3:2 là chấp
+nhận được: ô wall trên mobile còn đang là `1/1`.
+
+**`opacity` chứ không `brightness` cho cảnh rìa.** `brightness(.5)` trên một thẻ TRẮNG
+ra một mảng xám bẩn, không phải "lùi ra sau". Trên nền sáng, thứ diễn tả chiều sâu là độ
+mờ — cùng bài học với D-54 (nền) và D-55 (thẻ carousel). Kéo theo: luật
+`.st-sld-panel:not(.st-active) { filter: brightness(.65) }` trong khối `@media (hover:
+none)` phải **thu phạm vi về `min-width: 600px`**, nếu không nó nằm sau và đè ngược lại.
+
+### Điện thoại NẰM NGANG cũng là điện thoại
+
+844×390 không lọt `≤599px`. Để nguyên thì xoay máy một cái là thấy hai thiết kế khác
+nhau. Nhưng thẻ DỌC ở đó cũng không sống được: ảnh `3:2` rộng 675px sẽ cao 450px trên
+một màn cao 390px.
+
+→ **Bảng màu dùng chung** (một `@media` list `≤599px, (max-height:460px) and
+(orientation:landscape)`), **hướng xếp tách riêng**: dọc = ảnh trên/chữ dưới, ngang =
+ảnh trái (`42%`) / chữ phải, ảnh `align-self: stretch` nên cao đúng bằng cột chữ mà
+không cần biết trước con số nào. Bản ngang nhờ đó **lấy lại được dòng mô tả** — bố cục
+cũ phải `display: none` nó đi vì không còn chỗ.
+
+### Hai bẫy làm autoplay chết trên cảm ứng
+
+Ở nhịp 6s gần như không ai để ý; ở nhịp 2,5s nó thành "slideshow chết ngay sau cú chạm
+đầu tiên". Cả hai đều là cơ chế **dừng khi người dùng đang xem** (WCAG 2.2.2) bị kích
+hoạt nhầm:
+
+- Chrome Android bắn `mouseenter` **giả** sau mỗi lần chạm, và không có `mouseleave` nào
+  cho tới khi chạm ra chỗ khác → `paused` kẹt `true`. → chỉ nghe `mouseenter` khi
+  `matchMedia('(hover: hover)')`.
+- Chạm vào thẻ làm nút bên trong nhận focus → `focusin`, cũng kẹt. → chỉ dừng khi focus
+  đến từ **bàn phím** (`:focus-visible`), đúng đối tượng WCAG 2.2.2 nói tới.
+
+Thêm `dragging` vào điều kiện của `tick()`: ngón tay đang đặt trên cảnh mà nó tự trượt
+đi là lỗi thấy ngay ở nhịp 2,5s — trên desktop `:hover` đã lo việc này, cảm ứng thì
+không có hover để lo.
+
+**`setInterval` → chuỗi `setTimeout`.** Nhịp giờ phụ thuộc khổ màn (2,5s / 6s) mà
+`setInterval` chốt cứng nhịp lúc gọi: xoay ngang cái máy là nhịp sai cho tới lần
+`restart()` kế tiếp.
+
+**Transition của cảnh `620 → 460ms` trên điện thoại.** 620ms ăn 1/4 quãng nghỉ 2,5s —
+cảnh chưa kịp đứng yên đã đi tiếp.
+
+> ⚠️ **Hai chỗ phải khớp nhau:** `SMALL_MQ` trong `js/slider.js` và điều kiện `@media`
+> của bố cục thẻ trong `css/responsive2.css`. Nhịp 2,5s là nhịp của cái thẻ nhỏ đọc
+> lướt, không phải của cảnh gần trọn màn.
+
+### Đã đo (Playwright/Chromium, 7 khổ × slider)
+
+320×568 · 375×812 · 390×844 · 412×915 · 844×390 · 768×1024 · 1440×900 — **0 lỗi
+console**, và 5 bất biến: thẻ nằm trọn trong sân khấu · CTA không giao với ảnh · ‹ ›
+không giao với thẻ đang xem · `.st-sld-bg` tắt · nền thẻ đúng `#fff`. Nhịp đo được:
+điện thoại 2466/2495 ms, desktop 6000 ms; sau khi chạm vào sân khấu vẫn tự chạy tiếp.
+
+Một lỗi bắt được nhờ ảnh chụp chứ không nhờ số đo: ở 320px chữ trong CTA vỡ **hai dòng**
+("Khám phá VR / 360°") và nút cao 54px. → `≤379` bỏ mũi tên đuôi (icon VR đầu đã nói đủ
+"đi đâu") + chữ nhỏ một bậc.
+
+---
+
+## D-61 · ⭐ Nền sáng cho CẢ desktop · lối vào bản đồ 2D từ wall · 🟢 · 2026-08-05
+
+**Yêu cầu (YC-18):** *"Ở desktop cũng điều chỉnh lại trang chi tiết các địa điểm đi,
+nhìn nền đen lệch tông quá. Và cho hiển thị lại nút xem bản đồ 2D đi. Bố trí cho hợp lý
+là được."*
+
+### 1. Nền đen là thứ CUỐI CÙNG còn sót của bố cục cũ
+
+D-60 mới chỉ đổi khổ điện thoại, nên desktop vẫn là "cổng trải nghiệm": ảnh phủ gần trọn
+màn, chữ trắng đè lên ảnh, nền là chính ảnh đó `blur(34px) brightness(.42)`. Đứng cạnh
+wall trắng và bản đồ trắng, nó là màn tối duy nhất — chữ *"lệch tông"* của khách gọi
+đúng tên.
+
+**Đưa hẳn bảng màu sáng + cấu trúc thẻ xuống `css/slider.css` làm MẶC ĐỊNH.** Đây là
+điểm quan trọng của lượt này, không phải chi tiết kỹ thuật: sau D-60, cùng một component
+có hai bảng màu ở hai file, và mọi luật mới đều phải viết hai lần. Giờ `slider.css` =
+thẻ nền sáng (một bảng màu duy nhất), `responsive2.css` = **chỉ còn hướng xếp**. Khối
+"bảng màu dùng chung" 115 dòng của D-60 xoá sạch.
+
+| | Trước (D-50 → D-60) | Sau |
+|---|---|---|
+| Nền màn | `.st-sld-bg` — ảnh blur + tối | **gỡ hẳn khỏi HTML/CSS/JS** |
+| Cảnh | Cổng `84vw` cao trọn sân khấu | Thẻ `84vw`, cao theo ảnh, căn giữa |
+| Bố cục thẻ | Chữ đè lên ảnh, dưới gradient | **Ảnh trái 60% · chữ phải 40%** |
+| `.st-sld-shade` | Lớp gradient tách chữ khỏi ảnh | gỡ (không còn chữ nào trên ảnh) |
+| Cảnh rìa | `brightness(.55)` + `opacity` | chỉ `opacity` |
+| ‹ › | Trên ảnh, `rgba(255,255,255,.16)` | Trong lề `--sld-x`, trắng + viền |
+| Chip đang chọn | Vàng `--st-gold-300` | Xanh brand `--st-green-600` |
+| Nút × ở slider | Kính mờ (override ở `wall.css`) | Một dáng duy nhất cho cả 2 màn |
+
+**Chia theo HƯỚNG MÀN, không theo bề ngang.** Mặc định là thẻ ngang (ảnh trái · chữ
+phải); `@media (orientation: portrait)` đổi thành thẻ dọc (ảnh trên · chữ dưới). Lý do:
+iPad dọc 768×1024 **rộng hơn** iPhone ngang 844×390 nhưng cần đúng bố cục của iPhone
+dọc. Một mốc `max-width` không bao giờ nói đúng chuyện đó. Từ đây `≤599px` chỉ còn lo
+các con số của điện thoại, không lo mô hình.
+
+**Chiều cao thẻ do ẢNH quyết.** `.st-sld-img { width: 60%; aspect-ratio: 3/2 }` → ảnh
+không bị cắt thêm lần nào, và khối chữ `stretch` cao theo nó. Đo thật: 1440×900 ra thẻ
+1210×464 với ảnh 696×464 = đúng 3:2; 1920×1080 ra 1613×645 với ảnh 968×645.
+
+### 2. Nút bản đồ 2D — vấn đề là NÓ Ở ĐÂU, không phải nó có hiện không
+
+Nút `.st-sld-map` vẫn luôn hiện, nhưng ở desktop nó nằm ngay sát mép phải của dải chip
+đang mờ dần (mask fade) nên đọc ra là **một cái nút đè lên chip**. Và quan trọng hơn:
+từ **màn tổng quan (wall) thì không có lối nào vào bản đồ** — muốn xem bản đồ phải chọn
+một khu vực trước, trong khi bản đồ chính là thứ để trả lời *"khu vực nào ở đâu"*.
+
+Hai chỗ sửa:
+
+- **Thanh dưới slider** đọc ra ba cụm thay vì một dãy nút: dải chip = LỌC (xám tonal,
+  `flex: 1 1 auto` để luôn ăn hết chỗ trống) · bản đồ = HÀNH ĐỘNG khác (xanh tonal, có
+  vạch ngăn `::before`) · bộ đếm = thông tin (chữ xám). Vạch ngăn tự tắt ở khổ điện
+  thoại vì ở đó hai thứ đã nằm hai hàng.
+- **Thêm nút vào thanh công cụ của wall** — `data-open-map="all"`, không phải sửa một
+  dòng JS nào (`popup2.js` đã bắt `[data-open-map]` ở cấp document từ D-51). Desktop:
+  nút xanh tonal giữa "Tìm địa điểm" và "Bắt đầu hành trình". Điện thoại: **vuông, chỉ
+  còn icon**, đứng cạnh ô tìm — đúng chỗ mà bản 1 từng đặt nó (D-54), vì hai chữ "Xem
+  trên bản đồ 2D" ở 390px ăn nửa hàng cho một lối đi phụ. Nhãn vẫn nằm trong DOM +
+  `data-i18n-aria` để screen reader đọc được.
+
+Dùng lại khoá i18n `map.open` — có sẵn từ D-51 và **chết từ D-57** (nó thuộc hàng tìm
+kiếm của bản 1). Không thêm chuỗi mới.
+
+> ⚠️ `.st-wall-map` phải viết là `.st-wall-bar .st-wall-map`: luật chung
+> `.st-wall-bar button` có thêm một selector PHẦN TỬ nên nó thắng một class trần, và
+> bảng màu sẽ lặng lẽ không ăn. Cùng bẫy với `.st-primary` ngay trên nó.
+
+### Đã đo (Playwright/Chromium, 7 khổ)
+
+320×568 · 390×844 · 768×1024 · 844×390 · 1280×720 · 1440×900 · 1920×1080 — **0 lỗi
+console**, 10 bất biến: `.st-sld-bg` và `.st-sld-shade` không còn trong DOM · thẻ trắng
+· nút × dáng sáng · CTA không giao với ảnh · ‹ › không giao với thẻ · thẻ nằm trọn sân
+khấu · CTA không bị cắt · nút bản đồ không đè chip/bộ đếm · nút bản đồ ở wall nằm trong
+màn và **bấm vào mở được `#st-map` có pin** ở cả 7 khổ.
+
+> Một bẫy của phép đo, không phải của code: đo lúc `t = 500ms` thì thanh công cụ wall
+> còn đang ở `translateY(22px)` của animation vào màn (delay 860ms) nên nút bản đồ báo
+> "tràn đáy màn" 2px. Bất biến hình học phải đo **sau khi animation xong** — chờ 1700ms.
+
+---
+
 ## Nhật ký sửa đổi
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-05 (v18) | **Thêm D-61 (YC-18).** Nền sáng + cấu trúc thẻ thành MẶC ĐỊNH ở `css/slider.css` (desktop thành thẻ ngang: ảnh trái 60% · chữ phải), gỡ hẳn `.st-sld-bg` + `.st-sld-shade` khỏi HTML/CSS/JS, `responsive2.css` chỉ còn lo HƯỚNG XẾP và chia theo `orientation` thay vì `max-width`. Thanh dưới slider tách thành 3 cụm có vạch ngăn; thêm nút bản đồ 2D vào thanh công cụ wall (icon vuông trên điện thoại), dùng lại khoá i18n `map.open` chết từ D-57. |
+| 2026-08-05 (v17) | **Thêm D-60 (YC-17).** Màn chi tiết (slider) trên điện thoại: nền tối → **trắng**, mỗi cảnh thành **thẻ** (ảnh trên, chữ + CTA dưới trên nền trắng), ‹ › ra khỏi ảnh vào lề, cảnh rìa dùng `opacity` thay `brightness`, ảnh `clamp(170px,32vh,300px)`, autoplay **2,5s** trên điện thoại (desktop giữ 6s) với `setTimeout` chuỗi, thẻ NGANG cho điện thoại nằm ngang, và sửa 2 bẫy `mouseenter`/`focusin` giả làm autoplay chết sau cú chạm đầu tiên. |
 | 2026-08-04 (v16) | **Thêm D-55 + D-56 (YC-15).** D-55: carousel lên 5 thẻ với 4 biến bậc tách riêng (bậc ±2 nén lại, nghiêng bằng bậc ±1) · độ mờ thôi làm việc diễn tả chiều sâu (`.70 → .925`, dồn cho brightness) · autoplay `3600 → 3000ms`, transition `620 → 720ms` + token easing mới `--st-ease-flow` + delay so le theo bậc · parallax trên thẻ giữa (mượn của `wall.js`) · dựng lại animation vào màn cho **cả hai bản** (bản 2 trước đây có nhưng bị lớp fade khung nuốt mất) · **ảnh nguồn: 9/12 ảnh gốc trên site chỉ 600×600 và bản cũ đã phóng lên 760 từ khâu dựng asset** → đổi sang ảnh trang chi tiết, 9/12 lên ≥900px, không bao giờ phóng to · sửa `--st-n-800` (token không tồn tại) · mobile thẻ `78vw → 92vw`. D-56: danh sách điểm từ DÒNG sang THẺ ẢNH 4:3. |
 | 2026-08-04 (v15) | **Thêm D-54** — nền trắng phẳng cho **cả 2 bản** (bỏ vệt radial; **đảo ngược D-50 #4** = bản 2 hết nền tối), nút bản đồ chuyển từ footer lên hàng tìm kiếm, cỡ thẻ carousel suy từ chiều cao sân khấu thay vì hằng số `66vh` (bỏ cặp auto-margin). |
 | 2026-08-03 (v14) | **Thêm D-53** — `base.css` `img { max-width: 100% }` kẹp `.st-wt-img` (`width: 112%`) làm lộ dải trống 34px mép phải mọi ô wall. Sửa bằng `max-width: none`; thêm `tools/check-image-cover.js` đo rect thật thay vì chỉ kiểm thuộc tính CSS. |

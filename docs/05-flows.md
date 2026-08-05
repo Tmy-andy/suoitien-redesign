@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-04 (v9 — D-57 gỡ bản 1: §5.9 thành luồng chính; §5.6 + §5.8
-> viết lại cho `popup2.js`; §5.6 thêm phần JS có đọc matchMedia · D-58)
+> Cập nhật: 2026-08-05 (v11 — §5.10 viết lại: nút bản đồ 2D trở lại thanh công cụ wall,
+> hai lối vào phân vai rõ · D-61. v10 — §5.6 thêm 2 chỗ JS đọc matchMedia · D-60)
 
 # 05 — Flows & Logic
 
@@ -140,18 +140,26 @@ một:
 |---|---|---|
 | Wall từ mosaic 4×3 → trang cuộn 2 cột → 3 cột (landscape) | `responsive2.css` | đổi `grid-template-columns` + `aspect-ratio` |
 | Thanh công cụ từ 1 hàng `static` → 2 hàng `sticky` → xếp dọc (≤379) | `responsive2.css` | `display: grid` + `position: sticky` |
-| Cảnh slider rộng ra, chữ nhỏ lại, ‹ › đổi chỗ | `responsive2.css` | `--sld-w` / `--sld-x` + `top` của `.st-sld-nav` |
+| Thẻ slider đổi hướng xếp: NGANG (ảnh trái · chữ phải) ↔ DỌC (ảnh trên · chữ dưới) | `responsive2.css` | `@media (orientation: portrait)` → `flex-direction` của `.st-sld-panel` (D-61) |
+| **Nhịp tự chạy của slider** (2,5s điện thoại, 6s desktop) | **`js/slider.js`** | `autoMs()` — `matchMedia(SMALL_MQ)`, phải khớp @media của D-60 |
+| **Bỏ qua `mouseenter` giả trên cảm ứng** | **`js/slider.js`** | `matchMedia('(hover: hover)')` |
 | Thẻ bản đồ thành bottom sheet | `responsive2.css` | `left/right/bottom: 0` + bo 2 góc trên |
 | **Số ảnh nạp mỗi ô wall** (2 trên mobile, 3 trên desktop) | **`js/wall.js`** | `imgsPerTile()` — `matchMedia('(max-width: 599px)')` |
 | **Chiều cao thực của bottom sheet** để cụm zoom né | **`js/map2d.js`** | đo `offsetHeight` → ghi `--st-card-h` |
 | **Tắt parallax trên cảm ứng** | **`js/wall.js`** | lọc `e.pointerType !== 'mouse'` |
 
-Ba dòng cuối là **ba trường hợp CSS không làm được**, không phải ba chỗ tuỳ tiện:
+Năm dòng cuối là **năm trường hợp CSS không làm được**, không phải năm chỗ tuỳ tiện:
 
 - CSS không quyết định được **có tải một `<img>` hay không** — `display: none` vẫn tải.
 - CSS không đọc được **chiều cao của một phần tử khác**.
 - CSS không phân biệt được **nguồn của một sự kiện con trỏ**. `@media (hover: none)` nói
   về THIẾT BỊ, không nói về từng sự kiện — máy lai (laptop cảm ứng) có cả hai.
+- CSS không đặt được **nhịp của một `setTimeout`**.
+- CSS không **bỏ qua một event** đã bắn.
+
+> ⚠️ Hai dòng cuối (D-60) đọc `matchMedia` với **đúng chuỗi điều kiện** của @media bên
+> `responsive2.css` (`SMALL_MQ`). Sửa breakpoint của bố cục thẻ mà quên chuỗi này thì
+> nhịp 2,5s và cái thẻ nó phục vụ tách nhau ra — không lỗi, chỉ sai nhịp.
 
 > Media query đo **kích thước iframe**, không phải trang cha. Iframe được nhúng phủ
 > kín viewport nên hai con số thường bằng nhau — nhưng nếu bên tích hợp cho iframe
@@ -170,6 +178,8 @@ Ba dòng cuối là **ba trường hợp CSS không làm được**, không ph�
 | Ảnh thẻ 404 | Thẻ hiện nền xám `--st-n-200` + chữ vẫn đọc được (veil + body nằm trên nền, không phụ thuộc ảnh) |
 | `prefers-reduced-motion` | Autoplay **tắt hẳn**; transition/animation về `.01ms` (`base.css`); nút ‹ › và phím vẫn chạy |
 | Tab bị ẩn | `document.hidden` → autoplay tạm dừng, không đốt CPU vẽ transform dưới nền |
+| Chạm vào slider trên điện thoại | `mouseenter` giả của Chrome Android và `focusin` do chạm đều **bị bỏ qua** — nếu không, autoplay chết sau cú chạm đầu tiên (D-60) |
+| Ngón tay đang đặt trên cảnh | `dragging` → `tick()` bỏ lượt, cảnh không tự trượt dưới tay (D-60) |
 | Bấm thẻ 2 lần thật nhanh | Guard `closing` → lần thứ 2 return ngay |
 
 ## 5.8 Bootstrap `popup2.js` — thứ tự đầy đủ
@@ -275,20 +285,21 @@ vòng trong 9 ô của wall trong khi mắt đang nhìn slider.
 ## 5.10 Bản đồ 2D — mở được từ cả hai trạng thái (D-51)
 
 ```
-Bản 1                                  Bản 2
+WALL (tổng quan)                       SLIDER (chi tiết)
 ─────────────────────────────────      ─────────────────────────────────
-footer "Xem trên bản đồ 2D"            thanh wall "Xem trên bản đồ 2D"
-  → openMap('all')                       → openMap('all')
-  → 20 pin                               → 20 pin
-
-danh sách → "Xem khu vực này…"         slider → "Xem khu vực này…"
-  → openMap('area')                      → openMap('area')
-  → currentKeys()                        → D.group(slider.group()).keys
-    (khu vực HOẶC kết quả tìm kiếm)
+.st-wall-map "Xem trên bản đồ 2D"      .st-sld-map "Xem khu vực này…"
+  → openMap('all')                       → openMap('area')
+  → toàn bộ 20 pin                       → D.group(slider.group()).keys
+                                           (chỉ pin của khu vực đang xem)
 ```
 
-Cả hai gọi cùng `ST.map2d.open(keys, label)`. Component không biết mình đang được gọi
-từ bản nào.
+Hai nút, một `ST.map2d.open(keys, label)` — component không biết nó được gọi từ màn nào.
+Cả hai chỉ là `data-open-map="…"` trong HTML: `popup2.js` bắt `[data-open-map]` bằng
+**một** listener ở cấp document, nên thêm lối vào thứ ba ở đâu cũng không phải sửa JS.
+
+> ⚫ Nút ở wall từng bị gỡ ở D-57 rồi **dựng lại ở D-61** (YC-18). Vai của hai nút khác
+> nhau, không trùng: một cái hỏi *"tất cả nằm ở đâu"*, một cái hỏi *"mấy điểm này nằm ở
+> đâu"*.
 
 ### Trong bản đồ
 

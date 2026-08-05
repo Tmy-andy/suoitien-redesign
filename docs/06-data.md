@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-04 (v9 — D-57 gỡ `must` + `D.mustOf`, gỡ 21 khoá i18n của bản 1)
+> Cập nhật: 2026-08-05 (v10 — D-60: ảnh trong thẻ slider mobile cao theo màn, neo
+> `center 45%`. v9 — D-57 gỡ `must` + `D.mustOf`, gỡ 21 khoá i18n của bản 1)
 
 # 06 — Data
 
@@ -195,8 +196,10 @@ theo bảng chữ cái và **không** theo vị trí địa lý. Từ D-57 thứ
 thứ tự hiển thị** của bất kỳ đâu — thứ tự hiển thị do `keys` của từng nhóm quyết định.
 
 **Tỉ lệ 3:2 giờ chỉ còn là mặc định dễ chịu, không còn là ràng buộc** (D-57): ô wall và
-panel slider đều `object-fit: cover` với khung tự do. Chỗ nhạy nhất là cột dọc hẹp trên
-mobile — xem `object-position: center 38%` ở `css/responsive2.css` (D-58f).
+panel slider đều `object-fit: cover` với khung tự do — ô wall trên mobile còn đang là
+`1/1`, và từ D-60 ảnh trong thẻ slider cao theo màn (`clamp(170px, 32vh, 300px)`) chứ
+không theo tỉ lệ ảnh. Neo `object-position: center 45%` ở `css/responsive2.css` giữ lấy
+phần trên của cảnh (mái, đường chân trời) khi khung cắt sâu.
 
 <details><summary>Ràng buộc cũ của bản 1 (đã gỡ)</summary>
 

@@ -21,7 +21,16 @@ window.ST = window.ST || {};
 
   var VISIBLE = 1;           /* hé lộ 1 cảnh mỗi bên */
   var DRAG_MIN = 56;         /* ngưỡng phân biệt quẹt với bấm (cảnh to hơn thẻ → ngưỡng lớn hơn) */
-  var AUTO_MS = 6000;        /* note.md §93 "tự động chuyển cảnh chậm nếu khách chưa thao tác" */
+  var AUTO_MS    = 6000;     /* note.md §93 "tự động chuyển cảnh chậm nếu khách chưa thao tác" */
+  var AUTO_MS_SM = 2500;     /* điện thoại — khách chốt 2,5s (YC-17 · D-60) */
+
+  /* Đúng điều kiện @media của bố cục thẻ trong `css/responsive2.css` (D-60).
+     Hai chỗ này PHẢI khớp nhau: nhịp 2,5s là nhịp của cái thẻ nhỏ đọc lướt,
+     không phải của cảnh gần trọn màn trên desktop. */
+  var SMALL_MQ = '(max-width: 599px), (max-height: 460px) and (orientation: landscape)';
+  function autoMs() {
+    return (window.matchMedia && window.matchMedia(SMALL_MQ).matches) ? AUTO_MS_SM : AUTO_MS;
+  }
 
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
@@ -40,7 +49,6 @@ window.ST = window.ST || {};
   function create(root, opts) {
     opts = opts || {};
 
-    var bg      = root.querySelector('.st-sld-bg');
     var track   = root.querySelector('.st-sld-track');
     var chipsEl = root.querySelector('.st-sld-chips');
     var searchI = root.querySelector('.st-sld-search input');
@@ -91,7 +99,6 @@ window.ST = window.ST || {};
                    (i === 0 ? '' : 'loading="lazy" ') + 'decoding="async">'
             : '<span class="st-sld-img st-sld-noimg" aria-hidden="true"></span>' +
               '<span class="st-sld-nophoto"></span>') +
-          '<span class="st-sld-shade" aria-hidden="true"></span>' +
           '<div class="st-sld-info">' +
             '<span class="st-sld-cat"></span>' +
             '<h2 class="st-sld-name"></h2>' +
@@ -139,6 +146,44 @@ window.ST = window.ST || {};
         if (on) c.setAttribute('aria-current', 'true');
         else c.removeAttribute('aria-current');
       });
+      centerChip();
+    }
+
+    /* ── Dải chip: cuộn ngang ─────────────────────────────────────────────
+       11 nhóm không vừa một dòng, nên `.st-sld-chips` là một vùng cuộn ngang.
+       `overflow-x: auto` chỉ đủ cho NGÓN TAY quẹt và trackpad vuốt ngang.
+       Chuột thường thì KHÔNG — đã đo trên Chromium:
+
+           lăn dọc  deltaY 200  →  scrollLeft 0     (không nhúc nhích)
+           lăn ngang deltaX 200 →  scrollLeft 200   ✓
+           bấm giữ + kéo        →  không đổi
+           gán bằng script      →  chạy ✓
+
+       Tức là vùng cuộn không hỏng; hai đường vào của con chuột mới là thứ
+       không tồn tại. Chrome không tự đổi `deltaY` thành cuộn ngang cho một
+       container chỉ tràn ngang, và không trình duyệt nào có cử chỉ kéo-thả
+       bằng chuột. Cả hai phải viết tay. */
+    function chipsMax() { return chipsEl.scrollWidth - chipsEl.clientWidth; }
+
+    /* Fade ở mép nào CÒN nội dung bị cắt — mép đầu dải mà cũng mờ thì nó đọc
+       ra là lỗi tràn, không phải "còn nữa, cuộn tiếp đi". */
+    function updFade() {
+      var max = chipsMax();
+      chipsEl.classList.toggle('st-fade-l', max > 0 && chipsEl.scrollLeft > 4);
+      chipsEl.classList.toggle('st-fade-r', max > 0 && chipsEl.scrollLeft < max - 4);
+    }
+
+    /* Vào slider từ một ô wall thì nhóm đang xem có thể là chip thứ 9/11 —
+       nằm ngoài màn. Không kéo nó vào giữa thì người dùng thấy một dải chip
+       không có cái nào được chọn. `getBoundingClientRect` chứ không
+       `offsetLeft`: `.st-sld-bot` có `position: relative` nên nó mới là
+       offsetParent, và số đo sẽ lệch đúng bằng padding của thanh dưới. */
+    function centerChip() {
+      var c = chipsEl.querySelector('.st-sld-chip.st-on');
+      if (!c || chipsMax() <= 0) { updFade(); return; }
+      var cr = c.getBoundingClientRect(), wr = chipsEl.getBoundingClientRect();
+      chipsEl.scrollLeft += (cr.left - wr.left) - (wr.width - cr.width) / 2;
+      updFade();
     }
 
     /* ── Hình học ─────────────────────────────────────────────────────────
@@ -171,14 +216,10 @@ window.ST = window.ST || {};
         if (go) go.tabIndex = o === 0 ? 0 : -1;
       });
 
+      /* ⚫ Ở đây từng có đoạn ghi `background-image` cho `.st-sld-bg` (ảnh đang
+         xem, blur + tối, phủ kín viewport). Gỡ cùng phần tử đó ở D-61 — nền
+         của slider giờ là nền trắng chung của popup. */
       var d = keys.length ? D.get(keys[index]) : null;
-      if (bg && d) {
-        /* Cùng lý do với panel: `url("")` không phải "không có nền" mà là
-           "tải lại trang này rồi dùng làm ảnh nền". Nhóm chưa có ảnh thì gỡ
-           hẳn background-image, để css/slider.css lo bằng gradient tối. */
-        var bgSrc = D.imgOf(keys[index]);
-        bg.style.backgroundImage = bgSrc ? 'url("' + bgSrc + '")' : '';
-      }
       if (countEl) countEl.textContent = keys.length
         ? I.t('slider.counter', { i: index + 1, n: keys.length }) : '';
       if (liveEl && d) liveEl.textContent = I.destName(d) + ' — ' + (index + 1) + '/' + keys.length;
@@ -192,14 +233,23 @@ window.ST = window.ST || {};
       if (user) restart();
     }
 
-    /* ── Tự chạy ──────────────────────────────────────────────────────── */
-    function tick() { if (!paused && !document.hidden) go(index + 1); }
+    /* ── Tự chạy ──────────────────────────────────────────────────────────
+       Chuỗi `setTimeout` chứ không `setInterval`: nhịp phụ thuộc khổ màn
+       (2,5s / 6s) mà `setInterval` thì chốt cứng nhịp lúc gọi — xoay ngang
+       cái máy là nhịp sai cho tới lần `restart()` kế tiếp. */
+    function tick() {
+      /* `dragging` cũng là một kiểu "đang thao tác": ngón tay đặt trên cảnh mà
+         nó tự trượt đi là lỗi thấy ngay ở nhịp 2,5s. Trên desktop `:hover` đã
+         lo, cảm ứng thì không có hover để lo. */
+      if (!paused && !dragging && !document.hidden) go(index + 1);
+      timer = setTimeout(tick, autoMs());
+    }
     function start() {
       stop();
       if (reduced() || keys.length < 2) return;
-      timer = setInterval(tick, AUTO_MS);
+      timer = setTimeout(tick, autoMs());
     }
-    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    function stop() { if (timer) { clearTimeout(timer); timer = null; } }
     function restart() { if (timer) { stop(); start(); } }
 
     /* ── Kéo / quẹt ───────────────────────────────────────────────────────
@@ -267,9 +317,29 @@ window.ST = window.ST || {};
         else if (e.key === 'End') { e.preventDefault(); go(keys.length - 1, true); }
       });
 
-      root.addEventListener('mouseenter', function () { paused = true; });
+      /* ── Dừng khi người dùng đang xem/thao tác (WCAG 2.2.2) ──────────────
+         Hai cái bẫy dưới đây chỉ lộ ra trên CẢM ỨNG, và ở nhịp 6s thì gần như
+         không ai để ý; ở nhịp 2,5s (D-60) thì nó là "slideshow chết sau cú
+         chạm đầu tiên":
+
+           · Chrome Android bắn `mouseenter` giả sau mỗi lần chạm, và không có
+             `mouseleave` nào cho tới khi chạm ra chỗ khác → `paused` kẹt true.
+           · Chạm vào thẻ làm nút bên trong nhận focus → `focusin`, cũng kẹt.
+
+         Nên: hover chỉ tính trên máy CÓ hover thật, còn focus chỉ tính khi nó
+         đến từ BÀN PHÍM (`:focus-visible`) — đúng đối tượng mà WCAG 2.2.2 nói
+         tới, người đang tab qua từng nút. */
+      var canHover = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+      function kbdFocus(el) {
+        try { return el.matches(':focus-visible'); }
+        catch (e) { return true; }        /* trình duyệt cũ: giữ nguyên nết cũ */
+      }
+
+      root.addEventListener('mouseenter', function () { if (canHover) paused = true; });
       root.addEventListener('mouseleave', function () { paused = false; });
-      root.addEventListener('focusin', function () { paused = true; });
+      root.addEventListener('focusin', function (e) {
+        if (kbdFocus(e.target)) paused = true;
+      });
       root.addEventListener('focusout', function (e) {
         if (!root.contains(e.relatedTarget)) paused = false;
       });
@@ -280,11 +350,55 @@ window.ST = window.ST || {};
         });
       });
 
+      /* ── Dải chip ─────────────────────────────────────────────────────── */
       chipsEl.addEventListener('click', function (e) {
         var c = e.target.closest('.st-sld-chip');
         if (!c) return;
+        /* Vừa KÉO dải chip chứ không bấm — trình duyệt vẫn bắn `click` vào cái
+           chip dưới con trỏ lúc thả tay. Nuốt nó đi, nếu không kéo dải chip
+           một cái là đổi luôn nhóm đang xem. */
+        if (chipMoved) { chipMoved = false; return; }
         setGroup(c.getAttribute('data-g'));
       });
+
+      chipsEl.addEventListener('wheel', function (e) {
+        var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        if (!d || chipsMax() <= 0) return;
+        var next = Math.max(0, Math.min(chipsMax(), chipsEl.scrollLeft + d));
+        if (next === chipsEl.scrollLeft) return;   /* kịch biên → để cú lăn đi tiếp */
+        chipsEl.scrollLeft = next;
+        /* Chặn vì popup nằm trong <iframe> phủ kín trang cha: không chặn thì
+           cú lăn nổi lên trang cha và NÓ cuộn phía sau popup. */
+        e.preventDefault();
+      }, { passive: false });
+
+      var chipX = 0, chipSL = 0, chipDrag = false, chipMoved = false;
+      chipsEl.addEventListener('pointerdown', function (e) {
+        /* Cảm ứng đã có cuộn native mượt hơn hẳn (có quán tính) — đừng giành. */
+        if (e.pointerType === 'touch' || e.button > 0 || chipsMax() <= 0) return;
+        chipDrag = true; chipMoved = false;
+        chipX = e.clientX; chipSL = chipsEl.scrollLeft;
+        chipsEl.classList.add('st-dragging');
+        window.addEventListener('pointermove', onChipMove);
+        window.addEventListener('pointerup', endChipDrag);
+        window.addEventListener('pointercancel', endChipDrag);
+      });
+      function onChipMove(e) {
+        if (!chipDrag) return;
+        var d = e.clientX - chipX;
+        if (Math.abs(d) > 4) chipMoved = true;
+        chipsEl.scrollLeft = chipSL - d;
+      }
+      function endChipDrag() {
+        chipDrag = false;
+        chipsEl.classList.remove('st-dragging');
+        window.removeEventListener('pointermove', onChipMove);
+        window.removeEventListener('pointerup', endChipDrag);
+        window.removeEventListener('pointercancel', endChipDrag);
+      }
+
+      chipsEl.addEventListener('scroll', updFade, { passive: true });
+      window.addEventListener('resize', updFade);
 
       if (searchI) {
         searchI.addEventListener('input', function () {
@@ -343,5 +457,5 @@ window.ST = window.ST || {};
     };
   }
 
-  ST.slider = { create: create, AUTO_MS: AUTO_MS };
+  ST.slider = { create: create, AUTO_MS: AUTO_MS, AUTO_MS_SM: AUTO_MS_SM, autoMs: autoMs };
 })();

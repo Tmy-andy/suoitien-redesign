@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-04 (v13 — YC-16: chốt MỘT bản + dựng lại mobile · D-57/D-58).
+> Cập nhật: 2026-08-05 (v15 — YC-18: desktop cũng nền sáng, nút bản đồ 2D lên wall ·
+> D-61. v14 — YC-17: màn chi tiết trên mobile nền trắng + thẻ · D-60).
 > v12 — YC-15: chuyển động + 5 thẻ + ảnh nguồn + danh sách thành thẻ ảnh · D-55/D-56)
 
 # 00 — Yêu cầu
@@ -233,6 +234,60 @@ theo chủ đề"* (chính là cái wall đang hiện). Còn 3 mục, cả 3 ch�
 
 Chi tiết: [`09-variant2.md`](09-variant2.md) (spec đầy đủ) ·
 [`08-decisions.md`](08-decisions.md) D-50.
+
+---
+
+## 0.1n YC-18 — Desktop cũng nền sáng + trả lại nút bản đồ 2D (nguyên văn, 2026-08-05)
+
+> Ở desktop cũng điều chỉnh lại trang chi tiết các địa điểm đi, nhìn nền đen lệch tông
+> quá. Và cho hiển thị lại nút xem bản đồ 2D đi. Bố trí cho hợp lý là được.
+
+### Hiểu thành gì
+
+| Khách nói | Làm gì | Ở đâu |
+|---|---|---|
+| "ở desktop **cũng**" | Chữ "cũng" là chỉ dẫn: làm cho desktop **đúng cái vừa làm cho mobile** ở YC-17, chứ không phải một hướng khác | D-61 |
+| "nhìn nền đen lệch tông quá" | Gỡ hẳn `.st-sld-bg`; đưa bảng màu sáng + cấu trúc thẻ xuống `css/slider.css` làm **mặc định cho mọi khổ**. Desktop thành **thẻ ngang**: ảnh trái 60% · chữ phải | D-61 |
+| "cho hiển thị lại nút xem bản đồ 2D" | Nút vẫn luôn hiện trong slider, nhưng nó **nằm sát mép dải chip đang mờ dần** nên đọc ra là bị đè. Tách thành 3 cụm có vạch ngăn. Và quan trọng hơn: **thêm lối vào bản đồ từ màn tổng quan (wall)** — trước đó phải chọn một khu vực mới xem được bản đồ | D-61 |
+| "bố trí cho hợp lý là được" | Chia bố cục theo **hướng màn** (`orientation`) thay vì theo bề ngang; chiều cao thẻ do ảnh 3:2 quyết | D-61 |
+
+### Một chỗ hiểu rộng hơn nghĩa đen
+
+*"Hiển thị lại nút bản đồ"* đọc sát nghĩa thì chỉ là một nút CSS. Nhưng nút đó **đang
+hiện**; thứ thật sự thiếu là **lối vào bản đồ từ màn tổng quan** — và bản đồ chính là
+thứ trả lời câu hỏi của màn tổng quan (*"khu vực nào ở đâu"*). Làm cả hai.
+
+---
+
+## 0.1m YC-17 — Màn chi tiết trên mobile: nền trắng + thẻ (nguyên văn, 2026-08-05)
+
+> ở bản mobile phần xem chi tiết các địa điểm vr trong từng mục, nền cũng phải là nền
+> trắng cho đồng bộ, các ảnh nhỏ lại 1 chút, nút đang bị ảnh nằm đè lên nhìn không rõ,
+> ảnh tự động slide show trượt qua sau 2.5s. Xem có thể cải tiến layout cho đẹp hơn thì
+> cải tiến
+
+### Hiểu thành gì
+
+*"Phần xem chi tiết các địa điểm VR trong từng mục"* = **trạng thái 2 — Infinite
+Slider** (`#st-sld`), màn hiện ra sau khi bấm một ô khu vực ở wall.
+
+| Khách nói | Làm gì | Ở đâu |
+|---|---|---|
+| "nền cũng phải là nền trắng cho đồng bộ" | Bỏ `.st-sld-bg` (ảnh blur + tối) trên khổ điện thoại → lộ `--st-bg`. Kéo theo **toàn bộ** control phải đổi bảng màu: nút quay lại, ô tìm, nút ×, chip, nút bản đồ, bộ đếm, ‹ › — chúng đang là "trắng mờ trên nền tối", để nguyên là tàng hình | D-60 |
+| "các ảnh nhỏ lại 1 chút" | Cảnh thôi phủ gần trọn màn, thành **ảnh trên đầu một cái thẻ**: `92vw → 78vw` bề ngang, cao `clamp(170px, 32vh, 300px)` | D-60 |
+| "nút đang bị ảnh nằm đè lên nhìn không rõ" | Hai nhóm nút, cùng một nguyên nhân: **CTA "Khám phá VR 360°"** nằm trên ảnh dưới lớp gradient → đưa xuống vùng trắng của thẻ; **‹ ›** đè lên ảnh ở `top: 30%` → đẩy ra hẳn lề `--sld-x`, đổi sang nền trắng viền mảnh | D-60 |
+| "ảnh tự động slide show trượt qua sau 2.5s" | `AUTO_MS` 6000 → **2500 trên điện thoại**, desktop giữ 6000 | D-60 |
+| "cải tiến layout cho đẹp hơn thì cải tiến" | Thẻ căn giữa sân khấu, cao theo nội dung · thẻ rìa dùng **độ mờ** thay `brightness` · điện thoại **nằm ngang** thành thẻ NGANG (ảnh trái, chữ phải) và lấy lại được dòng mô tả vốn phải `display: none` · sửa 2 bẫy làm autoplay chết sau cú chạm đầu tiên | D-60 |
+
+### Một chỗ hiểu rộng hơn nghĩa đen, và vì sao
+
+Khách chỉ nói "nền trắng", nhưng nền trắng mà giữ nguyên control màu trắng-mờ thì màn
+đó **trống trơn**. Vì vậy D-60 làm cả bảng màu sáng cho `#st-sld`, không chỉ một dòng
+`background`.
+
+Và khách nói "bản mobile" — bản **nằm ngang** cũng là điện thoại. Để nó tối trong khi
+bản dọc trắng thì xoay máy một cái là thấy hai thiết kế khác nhau. Cùng bảng màu, khác
+hướng xếp thẻ.
 
 ---
 

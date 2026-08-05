@@ -1,4 +1,6 @@
-> Cập nhật: 2026-08-04 (v6 — D-57 khách chốt bản này, gỡ bản 1; D-58 dựng lại mobile)
+> Cập nhật: 2026-08-05 (v8 — D-61: nền sáng + thẻ thành MẶC ĐỊNH cho mọi khổ, desktop
+> thành thẻ ngang, nút bản đồ 2D trở lại thanh công cụ wall. v7 — D-60: slider trên
+> điện thoại thành THẺ nền trắng, autoplay 2,5s)
 
 # 09 — VR Wall + Infinite Slider
 
@@ -190,23 +192,31 @@ Dừng khi: `prefers-reduced-motion` (tắt hẳn) · tab ẩn · con trỏ đan
 
 Ảnh thật nên là video loop 4–6 s hoặc panorama nhẹ (note.md §59–64) — xem TODO.
 
-### Thanh công cụ — 3 nút, không phải 5
+### Thanh công cụ — 4 nút, không phải 5
 
-`note.md` §198 liệt kê 5 mục. Đã bỏ 2:
+`note.md` §198 liệt kê 5 mục. Đã bỏ 1:
 
 | Mục | Vì sao bỏ |
 |---|---|
-| ~~Xem bản đồ~~ | Bản đồ gỡ từ D-44. Nút mở ra chỗ trống tệ hơn không có nút |
 | ~~Khám phá theo chủ đề~~ | **Chính là cái wall đang hiện** — nút tự trỏ vào mình |
 
-Còn lại, cả 3 đều chạy thật:
+Còn lại, cả 4 đều chạy thật, và thứ tự DOM cũng là thứ tự đọc trên mobile:
 
 | Nút | Làm gì |
 |---|---|
 | **Tìm địa điểm** | → slider nhóm `all`, focus thẳng vào ô tìm kiếm |
-| ~~Xem trên bản đồ 2D~~ | Đã **gỡ hẳn khỏi `index.html`** (D-57): ở wall chưa chọn khu vực nào nên nó chỉ mở được "toàn bộ 20 pin", trùng vai với nút trong slider mà lại chiếm mất một ô của thanh 2 hàng trên mobile. `popup2.js` vẫn xử lý `[data-open-map="all"]` — thêm lại nút là chạy ngay |
+| **Xem trên bản đồ 2D** ⭐ | `data-open-map="all"` → mở `#st-map` với toàn bộ 20 pin. Không cần JS mới: `popup2.js` bắt `[data-open-map]` ở cấp document từ D-51 |
 | **Bắt đầu hành trình** | → slider nhóm `noibat` (5 điểm ai cũng ghé) |
 | **Bỏ qua, vào VR ngay** | `close('button')` → `st:close` |
+
+> ⚫ Nút bản đồ từng bị **gỡ khỏi wall ở D-57** với lý do "trùng vai với nút trong
+> slider". **Đảo lại ở D-61** theo yêu cầu của khách, và lý do cũ hoá ra là sai: nút
+> trong slider mở *khu vực đang xem*, nút ở wall mở *toàn bộ* — và bản đồ chính là thứ
+> trả lời câu hỏi của màn tổng quan (*"khu vực nào ở đâu"*). Bắt người dùng chọn đại
+> một khu vực để xem được bản đồ là bắt họ đi vòng.
+>
+> Lo ngại "chiếm mất một ô của thanh 2 hàng trên mobile" thì có thật, và cách gỡ là
+> **nút vuông chỉ có icon đứng cạnh ô tìm** — đúng chỗ bản 1 từng đặt nó (D-54).
 
 ---
 
@@ -214,30 +224,37 @@ Còn lại, cả 3 đều chạy thật:
 
 | Selector | Vai trò |
 |---|---|
-| `.st-sld-bg` | Ảnh đang xem, `blur(34px) brightness(.42)`, phủ kín viewport |
 | `.st-sld-top` | Nút "Tất cả khu vực" + ô tìm kiếm |
-| `.st-sld-track` `.st-sld-panel` | Sân khấu + các cảnh |
+| `.st-sld-track` `.st-sld-panel` | Sân khấu + các **thẻ** |
+| `.st-sld-img` | Ảnh — 60% bề ngang thẻ ở màn ngang, 100% ở màn dọc |
 | `.st-sld-info` | Chip nhóm · tên · mô tả · nút **"Khám phá VR 360°"** |
-| `.st-sld-nav` | 2 nút ‹ › |
-| `.st-sld-chips` | 9 chip lọc nhóm, cuộn ngang có fade mép |
+| `.st-sld-nav` | 2 nút ‹ › — **ngoài thẻ**, đứng trong lề `--sld-x` (D-60) |
+| `.st-sld-chips` | 11 chip lọc nhóm, cuộn ngang có fade mép |
 | `.st-sld-map` ⭐ | *"Xem khu vực này trên bản đồ"* — mở `#st-map` **chỉ với pin của nhóm đang xem** (D-51) |
 | `.st-sld-counter` | `3 / 12` |
 | `.st-sld-live` | `aria-live` — đọc "Tên — 3/12" |
+| ~~`.st-sld-bg`~~ | ⚫ **ĐÃ GỠ (D-61)** — ảnh đang xem blur + tối phủ kín viewport. Chính là "nền đen lệch tông" khách nói |
+| ~~`.st-sld-shade`~~ | ⚫ **ĐÃ GỠ (D-61)** — gradient tách chữ khỏi ảnh. Không còn chữ nào nằm trên ảnh |
 
-### Gỡ mâu thuẫn của note.md §85
+### ⚫ Gỡ mâu thuẫn của note.md §85 — cách cũ, đã bỏ ở D-61
 
 > *"Phía sau là ảnh hoặc video toàn màn hình. Hai bên hé lộ một phần cảnh tiếp theo và
 > cảnh trước đó."*
 
-Hai câu nghe ngược nhau. Cách gỡ: **nền** là ảnh hiện tại phủ kín viewport (blur + tối)
-→ thoả vế 1; **các cảnh** nằm trên nó dạng cổng rộng `84vw`, hé `8vw` mỗi bên → thoả
+Hai câu nghe ngược nhau. Cách gỡ **cũ**: nền là ảnh hiện tại phủ kín viewport (blur +
+tối) → thoả vế 1; các cảnh nằm trên nó dạng cổng rộng `84vw`, hé `8vw` mỗi bên → thoả
 vế 2.
 
+Cách gỡ đó **đã bị khách bác ở YC-17 + YC-18**: nền tối làm màn này lệch tông với wall
+và bản đồ, còn chữ + nút nằm trên ảnh thì chìm vào mái ngói đỏ/vàng của Suối Tiên. Từ
+D-61, **vế "ảnh toàn màn hình" của note.md §85 không còn hiệu lực** — mỗi cảnh là một
+THẺ trên nền trắng. Vế "hai bên hé lộ" thì giữ nguyên và vẫn do đúng cơ chế cũ lo:
+
 ```
---sld-w: 84vw;   /* bề ngang một cảnh */
---sld-x: 8vw;    /* lề trái → 8vw hé mỗi bên */
-transform: translateX(calc(var(--o) * var(--sld-w))) scale(calc(1 - var(--oa) * .07));
-opacity:   calc(1 - var(--oa) * .35);
+--sld-w: 84vw;   /* bề ngang một thẻ */
+--sld-x: 8vw;    /* lề trái → 8vw hé mỗi bên, và là chỗ đứng của ‹ › */
+transform: translate(calc(var(--o) * var(--sld-w)), -50%) scale(calc(1 - var(--oa) * .06));
+opacity:   calc(1 - var(--oa) * .55);
 ```
 
 Cơ chế `--o` (bậc so với cảnh giữa, có dấu) / `--oa` (trị tuyệt đối) — JS chỉ ghi hai
@@ -247,11 +264,35 @@ số, CSS lo toàn bộ hình học. Chính cơ chế này `carousel.js` của b
 > `wild` chỉ có 1 điểm, `water` có 2 — vòng thì panel "trước" và "sau" trỏ vào cùng một
 > cái và cảnh nhân đôi trên màn.
 
+### Bố cục một thẻ (D-61)
+
+Chia theo **HƯỚNG MÀN**, không theo bề ngang — iPad dọc 768×1024 rộng hơn iPhone ngang
+844×390 nhưng cần đúng bố cục của iPhone dọc. Một mốc `max-width` không nói được điều đó.
+
+```
+MÀN NGANG (mặc định, css/slider.css)      MÀN DỌC (@media orientation: portrait)
+┌──────────────┬───────────────┐          ┌───────────────────────┐
+│              │ VĂN HOÁ       │          │         ẢNH           │
+│     ẢNH      │ Cổng Thiên …  │          │        (3:2)          │
+│    60% · 3:2 │ mô tả 2 dòng  │          ├───────────────────────┤
+│              │ [Khám phá VR] │          │ VĂN HOÁ               │
+└──────────────┴───────────────┘          │ Cổng Thiên Tiên Môn   │
+   ‹ và › đứng trong lề --sld-x           │ [ Khám phá VR 360° ]  │
+   (KHÔNG đè lên thẻ)                     └───────────────────────┘
+```
+
+**Chiều cao thẻ do ẢNH quyết**, không phải một hằng số: `width: 60%` + `aspect-ratio:
+3/2` nên ảnh không bị cắt thêm lần nào, khối chữ `stretch` cao theo nó. Đo thật:
+1440×900 → thẻ 1210×464 (ảnh 696×464) · 1920×1080 → 1613×645 (ảnh 968×645) ·
+844×390 → 675×216 (ảnh 324×216).
+
+Ở màn dọc, chiều cao ảnh lại suy từ **chiều cao màn** chứ không từ `aspect-ratio` — lý
+do ở §9.5.
+
 ### Bấm cảnh rìa = đưa vào giữa, KHÔNG đi VR
 
-Ngược với bản 1 (bấm thẻ nào đi thẳng thẻ đó). **Cố ý:** ở đây mỗi cảnh chiếm gần trọn
-màn và có mô tả riêng — người dùng cần đọc trước khi quyết. Nút
-**"Khám phá VR 360°"** mới là hành động đi.
+Ngược với bản 1 (bấm thẻ nào đi thẳng thẻ đó). **Cố ý:** mỗi thẻ có mô tả riêng —
+người dùng cần đọc trước khi quyết. Nút **"Khám phá VR 360°"** mới là hành động đi.
 
 ### Thao tác (note.md §87)
 
@@ -261,7 +302,18 @@ màn và có mô tả riêng — người dùng cần đọc trước khi quyế
 | Con lăn chuột | Ngưỡng 12 + khoá **420 ms** — trackpad bắn hàng chục event mỗi lần vuốt, không khoá thì lướt một cái nhảy 8 cảnh |
 | Nút ‹ › | |
 | `←` `→` `Home` `End` | |
-| Tự chuyển | **6000 ms**, dừng khi hover/focus/tab ẩn, tắt khi `prefers-reduced-motion` |
+| Tự chuyển | **6000 ms** desktop · **2500 ms** điện thoại (D-60). Dừng khi hover/focus bàn phím/đang kéo/tab ẩn, tắt khi `prefers-reduced-motion` |
+
+> **Nhịp đi theo khổ màn** (`autoMs()` đọc `matchMedia`), và cài bằng **chuỗi
+> `setTimeout` chứ không `setInterval`**: `setInterval` chốt cứng nhịp lúc gọi, xoay
+> ngang cái máy là nhịp sai cho tới lần `restart()` kế tiếp.
+>
+> **Dừng khi người dùng đang xem — hai bẫy chỉ lộ trên cảm ứng** (D-60): Chrome Android
+> bắn `mouseenter` giả sau mỗi lần chạm và không có `mouseleave` nào cho tới khi chạm
+> chỗ khác; chạm vào thẻ cũng làm nút bên trong nhận focus. Cả hai làm `paused` kẹt
+> `true` → slideshow chết sau cú chạm đầu tiên. Nên: hover chỉ tính khi
+> `matchMedia('(hover: hover)')`, focus chỉ tính khi `:focus-visible` (bàn phím — đúng
+> đối tượng WCAG 2.2.2 nói tới).
 
 > Không dùng `setPointerCapture` — Chrome bắn `click` vào phần tử capture chứ không vào
 > panel dưới ngón tay. Bẫy đã vấp ở `carousel.js`.
@@ -338,14 +390,20 @@ Cộng với thanh công cụ 3 nút xếp dọc ăn ~150px, người dùng th�
 
 ### Bảng breakpoint
 
+**Hai trục độc lập từ D-61:** `orientation` quyết **hướng xếp thẻ** của slider,
+`max-width` quyết **các con số** (cỡ chữ, padding, cỡ nút). Gộp hai trục làm một là
+đúng cái sai mà D-61 gỡ: iPad dọc 768 rộng hơn iPhone ngang 844.
+
 | Breakpoint | Wall | Slider | Bản đồ |
 |---|---|---|---|
 | ≥1600 | Grid `max-width: 1560px` | — | — |
-| **≤1023** | Trang cuộn · 2 cột · hero `16/8.6` · ô khác `4/3` · thanh dính đáy | `--sld-w: 88vw` | — |
-| **≤599** | hero `16/10` · ô khác `1/1` · **header căn TRÁI** · thanh 2 hàng | `--sld-w: 92vw` · back thành nút tròn · `object-position: center 38%` · ‹ › lên `top:30%` · thanh dưới **2 hàng** | **bottom sheet** dính đáy, bo 2 góc trên |
-| **≤379** | Thanh công cụ **xếp dọc**, nút bỏ qua dáng link | Tên điểm 20px | — |
-| Landscape ≤460 cao | **3 cột** · hero `16/5` · ẩn eyebrow + subtitle | ẩn mô tả · ‹ › lên `top:26%` | — |
-| `hover: none` | Tắt "làm tối ô khác" · thêm `:active` cho mọi thứ | Cảnh rìa sáng hơn (`.65`) | `:active` cho pin |
+| **Mặc định** (`slider.css`) | Mosaic 5×3 | **THẺ NGANG** nền trắng: ảnh trái `60%` `3:2` · chữ phải · `--sld-w: 84vw` · ‹ › 52px trong lề | — |
+| **`orientation: portrait`** | — | **THẺ DỌC**: ảnh `100%` `3:2` trên · chữ dưới | — |
+| **≤1023** | Trang cuộn · 2 cột · hero `16/8.6` · ô khác `4/3` · thanh dính đáy | `--sld-x` lên `8vw` + ‹ › còn 44px — để nút đứng TRỌN ngoài thẻ | — |
+| **≤599 (dọc)** | hero `16/10` · ô khác `1/1` · **header căn TRÁI** · thanh 2 hàng, nút bản đồ thành **icon vuông** cạnh ô tìm | `--sld-w: 78vw` · ảnh `clamp(170px,32vh,300px)` (suy từ chiều CAO màn) · blurb kẹp 2 dòng · CTA tràn ngang · ‹ › 38px · back thành nút tròn · thanh dưới **2 hàng** | **bottom sheet** dính đáy, bo 2 góc trên |
+| **≤379** | Hàng 1 giữ 2 cột (tìm + bản đồ), 2 nút còn lại trải ngang | Tên 19px · ‹ › còn 32px · CTA bỏ mũi tên đuôi | — |
+| Landscape ≤460 cao | **3 cột** · hero `16/5` · ẩn eyebrow + subtitle | Thẻ ngang bản bỏ túi: `--sld-w: 80vw` · tên 20px · blurb kẹp 2 dòng · ‹ › 36px | — |
+| `hover: none` | Tắt "làm tối ô khác" · thêm `:active` cho mọi thứ | — (thẻ rìa lùi bằng `opacity`, không cần hover để gỡ) | `:active` cho pin |
 
 ### Vì sao từng con số
 
@@ -379,19 +437,65 @@ nội dung DÀI hơn màn; auto-margin lo trường hợp NGẮN hơn (tablet r�
 thanh dán ngay dưới ô cuối và chừa một mảng trắng to bên dưới. Thêm `::before` gradient
 26px để ô cuối trôi vào thanh chứ không bị cắt ngang một nhát.
 
-**`object-position: center 38%` cho panel slider.** Khung dọc hẹp cắt ảnh 3:2 rất sâu;
-neo 38% giữ được mái và đường chân trời thay vì chỉ còn khúc giữa.
-
-**‹ › đẩy lên `top: 30%`.** Vùng đó chỉ có ảnh — không đụng tên / mô tả / CTA. Nền đổi
-sang `rgba(6,12,20,.52)` chứ không `rgba(255,255,255,.16)` như desktop: ở desktop nút
-nằm trên nền blur đã tối sẵn, ở đây nó đè lên ảnh mái đỏ/vàng chói.
-
 **Thanh dưới slider từ 3 hàng xuống 2.** Chip / bản đồ / đếm xếp dọc ăn ~120px:
 
 ```
 [ chip · chip · chip …        ]   ← grid-column: 1 / -1, cuộn ngang
 [ Xem trên bản đồ  ][   3/12  ]
 ```
+
+### Slider trên điện thoại — THẺ, không phải cổng (D-60 · 2026-08-05)
+
+⚫ Bản trước bóp nguyên bố cục desktop xuống: cổng `92vw` cao trọn sân khấu, chữ trắng
+đè lên ảnh, ‹ › đẩy lên `top: 30%` để né khối chữ, `object-position: center 38%` để cứu
+lấy phần mái. Ba mẹo đó cùng chống một cái sai gốc: **ảnh chiếm chỗ của mọi thứ khác**.
+Khách gọi tên đúng triệu chứng — *"nút đang bị ảnh nằm đè lên nhìn không rõ"*.
+
+Giờ mỗi cảnh là một **thẻ**: ảnh ở trên, chữ và nút ở dưới trên nền trắng. Không còn thứ
+gì đè lên thứ gì, nên cũng không còn mẹo nào để cân bằng.
+
+> **Một lượt sau (D-61) chính desktop cũng đi theo mô hình này** và bảng màu sáng + cấu
+> trúc thẻ chuyển thành MẶC ĐỊNH ở `css/slider.css`. Mục này giữ lại vì nó ghi *vì sao*
+> từng con số của khổ điện thoại là con số đó — phần "nền trắng kéo theo cả bảng màu"
+> bên dưới giờ áp dụng cho mọi khổ, không riêng điện thoại.
+
+```
+┌─ .st-sld-panel ────────────┐      thẻ 78vw, CĂN GIỮA sân khấu,
+│         .st-sld-img        │      cao theo nội dung (max-height: 100%)
+│   clamp(170px,32vh,300px)  │
+├────────────────────────────┤  ‹  ›  ← ngoài mép thẻ, trong lề 11vw
+│ VĂN HOÁ                    │
+│ Cổng Thiên Tiên Môn        │
+│ mô tả 2 dòng               │
+│ [ Khám phá VR 360°    → ]  │
+└────────────────────────────┘
+```
+
+| Con số | Vì sao |
+|---|---|
+| `--sld-w: 78vw` (từ `92vw`) | **Không phải để "cho nhỏ lại"** mà là điều kiện của việc gỡ nút ra khỏi ảnh: lề `11vw ≈ 43px` ở khổ 390 vừa đủ đặt trọn nút ‹ › 38px **bên ngoài** thẻ |
+| Ảnh `clamp(170px, 32vh, 300px)` | Suy từ **chiều cao màn**, không từ `aspect-ratio`. Bản đầu để `3/2` — đo ra thẻ 397px giữa sân khấu 676px (iPhone 14): **140px trắng trên và dưới**, và máy càng cao chỗ trống càng nhiều. `clamp` đưa thẻ lên 465px. Cắt sâu hơn 3:2 là chấp nhận được — ô wall mobile còn đang là `1/1` |
+| `top: 50%` + `translate(x, -50%)` | Gộp bước căn giữa vào đúng cái transform mà `--o` đang lái. Tách ra `top: calc(50% - …)` thì phải biết trước chiều cao thẻ |
+| Cảnh rìa `opacity: .5` | `brightness()` trên thẻ **trắng** ra một mảng xám bẩn, không phải "lùi ra sau" — cùng bài học với D-54 và D-55 |
+| Transition `620 → 460ms` | 620ms ăn 1/4 quãng nghỉ 2,5s; cảnh chưa kịp đứng yên đã đi tiếp |
+| `≤379`: ‹ › còn 32px | Lề `11vw` ở khổ 320 chỉ còn 35px |
+| `≤379`: CTA bỏ mũi tên đuôi | "Khám phá VR 360°" + 2 icon trong 218px vỡ **hai dòng**, nút cao 54px. Icon VR ở đầu đã nói đủ "đi đâu" |
+
+**Nền trắng kéo theo cả bảng màu.** `.st-sld-bg` tắt đi mới là một dòng; phần việc thật
+là mọi control quanh nó đang mang dáng "trắng mờ trên nền tối" — nút quay lại, ô tìm,
+chip, nút bản đồ, bộ đếm, và cả `#st-pop2.st-state-slider .st-p2-close` (`wall.css` cố ý
+đảo nút × sang kính mờ khi vào slider). Để nguyên thì chúng **tàng hình**.
+
+**Điện thoại NẰM NGANG cũng là điện thoại.** 844×390 không lọt `≤599px`; để nguyên thì
+xoay máy một cái là thấy hai thiết kế khác nhau. Nhưng thẻ DỌC ở đó cũng không sống
+được (ảnh rộng 675px sẽ cao 450px trên màn cao 390px) → thẻ NGANG. Chính chỗ này đẻ ra
+cách chia của D-61: **hướng xếp theo `orientation`, con số theo `max-width`**. Bản ngang
+nhờ đó **lấy lại được dòng mô tả** mà bố cục cũ phải `display: none`.
+
+> ⚫ D-60 giải bài này bằng một `@media` list dùng chung bảng màu cho hai khổ điện
+> thoại, kèm một luật `filter: brightness(.65)` phải thu phạm vi về `min-width: 600px`
+> cho khỏi đè ngược. **D-61 xoá cả cụm đó**: bảng màu sáng thành mặc định thì không còn
+> hai bảng màu để đồng bộ, và không còn `brightness` nào để thu phạm vi.
 
 **`--st-card-h` — đo chứ không đoán.** Cụm nút zoom phải né bottom sheet. Hằng số
 `152px` đúng cho điểm này, hụt 13px cho điểm kia (thẻ cao bao nhiêu là do `blurb` mấy
@@ -458,6 +562,40 @@ nhóm (Cung Vàng vừa văn hoá vừa kiến trúc); đó là chủ ý, không
 | B5 | Esc ở slider → về wall, ô tìm kiếm được xoá |
 | C | Trong iframe: `st:ready`, `st:lang` đổi cả tiêu đề lẫn nhãn ô |
 | C3–C4 | Wall → slider → VR: `st:navigate` đúng pano + `st:close`; `st:open` quay về wall |
+
+### Nền sáng cho mọi khổ + nút bản đồ ở wall (D-61) — 7 khổ, **0 lỗi console**
+
+320×568 · 390×844 · 768×1024 · 844×390 · 1280×720 · 1440×900 · 1920×1080.
+
+| Bất biến | Ghi chú |
+|---|---|
+| `.st-sld-bg` · `.st-sld-shade` không còn trong DOM | không chỉ `display: none` — gỡ khỏi HTML/JS |
+| Thẻ trắng · nút × dáng sáng | trên **mọi** khổ, kể cả desktop |
+| CTA không giao với ảnh · ‹ › không giao với thẻ | ở cả thẻ ngang lẫn thẻ dọc |
+| Thẻ nằm trọn sân khấu · CTA không bị cắt | |
+| Nút bản đồ không đè dải chip / bộ đếm | chính là chỗ khách thấy "nút bị mất" |
+| **Nút bản đồ ở wall nằm trong màn và bấm mở được `#st-map` có pin** | 7/7 khổ |
+
+> Bẫy của phép ĐO chứ không phải của code: đo lúc `t = 500ms` thì thanh công cụ wall còn
+> ở `translateY(22px)` của animation vào màn (delay 860ms), nên nút bản đồ báo "tràn đáy
+> màn" 2px ở 5/7 khổ. Bất biến hình học phải đo **sau khi animation xong**.
+
+### Slider trên điện thoại (D-60) — 7 khổ, **0 lỗi console**
+
+320×568 · 375×812 · 390×844 · 412×915 · 844×390 ngang · 768×1024 · 1440×900.
+
+| Bất biến | Ghi chú |
+|---|---|
+| Thẻ nằm trọn trong sân khấu | không tràn lên thanh trên / thanh dưới |
+| **CTA không giao với ảnh** | chính là lỗi khách báo |
+| **‹ › không giao với thẻ đang xem** | ở khổ 320 lần đầu còn thò 6px → thu nút về 32px |
+| `.st-sld-bg` tắt · nền thẻ đúng `#fff` | trên mọi khổ điện thoại |
+| Nhịp tự chạy | đo được **2466 / 2495 ms** ở điện thoại, **6000 ms** ở desktop |
+| Chạm rồi vẫn tự chạy tiếp | bẫy `mouseenter` / `focusin` giả — xem D-60 |
+
+Một lỗi chỉ ảnh chụp mới bắt được, số đo thì không: ở 320px chữ trong CTA vỡ **hai
+dòng** ("Khám phá VR / 360°") và nút cao 54px. Bất biến "nút không vỡ nhiều dòng" của
+D-58 chỉ chạy trên thanh công cụ của wall, không chạy trên CTA của slider.
 
 ### Hình học responsive (D-58) — 7 khổ × 4 màn, **sạch**
 
