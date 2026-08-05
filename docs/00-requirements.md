@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-05 (v16 — YC-19: dải danh mục cuộn ngang được bằng chuột · D-62.
-> v15 — YC-18: desktop cũng nền sáng, nút bản đồ 2D lên wall · D-61).
+> Cập nhật: 2026-08-05 (v17 — YC-20: dùng font `DVN Gustavo` khách gửi · D-63.
+> v16 — YC-19: dải danh mục cuộn ngang được bằng chuột · D-62).
 > v12 — YC-15: chuyển động + 5 thẻ + ảnh nguồn + danh sách thành thẻ ảnh · D-55/D-56)
 
 # 00 — Yêu cầu
@@ -234,6 +234,33 @@ theo chủ đề"* (chính là cái wall đang hiện). Còn 3 mục, cả 3 ch�
 
 Chi tiết: [`09-variant2.md`](09-variant2.md) (spec đầy đủ) ·
 [`08-decisions.md`](08-decisions.md) D-50.
+
+---
+
+## 0.1p YC-20 — Font riêng của khách (nguyên văn, 2026-08-05)
+
+> dùng font chữ trong `@assets/font/`
+
+Khách bỏ vào repo thư mục `assets/font/DVN Gustavo/` — **3 file `.ttf`**: Regular (400),
+Medium (500), Bold (700). Không có bản nghiêng.
+
+### Một câu hỏi phải hỏi lại
+
+Popup lúc đó chạy **hệ 2 font** (D-23): `Arima Madurai` cho tiêu đề + `Be Vietnam Pro`
+cho body. Một bộ chữ mới thì thay bộ nào? Ba hướng khác nhau về kết quả nên **hỏi khách**
+thay vì đoán → **khách chốt: thay cả hai.**
+
+Kéo theo một hệ quả có giá: chừng nào còn giữ một trong hai font Google thì `index.html`
+vẫn phải `<link>` ra `fonts.googleapis.com`. Thay cả hai là **gỡ được hẳn ngoại lệ RULE
+#3 cuối cùng** — popup từ nay không gọi host ngoài nào.
+
+### Đã kiểm trước khi nhúng
+
+Dò `cmap` cả 3 file: **đủ 67 ký tự có dấu tiếng Việt**, không thiếu chữ nào. Nếu thiếu
+thì lỗi lộ ra ở chỗ tệ nhất — một ô wall tên *"Long Hoa Thiên Bảo"* mất dấu, hoặc một
+chữ trong câu rơi về font khác hẳn phần còn lại.
+
+Chi tiết: **D-63** · [`02-design-system.md`](02-design-system.md) §2.2.
 
 ---
 
@@ -607,6 +634,9 @@ Chi tiết + thang màu dẫn xuất: [`02-design-system.md`](02-design-system.m
 `body { font-family: "Arima Madurai", cursive; }` — Google Fonts, weight 100–700,
 **đã verify có subset `vietnamese`**.
 
+> ⚫ Đây là ghi chép **site chính dùng gì** — vẫn đúng. Nhưng **popup thì không còn lấy
+> font từ đây**: từ 2026-08-05 (YC-20 · D-63) nó dùng `DVN Gustavo` khách gửi.
+
 ### Menu thật — 8 mục cấp 1, 84 mục tổng, 3 cấp
 
 | Cấp 1 | href | Cấp 2 |
@@ -698,7 +728,7 @@ Danh sách đầy đủ 84 mục: [`06-data.md`](06-data.md) §6.6.
 |---|---|---|---|
 | Q24 | Màu hex? | "Bạn đọc https://suoitien.vn/ giúp tôi" | ✅ **Đã lấy 10 màu thật** từ `style.css` (§0.4). Blocker đã xoá. |
 | Q25 | Tone? | **(a) light/airy** | ✅ **Bỏ hướng dark-glass** của v1. Bề mặt trắng / trắng-mờ + blur, nội dung xanh lá. Khớp đúng UI VR hiện có (ảnh 5). |
-| Q26 | Font? | "lấy font của https://suoitien.vn/" | ✅ **Arima Madurai** (verify có tiếng Việt). Dùng hệ 2 font — xem [`02-design-system.md`](02-design-system.md) §2.2 và D-26. |
+| Q26 | Font? | "lấy font của https://suoitien.vn/" | ⚫ **Hết hiệu lực 2026-08-05.** Từng là `Arima Madurai` + hệ 2 font (D-23); khách gửi bộ chữ riêng **`DVN Gustavo`** (YC-20 · D-63) nên popup không lấy font của site chính nữa. [`02-design-system.md`](02-design-system.md) §2.2. |
 | Q27 | Ảnh các khu? | "không" | ✅ Dùng gradient placeholder theo phân loại. |
 | Q28 | Phép/Pháp Thuật? | — | ✅ Tự giải quyết: site chính dùng **"Pháp Thuật"**. |
 

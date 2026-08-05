@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-05 (v19 — thêm D-62: `overflow-x: auto` không đủ cho chuột. v18 —
-> D-61: nền sáng cho cả desktop, thẻ ngang, nút bản đồ 2D ở wall)
+> Cập nhật: 2026-08-05 (v20 — thêm D-63: một font `DVN Gustavo` tự host, hết Google
+> Fonts, D-23 bị đảo ngược. v19 — D-62: `overflow-x: auto` không đủ cho chuột)
 
 > ⚠️ **D-57 · D-58 · D-59 không có mục riêng ở file này** — chúng được ghi tại chỗ
 > trong `09-variant2.md` §9.1/§9.5 và `06-data.md` ngày 2026-08-04. Code và các doc
@@ -22,9 +22,10 @@ file 1 IIFE, expose vào namespace `ST`.
 **Vì sao không ES module:** `type="module"` bị CORS chặn khi mở `file://` → khách
 double-click là trắng trang.
 
-**Ngoại lệ duy nhất:** Google Fonts CDN cho `Arima Madurai` — vì Q26 yêu cầu font của
-site chính, và site chính cũng nạp từ CDN đó. Có `@font-face` local fallback + font
-stack hệ thống nếu offline.
+⚫ **Ngoại lệ duy nhất ~~Google Fonts CDN cho `Arima Madurai`~~ — đã gỡ 2026-08-05
+(D-63).** Nó tồn tại vì Q26 yêu cầu font của site chính, và site chính cũng nạp từ CDN
+đó. Khách gửi bộ `DVN Gustavo` riêng → font vào hẳn `assets/font/`, và từ đó **không
+còn ngoại lệ nào**: mở `file://` là chạy đúng font, không cần mạng.
 
 **Loại:** Vite + vanilla TS · single-file 3000 dòng.
 
@@ -364,7 +365,13 @@ Dock đủ chỗ.
 
 ---
 
-## D-23 · Hệ 2 font: Arima Madurai + Be Vietnam Pro · 🔵 (Q26) ⭐
+## D-23 · ⚫ Hệ 2 font: Arima Madurai + Be Vietnam Pro · (Q26) — ĐẢO NGƯỢC 2026-08-05 (D-63)
+
+> ⚫ **Hết hiệu lực.** Khách gửi bộ chữ thương hiệu `DVN Gustavo` ngày 2026-08-05 →
+> popup dùng **một** font cho cả trang. Giữ nguyên mục này vì lập luận "font display
+> khó đọc ở 13–15px" bên dưới **vẫn đúng** và sẽ còn phải cân lại nếu có font mới; chỉ
+> là tiền đề của nó (danh sách 158 điểm, chỉ dẫn từng chặng) đã bị D-46/D-57 gỡ hết,
+> chữ trong popup giờ toàn nhãn ngắn. Xem **D-63**.
 
 **Bối cảnh:** Q26 = "lấy font của suoitien.vn" → `Arima Madurai` (đã verify có
 subset `vietnamese`). Nhưng đây là font **display/decorative** (Google phân loại
@@ -2121,10 +2128,83 @@ cuối.
 
 ---
 
+## D-63 · ⭐ MỘT font `DVN Gustavo` khách gửi — hết Google Fonts · 🟢 · 2026-08-05
+
+**Khách:** gửi thư mục `assets/font/DVN Gustavo/` (3 file `.ttf`) kèm *"dùng font chữ
+trong `assets/font/`"*.
+
+### 1. Dùng cho cả tiêu đề lẫn body, không chỉ tiêu đề
+
+Ba lựa chọn đã đưa ra: thay cả hai token · chỉ `--st-font-display` · chỉ `--st-font-ui`.
+**Khách chốt cả hai.**
+
+Nó cũng là phương án đúng về kỹ thuật, vì lý do độc lập với thẩm mỹ: chừng nào còn giữ
+một trong hai font Google thì `index.html` vẫn phải `<link>` ra `fonts.googleapis.com`,
+tức **ngoại lệ RULE #3 vẫn còn nguyên** — chỉ nhỏ đi một nửa. Thay cả hai thì gỡ được
+hẳn, và với popup nhúng iframe điều đó có giá thật: bớt DNS + TLS tới một host lạ ngay
+trên đường tới first paint, và không có cảnh popup đổi font khi khách xem offline.
+
+**Lo ngại cũ hết hiệu lực.** D-23 từ chối "Arima cho 100%" vì font display khó đọc ở
+13–15px. Tiền đề đó là **danh sách 158 điểm** và **chỉ dẫn từng chặng** — cả hai đã bị
+D-46/D-57 gỡ. Chữ trong popup hiện nay toàn **nhãn ngắn**: tên khu vực, tên cảnh, chữ
+nút, chip. Gustavo là geometric grotesque (chữ `a` một tầng) chứ không phải mặt chữ
+trang trí, nên nó gánh được cả hai vai.
+
+### 2. Đo trước khi tin
+
+| Kiểm | Kết quả |
+|---|---|
+| Dấu tiếng Việt | Dò **67 ký tự có dấu** trên `cmap` cả 3 file — **không thiếu ký tự nào** (529–544 glyph/file) |
+| Weight thật | `usWeightClass` 400 · 500 · 700 — khớp đúng 3 bậc `tokens.css` đang gọi |
+| Italic | **không có** bản nghiêng nào |
+| Kích thước | 192/186/186 KB `.ttf` → **44/43/42 KB** `.woff2` (fonttools + brotli) |
+
+Không dò `cmap` mà cứ nhúng thì lỗi lộ ra ở đúng chỗ tệ nhất: một ô wall tên
+*"Long Hoa Thiên Bảo"* hiện ra thiếu dấu, hoặc ký tự thiếu rơi về font fallback và một
+chữ trong câu **khác mặt chữ** hẳn phần còn lại.
+
+### 3. Ba cái bẫy khi tự host font
+
+| Bẫy | Vì sao chết người | Cách chặn |
+|---|---|---|
+| Khai 3 `font-family` theo tên nội bộ của file (`DVN - Gustavo`, `DVN - Gustavo Med`) | `font: 700 …` không tìm ra Bold → trình duyệt **bôi đậm giả** bản Regular. Không lỗi, chỉ dày lệch và mất đường cong riêng | Cả 3 `@font-face` cùng một family, phân biệt bằng `font-weight` |
+| Nhúng thẳng `.ttf` | Nặng gấp **4,3 lần** `.woff2` mà không thêm một pixel chi tiết nào — đúng họ với lỗi "phóng ảnh lúc dựng asset" ở D-55 | `.ttf` ở lại repo làm **master**, bản chạy chỉ nạp `.woff2` |
+| Để mặc `font-synthesis` | Bộ không có italic; một `<em>` lọt vào từ nội dung động sẽ bị **nghiêng giả**, đứng cạnh chữ thật là lộ | `font-synthesis: none` trên `body` |
+
+### 4. Preload 400 + 700, KHÔNG preload 500
+
+Preload cả 3 là 129 KB giành băng thông với **11 ảnh banner** của wall đang tải cùng
+lúc — mà 500 trên wall chỉ dính `.st-wt-sub`, thứ vẫn đang `opacity: 0` cho tới khi rê
+chuột vào ô. Các chỗ còn lại (slider, bản đồ 2D) đều ở màn sau. `font-display: swap` lo
+nốt phần đó.
+
+### 5. Hai token font vẫn giữ tách đôi
+
+`--st-font-display` và `--st-font-ui` hiện trỏ **cùng một family**, và vẫn không gộp.
+Mọi component đã khai theo **vai trò** (tiêu đề / thân) chứ không theo tên font; giữ hai
+token thì lần sau đổi font tiêu đề chỉ sửa một dòng. Gộp lại là vứt đúng chỗ nối đó đi
+để đổi lấy một dòng CSS ngắn hơn.
+
+*(Cùng lý do đã giữ đủ bậc thang màu ở D-55(g) — nhưng khác `--st-ease-flow` bị gỡ ở
+D-57: cái đó là đường cong đặt riêng cho một component đã chết, còn đây là một **chỗ
+nối** vẫn đang sống.)*
+
+**Đã gỡ:** 2 `<link rel="preconnect">` + 1 `<link>` stylesheet Google Fonts, chuỗi
+fallback `cursive` (di vật của Arima Madurai — Gustavo rơi vào cursive là lệch hẳn
+tông), và thư mục rác `__MACOSX/` đi kèm bộ font.
+
+> 📌 **Cấu hình font cũ chép nguyên văn ở [`02-design-system.md`](02-design-system.md)
+> §2.2.3** — cả 3 dòng `<link>` lẫn 2 chuỗi token, kèm 3 bước dựng lại và commit gốc
+> `e5a17de`. Decision log ghi *vì sao*; chỗ đó giữ *chép về là chạy*, để lần sau muốn so
+> hai font cạnh nhau thì không mất 20 phút đào git.
+
+---
+
 ## Nhật ký sửa đổi
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-05 (v20) | **Thêm D-63 (YC-20).** Khách gửi bộ chữ `DVN Gustavo` → popup dùng **một** font cho cả tiêu đề lẫn body, tự host trong `assets/font/` (`.ttf` master + `.woff2` bản chạy), thêm `css/fonts.css`. **Gỡ hẳn Google Fonts** — ngoại lệ cuối cùng của RULE #3 ở D-01 hết, và **D-23 (hệ 2 font Arima Madurai + Be Vietnam Pro) bị đảo ngược**. Preload 400 + 700, cố ý bỏ 500. |
 | 2026-08-05 (v19) | **Thêm D-62 (YC-19).** Dải chip `overflow-x: auto` cuộn được bằng ngón tay và trackpad nhưng **bất động với chuột thường** — Chrome không đổi `deltaY` thành cuộn ngang, và không trình duyệt nào có cử chỉ kéo-thả bằng chuột. Viết tay `wheel` + kéo (bỏ qua `pointerType: touch`, ngưỡng 4px để cú kéo không biến thành cú chọn chip), thêm `centerChip()` kéo chip đang chọn vào giữa và fade hai mép theo trạng thái cuộn. |
 | 2026-08-05 (v18) | **Thêm D-61 (YC-18).** Nền sáng + cấu trúc thẻ thành MẶC ĐỊNH ở `css/slider.css` (desktop thành thẻ ngang: ảnh trái 60% · chữ phải), gỡ hẳn `.st-sld-bg` + `.st-sld-shade` khỏi HTML/CSS/JS, `responsive2.css` chỉ còn lo HƯỚNG XẾP và chia theo `orientation` thay vì `max-width`. Thanh dưới slider tách thành 3 cụm có vạch ngăn; thêm nút bản đồ 2D vào thanh công cụ wall (icon vuông trên điện thoại), dùng lại khoá i18n `map.open` chết từ D-57. |
 | 2026-08-05 (v17) | **Thêm D-60 (YC-17).** Màn chi tiết (slider) trên điện thoại: nền tối → **trắng**, mỗi cảnh thành **thẻ** (ảnh trên, chữ + CTA dưới trên nền trắng), ‹ › ra khỏi ảnh vào lề, cảnh rìa dùng `opacity` thay `brightness`, ảnh `clamp(170px,32vh,300px)`, autoplay **2,5s** trên điện thoại (desktop giữ 6s) với `setTimeout` chuỗi, thẻ NGANG cho điện thoại nằm ngang, và sửa 2 bẫy `mouseenter`/`focusin` giả làm autoplay chết sau cú chạm đầu tiên. |
@@ -2146,9 +2226,16 @@ cuối.
 | 2026-07-31 | **Thêm D-36** — khách phản hồi lần 4 về topbar phải. Bỏ hẳn lối vẽ tay icon FontAwesome, chuyển sang trích outline từ font gốc; sửa cỡ glyph, tỉ lệ cờ, sao VN, khoảng hở cờ↔social. |
 | 2026-07-30 (v3) | Viết code prototype. **Thêm D-31 → D-35** — cả 5 đều phát hiện khi **chạy test tự động (Playwright)**, không phải khi đọc code: nút peek không bấm được, mobile map quá nhỏ, CORS `file://`, hotspot lệch do letterbox, vệt nối panorama. |
 
-### Ghi chú về 6 quyết định bị đảo ngược
+### Ghi chú về các quyết định bị đảo ngược
+
+*(Đầu mục từng ghi "6" trong khi danh sách đã dài hơn — bỏ con số thay vì cập nhật nó,
+vì nó sẽ lệch lại ngay lần đảo ngược sau.)*
 
 Đều do **thiếu thông tin** hoặc **ràng buộc thay đổi**, không phải do lập luận sai:
+
+- **D-23** — lập luận "font display khó đọc ở 13–15px" **vẫn đúng nguyên**, chỉ là nó
+  trả lời cho một trang có danh sách 158 điểm và chỉ dẫn từng chặng. D-46/D-57 gỡ hết
+  hai thứ đó; chữ còn lại toàn nhãn ngắn, và khách gửi luôn font riêng. D-63 sửa lại.
 
 - **D-05** — tôi không biết dưới-giữa đã có cụm 4 nút. Ảnh 5 mới cho thấy. Kết luận
   mới (hợp nhất) mạnh hơn kết luận cũ (dời chỗ).

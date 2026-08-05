@@ -1,12 +1,13 @@
-> Cập nhật: 2026-08-05 (v15 — D-61: hết chỗ nền tối cuối cùng, thêm cặp tonal xanh cho
-> hành động phụ, chip đang chọn đổi từ vàng sang xanh brand. v14 — D-60: §2.8 breakpoint
-> mobile/landscape đổi sang bố cục thẻ nền trắng)
+> Cập nhật: 2026-08-05 (v16 — D-63: §2.2 viết lại, popup dùng MỘT font `DVN Gustavo`
+> khách gửi, hết Google Fonts. v15 — D-61: hết chỗ nền tối cuối cùng, thêm cặp tonal
+> xanh cho hành động phụ, chip đang chọn đổi từ vàng sang xanh brand)
 
 # 02 — Design System
 
 > ⚠️ **Phần lớn file này viết cho bản trước** (header, navbar, dock, thẻ vé) và giữ lại
-> làm nguồn tra **màu/font gốc từ site chính** — phần đó vẫn đúng và vẫn là nguồn của
-> `tokens.css`. Nhưng các mục tả spec của UI đã gỡ (§2.3.1 vùng cấm, §2.4.1 răng cưa
+> làm nguồn tra **màu gốc từ site chính** — phần đó vẫn đúng và vẫn là nguồn của
+> `tokens.css`. **Font thì không còn lấy từ site chính nữa** (D-63): khách gửi bộ
+> `DVN Gustavo` riêng, §2.2 đã viết lại theo nó. Nhưng các mục tả spec của UI đã gỡ (§2.3.1 vùng cấm, §2.4.1 răng cưa
 > tấm vé, §2.7.1 bộ icon `i-fa-*`) **không còn tương ứng với code** — xem
 > [`08-decisions.md`](08-decisions.md) D-46.
 >
@@ -252,49 +253,109 @@ lệch **có chủ đích**, ghi ở đầu `css/route.css`.
 
 ## 2.2 Typography
 
-### Font thật của site chính
+### 2.2.1 Font hiện tại — DVN Gustavo, MỘT bộ cho cả trang (2026-08-05 · D-63)
+
+Khách gửi thẳng bộ chữ thương hiệu ngày **2026-08-05**. Từ đó popup dùng **duy nhất**
+`DVN Gustavo`, và **không còn `<link>` nào ra `fonts.googleapis.com`** — ngoại lệ cuối
+cùng của RULE #3 đã dọn xong.
 
 ```css
-/* style.css dòng 53 */
-body { font-family: "Arima Madurai", cursive; }
+/* css/tokens.css — hai token GIỮ NGUYÊN dù cùng trỏ một family */
+--st-font-display: 'DVN Gustavo', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+--st-font-ui:      'DVN Gustavo', system-ui, -apple-system, BlinkMacSystemFont,
+                   'Segoe UI', Roboto, Arial, sans-serif;
 ```
 
-Nạp từ Google Fonts, weight `100;200;300;400;500;700`:
+Vì sao **không gộp thành một token**: mọi component đã khai theo **vai trò** (tiêu đề /
+thân), không theo tên font. Giữ hai token thì đổi font tiêu đề sau này sửa đúng một dòng;
+gộp lại là vứt mất chính chỗ nối đó — và bảng "dùng token nào ở đâu" bên dưới vẫn còn
+nguyên giá trị.
+
+`cursive` ở cuối chuỗi fallback đã **bỏ**: nó có từ thời `Arima Madurai` (mặt chữ viết
+tay). Gustavo là geometric grotesque — rơi vào `cursive` bây giờ là lệch hẳn tông, nên
+fallback xếp toàn font hệ thống **có đủ dấu tiếng Việt**.
+
+| Weight | File nguồn (khách gửi) | `.woff2` build | Dùng ở |
+|---|---|---|---|
+| 400 | `DVN - Gustavo-Regular.ttf` (192 KB) | `dvn-gustavo-400.woff2` (44 KB) | `--st-t-body` |
+| 500 | `DVN - GUSTAVO - Medium.ttf` (186 KB) | `dvn-gustavo-500.woff2` (43 KB) | `--st-t-sm` |
+| 700 | `DVN - Gustavo-Bold.ttf` (186 KB) | `dvn-gustavo-700.woff2` (42 KB) | display · h2 · h3 · btn · xs |
+
+**Đã verify đủ dấu tiếng Việt** — dò toàn bộ 67 ký tự có dấu trên `cmap` của cả 3 file,
+không thiếu ký tự nào (529–544 glyph/file).
+
+### 2.2.2 `css/fonts.css` — ba điều dễ làm sai
+
+1. **Cả 3 file khai CÙNG một `font-family`**, phân biệt bằng `font-weight`. Nếu khai
+   theo tên nội bộ của từng file (`DVN - Gustavo`, `DVN - Gustavo Med`) thì
+   `font: 700 20px/1.3 var(--st-font-display)` không tìm ra Bold mà để trình duyệt
+   **bôi đậm giả** bản Regular — dày lệch, mất hết đường cong riêng.
+2. **`.ttf` gốc ở lại repo làm master**, bản chạy chỉ nạp `.woff2`. Sinh lại:
+   ```bash
+   python -c "from fontTools.ttLib import TTFont; f=TTFont('in.ttf'); f.flavor='woff2'; f.save('out.woff2')"
+   ```
+   (cần `fonttools` + `brotli`, đây là **công cụ dev** như `tools/` — bản chạy vẫn thuần).
+3. **`font-synthesis: none`** trên `body`. Bộ chỉ có 3 weight và **không có italic**;
+   một `<b>`/`<em>` lọt vào từ nội dung động sẽ bị tổng hợp giả, và chữ giả đứng cạnh
+   chữ thật trong cùng một thẻ thì lộ ngay.
+
+**Preload** (`index.html`): chỉ **400 + 700**. 500 cố ý không preload — trên wall nó chỉ
+dính `.st-wt-sub`, thứ vẫn đang `opacity: 0` cho tới khi rê vào ô; các chỗ còn lại
+(slider, bản đồ 2D) đều ở màn sau. Không đáng giành băng thông với 11 ảnh banner đang
+tải cùng lúc; `font-display: swap` lo nốt.
+
+### 2.2.3 ⚫ FONT CŨ — hệ 2 font Arima Madurai + Be Vietnam Pro (D-23), gỡ 2026-08-05
+
+**Chép nguyên văn để dựng lại được mà không cần đào git.** Đây là toàn bộ những gì D-63
+đã xoá — không thiếu dòng nào.
+
+`index.html`, ngay trên `<link rel="stylesheet" href="css/tokens.css">`:
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@400;500;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 ```
-https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@100;200;300;400;500;700&display=swap
-```
 
-**Đã verify hỗ trợ tiếng Việt** — subset `vietnamese` có mặt:
-`U+0102-0103, U+0110-0111, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB…`
-
-### Vấn đề & giải pháp: font kép
-
-`Arima Madurai` là font **display/decorative** (Google phân loại `cursive`). Nó
-đẹp và đúng nhận diện cho tiêu đề, nhưng ở 13–15px cho **danh sách 158 điểm** hoặc
-**chỉ dẫn từng chặng** ("Đi ~40 m rồi rẽ phải (gần j9)") thì khó đọc, nhất là chữ
-Việt nhiều dấu.
-
-Trang VR hiện tại đã dùng `Be Vietnam Pro` (`vr-360/fonts.css`) cho đúng lý do này.
-
-**Chốt — hệ 2 font:**
+`css/tokens.css`:
 
 ```css
---st-font-display: 'Arima Madurai', 'Be Vietnam Pro', system-ui, cursive;  /* tiêu đề, nav, nút */
---st-font-ui:      'Be Vietnam Pro', -apple-system, BlinkMacSystemFont,
-                   'Segoe UI', Roboto, Arial, sans-serif;                  /* body, list, form */
+--st-font-display: 'Arima Madurai','Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',cursive;
+--st-font-ui:      'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
 ```
+
+**Quay lại thì làm 3 việc:** chép 2 khối trên vào đúng chỗ · xoá `<link rel="preload">`
+font + `<link>` `css/fonts.css` · bỏ `font-synthesis: none` (Arima/Be Vietnam Pro có bản
+nghiêng thật, chặn tổng hợp không còn lý do).
+
+Bản git đầy đủ ngay trước khi gỡ: **`e5a17de`** (2026-08-05) — `git show e5a17de:index.html`.
+
+⚠️ **Thang chữ không quay lại được y nguyên.** Từ D-63 `tokens.css` chỉ còn khai weight
+**400 · 500 · 700**; hệ cũ nạp thêm `800` cho Arima và `600` cho Be Vietnam Pro. Hai
+weight đó **không có bậc nào trong `tokens.css` gọi tới** — chúng nằm trong URL từ thời
+navbar/topbar (đã gỡ ở D-46) chứ không phải đang được dùng. Dựng lại thì cứ để nguyên
+URL trên, đừng tưởng có chỗ nào đang thiếu weight.
+
+#### Vì sao từng làm vậy, và vì sao hết đúng
+
+Site chính khai `body { font-family: "Arima Madurai", cursive }` (`style.css` dòng 53),
+nạp từ Google Fonts. Vì Arima là font **display/decorative**, popup ghép nó với
+`Be Vietnam Pro` cho phần thân chữ — đúng cách trang VR đang làm (`vr-360/fonts.css`).
+
+Hết hiệu lực khi khách gửi font riêng: một bộ chữ phủ cả trang thì không còn chỗ cho font
+thứ hai, và nỗi lo "font display khó đọc ở 13–15px" cũng tan theo — danh sách 158 điểm
+lẫn chỉ dẫn từng chặng đều đã bị gỡ từ D-46/D-57, chữ trong popup giờ toàn **nhãn ngắn**.
+Xem [`08-decisions.md`](08-decisions.md) D-63.
+
+### 2.2.4 Bảng vai trò — token nào cho chỗ nào
+
+Vẫn áp dụng nguyên vẹn, chỉ khác là hai token hiện cùng trỏ `DVN Gustavo`:
 
 | Dùng `--st-font-display` | Dùng `--st-font-ui` |
 |---|---|
-| Logo wordmark | Danh sách điểm đến |
-| Item navbar | Chỉ dẫn từng chặng |
-| Tiêu đề modal welcome | Mô tả, blurb |
-| Label nút chính (Chỉ đường, Điểm đến, Mua vé) | Input, placeholder, chip |
-| Tên điểm trong scene-label | Text phụ, số liệu |
-| Tiêu đề overlay | Toast |
-
-→ Nav + heading **giống hệt site chính** (đồng bộ như khách yêu cầu), phần dày chữ
-thì đọc được. Xem [`08-decisions.md`](08-decisions.md) D-26.
+| Tiêu đề wall, tiêu đề bản đồ 2D | Mô tả, blurb |
+| Tên ô wall, tên điểm trong slider | Input, placeholder, chip |
+| Label nút chính | Text phụ, số liệu, badge |
 
 ### Thang chữ
 
@@ -319,8 +380,13 @@ thì đọc được. Xem [`08-decisions.md`](08-decisions.md) D-26.
 > **Bài học lặp lại lần hai:** bảng token trong docs mà đi trước `tokens.css` thì nó
 > không phải tài liệu nữa, nó là bẫy. Sửa token là phải mở **cả hai** file cùng lượt.
 
-**Cấm weight 100/200/300** — chữ Việt nhiều dấu, weight mỏng làm dấu biến mất trên
-màn hình thường. Min = 400. (Site chính có nạp weight 100–300 nhưng ta không dùng.)
+**Chỉ có đúng 3 weight: 400 · 500 · 700.** Thang chữ trên đây khớp sẵn, đừng khai
+weight nào khác — `600` chẳng hạn sẽ không tồn tại và bị `font-synthesis: none` chặn
+tổng hợp, kết quả là rơi về 500 chứ không đậm lên.
+
+Luật cũ **cấm weight 100/200/300** giờ tự thoả (bộ không có), nhưng lý do vẫn cần nhớ
+cho font sau này: chữ Việt nhiều dấu, weight mỏng làm **dấu biến mất** trên màn hình
+thường. Min = 400.
 
 ## 2.3 Spacing — thang 4px
 

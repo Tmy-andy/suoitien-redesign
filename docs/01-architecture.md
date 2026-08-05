@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-05 (v16 — D-62: dải chip cuộn ngang bằng chuột do JS lo. v15 — D-61:
-> nền sáng + thẻ thành mặc định ở `css/slider.css`, nút bản đồ 2D trở lại wall)
+> Cập nhật: 2026-08-05 (v17 — D-63: thêm `css/fonts.css` + `assets/font/`, gỡ Google
+> Fonts. v16 — D-62: dải chip cuộn ngang bằng chuột do JS lo)
 
 # 01 — Architecture & Structure
 
@@ -14,6 +14,7 @@ suoitien-vr360redes/
 ├── docs/                      # ← bạn đang ở đây
 │
 ├── css/
+│   ├── fonts.css              # ⟨chung⟩ @font-face DVN Gustavo. Nạp TRƯỚC tokens (D-63)
 │   ├── tokens.css             # ⟨chung⟩ màu, font, spacing, z-index, easing
 │   ├── base.css               # ⟨chung⟩ reset, html/body TRONG SUỐT, img cover, #st-debug
 │   ├── map2d.css              # #st-map — bản đồ 2D + pin (D-51)
@@ -34,8 +35,14 @@ suoitien-vr360redes/
 ├── assets/
 │   ├── img/cards/*.webp       # 12 ảnh banner 3:2, 500–1200px (~1,32 MB)
 │   │                          #   Nguồn suoitien.vn — URL gốc ở 06-data.md §6.8
-│   └── map/park-2400.webp     # Bản đồ 2D 2400×1208 (391 KB), đã flatten #0f172a
-│                              #   Nguồn `Ban Do Suoi Tien/` — 06-data.md §6.10
+│   ├── map/park-2400.webp     # Bản đồ 2D 2400×1208 (391 KB), đã flatten #0f172a
+│   │                          #   Nguồn `Ban Do Suoi Tien/` — 06-data.md §6.10
+│   └── font/
+│       ├── dvn-gustavo-400.woff2   # ★ BẢN CHẠY chỉ nạp 3 file này, ~44 KB/weight
+│       ├── dvn-gustavo-500.woff2
+│       ├── dvn-gustavo-700.woff2
+│       └── DVN Gustavo/*.ttf       # .ttf GỐC khách gửi — master, đừng deploy
+│                                   #   Cách build lại .woff2: 02-design-system.md §2.2.2
 │
 └── tools/                     # CÔNG CỤ DEV — không thuộc bản chạy
     ├── check-icon-center.js   # Tâm khối của từng symbol (cô lập)
@@ -124,7 +131,7 @@ commit đó; ở `0cb4c67` nó đã bị ghi đè bằng markup bản 1).
 | Nguyên tắc | Lý do |
 |---|---|
 | **Popup không biết mình ở trong iframe** | Chỉ `js/bridge.js` biết. Muốn nhúng vào chỗ khác thì chỉ phải đọc lại 1 file. |
-| **Không dependency ngoài** | Khách mở file là chạy, không cần mạng. Không CDN, không npm. |
+| **Không dependency ngoài** | Khách mở file là chạy, không cần mạng. Không CDN, không npm. Từ D-63 điều này đúng **100%** — ngoại lệ Google Fonts cuối cùng đã gỡ, font nằm trong `assets/font/`. |
 | **Prefix `st-` cho mọi id/class** | Trong iframe thì CSS đã cách ly sẵn, nhưng prefix vẫn giúp grep và giúp nếu sau này ai đó nhúng inline thay vì iframe. |
 | **1 file CSS = 1 vùng UI** | Sửa wall không cần mở file khác. Ngoại lệ có chủ ý: `responsive2.css` giữ @media của MỌI vùng — xem §1.3. |
 | **`html, body` trong suốt** | Bắt buộc dù popup có nền đặc: lúc vào/ra nó fade `opacity`, đúng những frame đó phải nhìn xuyên qua thấy panorama. [`07`](07-integration.md) §7.2.1. |
@@ -132,13 +139,14 @@ commit đó; ở `0cb4c67` nó đã bị ghi đè bằng markup bản 1).
 
 ## 1.3 Thứ tự load trong `index.html`
 
-`tokens.css` phải trước mọi CSS khác; `responsive2.css` phải **sau cùng**;
-`data.js` phải trước mọi JS khác; `popup2.js` phải **cuối cùng**.
+`fonts.css` phải trước `tokens.css`; `tokens.css` phải trước mọi CSS khác;
+`responsive2.css` phải **sau cùng**; `data.js` phải trước mọi JS khác; `popup2.js`
+phải **cuối cùng**.
 
 ```html
 <head>
-  <!-- Google Fonts (ngoại lệ RULE #3 đang tồn tại — xem TODO.md) -->
-  tokens.css → base.css → wall.css → slider.css → map2d.css → responsive2.css
+  <!-- 2 <link rel="preload"> font 400 + 700 (D-63). KHÔNG còn CDN nào. -->
+  fonts.css → tokens.css → base.css → wall.css → slider.css → map2d.css → responsive2.css
 </head>
 <body>
   <!-- SVG sprite inline (12 icon) — phải có TRƯỚC mọi <use> -->
@@ -155,6 +163,11 @@ commit đó; ở `0cb4c67` nó đã bị ghi đè bằng markup bản 1).
 `responsive2.css` nạp CUỐI là **ràng buộc**, không phải quy ước: từ D-58 nó giữ toàn
 bộ @media của project, kể cả của bản đồ 2D — nó phải thắng `map2d.css` bằng thứ tự
 nguồn chứ không bằng specificity.
+
+`fonts.css` nạp ĐẦU cũng là ràng buộc, nhưng vì lý do khác: `@font-face` không tham gia
+cascade nên thứ tự **không** ảnh hưởng cái nào thắng. Nó đứng đầu để đọc-hiểu — family
+name khai ở đó là thứ `tokens.css` ngay dưới trỏ vào; đảo ngược lại thì `--st-font-ui`
+tham chiếu một cái tên chưa xuất hiện ở đâu trong file nào đọc trước nó.
 
 Tất cả `<script>` là **classic script** (không `type="module"`) → biến global, không
 cần server, mở `file://` chạy được. Mỗi file bọc trong IIFE, chỉ expose 1 namespace:
@@ -240,7 +253,8 @@ khác; xem D-58(h).
 
 | Muốn đổi | Sửa file |
 |---|---|
-| Màu / font / spacing / radius / shadow | `css/tokens.css` — **chỉ** file này |
+| Màu / spacing / radius / shadow / **thang chữ** | `css/tokens.css` — **chỉ** file này |
+| **Bản thân bộ font** (thêm weight, đổi sang font khác) | `css/fonts.css` (`@font-face`) + `assets/font/` + 2 dòng `<link rel="preload">` trong `index.html`. Thang chữ ở `tokens.css` không phải đụng. |
 | Tên điểm, danh sách điểm, ảnh | `js/data.js` → `DESTINATIONS` / `CARDS` |
 | Số hiệu / vị trí pin trên bản đồ | `js/data.js` → `MAP_META` |
 | Ảnh bản đồ | `js/data.js` → `MAP` + `assets/map/` (nhớ flatten, xem `06-data.md` §6.10) |

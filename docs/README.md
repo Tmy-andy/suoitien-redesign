@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-05 (v17 — D-62: dải chip cuộn ngang được bằng chuột. v16 — D-61:
-> nền sáng cho mọi khổ, desktop thành thẻ ngang, nút bản đồ 2D trở lại wall)
+> Cập nhật: 2026-08-05 (v18 — D-63: font `DVN Gustavo` khách gửi, tự host, hết Google
+> Fonts. v17 — D-62: dải chip cuộn ngang được bằng chuột)
 
 # Suối Tiên VR360 — Popup chọn điểm bắt đầu · Docs
 
@@ -30,8 +30,9 @@ Vì vậy vài tên còn hậu tố **"2"** — `#st-pop2` · `js/popup2.js` ·
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Docs | ✅ **v17** (2026-08-05) |
-| Design tokens | ✅ 3 màu brand + hệ 2 font lấy thật từ `suoitien.vn/…/style.css` |
+| Docs | ✅ **v18** (2026-08-05) |
+| Design tokens | ✅ 3 màu brand lấy thật từ `suoitien.vn/…/style.css` |
+| **Font `DVN Gustavo`** khách gửi — tự host, một bộ cho cả trang | ✅ **xong** — D-63 ⭐ |
 | **VR Wall 9 ô → Infinite Slider → VR**, có tìm/lọc | ✅ **xong** — D-50 |
 | **Bản mobile** — trang cuộn, thanh dính đáy, bottom sheet | ✅ **xong** — D-58 ⭐ |
 | **Màn chi tiết trên mobile** — thẻ nền trắng, autoplay 2,5s | ✅ **xong** — D-60 ⭐ |
@@ -48,7 +49,7 @@ Vì vậy vài tên còn hậu tố **"2"** — `#st-pop2` · `js/popup2.js` ·
 | Duyệt cách chia 9 khu vực | ⬜ chờ khách (Q-41) |
 | **Số hiệu + toạ độ pin trên bản đồ** — mới 2/20 số là thật | ⬜ chờ khách/dev (Q-43) |
 | Ảnh bản đồ có dải tối lớn phía trên (máy dọc thấy rõ) | ⬜ cần cắt lại asset — `TODO.md` |
-| `@font-face` local thay Google Fonts | ⬜ chưa làm |
+| ~~`@font-face` local thay Google Fonts~~ | ✅ **xong** — D-63: hết `<link>` ra CDN, **không còn ngoại lệ RULE #3** |
 
 **Đã test** (Playwright/Chromium, `0` lỗi console):
 

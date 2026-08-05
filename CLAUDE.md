@@ -49,7 +49,8 @@ Các file bắt buộc phải có và phải khớp với code thực tế:
 ## RULE #3 — Code
 
 - Không thêm dependency ngoài (CDN, npm) trong bản chạy. Icon inline SVG.
-  *(Ngoại lệ đang tồn tại: Google Fonts — xem `docs/TODO.md`.)*
+  **Hết ngoại lệ từ 2026-08-05 (D-63)** — Google Fonts đã gỡ, font tự host trong
+  `assets/font/`. Đừng dựng lại ngoại lệ nào.
 - Prefix `st-` cho mọi id/class để không đụng CSS của 3DVista/floorplan khi ghép.
 - Popup **không được biết** nó đang nằm trong iframe, trừ `js/bridge.js`. Mọi lời gọi
   ra ngoài đi qua `ST.bridge`.
@@ -68,10 +69,12 @@ bản 1 (màn chào + 3D carousel) và `host-demo.html` **đã gỡ hẳn**:
 ```
 index.html    ← VR Wall 11 khu vực → Infinite Slider → VR (2 tầng)
 
-css/tokens · css/base · css/wall · css/slider · css/map2d · css/responsive2
+css/fonts · css/tokens · css/base · css/wall · css/slider · css/map2d · css/responsive2
 js/data · js/i18n · js/a11y · js/bridge · js/map2d · js/wall · js/slider · js/popup2
 assets/img/cards/            ảnh banner .webp
 assets/map/park-2400.webp    bản đồ 2D (391 KB)
+assets/font/*.woff2          DVN Gustavo 400/500/700 — bản chạy nạp 3 file này
+assets/font/DVN Gustavo/     .ttf gốc khách gửi (master, ĐỪNG deploy)
 ```
 
 Vài tên còn hậu tố **"2"** (`#st-pop2`, `js/popup2.js`, `css/responsive2.css`) — giữ
@@ -105,7 +108,9 @@ CSS: `halink-content/themes/halink-c5/public/theme/css/style.css`
 | `#DEA800` | **Vàng** — nền topbar; ở popup là badge "Nên xem" |
 | `#EB0029` | **Đỏ** — chữ nút "Mua vé"; ở popup là 1/3 dải nhận diện trên đỉnh panel |
 
-- Font: **`Arima Madurai`** (tiêu đề) + **`Be Vietnam Pro`** (body) — hệ 2 font, D-23.
+- ⚫ Font: ~~`Arima Madurai` (tiêu đề) + `Be Vietnam Pro` (body) — hệ 2 font, D-23.~~
+  **Popup không lấy font của site chính nữa** — khách gửi bộ chữ riêng `DVN Gustavo`
+  ngày 2026-08-05 (D-63). Site chính vẫn là nguồn chuẩn cho **màu và ảnh**.
 - **12 ảnh banner** của carousel tải từ đây → `docs/06-data.md` §6.8 ghi URL gốc từng ảnh.
 
 ## Chốt quan trọng từ khách
@@ -140,6 +145,13 @@ CSS: `halink-content/themes/halink-c5/public/theme/css/style.css`
   còn lo **hướng xếp**, và chia theo `orientation` chứ không `max-width`. Nút *"Xem trên
   bản đồ 2D"* **trở lại thanh công cụ wall** (icon vuông trên điện thoại) — đảo ngược
   chỗ D-57 đã gỡ nó (D-61).
+- **2026-08-05 (YC-20):** dùng **font khách gửi** trong `assets/font/` — `DVN Gustavo`
+  (Regular 400 · Medium 500 · Bold 700, đủ dấu tiếng Việt, **không có italic**). Thay
+  **cả hai** token font, tức bỏ luôn hệ 2 font của D-23. Ba luật đi kèm: cả 3 `.ttf`
+  khai **chung một `font-family`** phân biệt bằng `font-weight` (khai riêng → trình
+  duyệt bôi đậm giả) · `.ttf` là **master**, bản chạy chỉ nạp `.woff2` (nhẹ hơn 4,3
+  lần) · `font-synthesis: none` vì bộ không có bản nghiêng. Preload 400 + 700, **không**
+  preload 500. Font mới phải **dò `cmap` đủ dấu tiếng Việt trước khi nhúng** (D-63).
 - **2026-08-05 (YC-19):** dải chip lọc nhóm không cuộn ngang được bằng chuột. Vùng cuộn
   không hỏng — **`overflow-x: auto` chỉ mở đường cho ngón tay và trackpad**; với chuột
   thường thì lăn dọc lẫn kéo-thả đều không tồn tại, phải viết tay `wheel` + kéo. Luật

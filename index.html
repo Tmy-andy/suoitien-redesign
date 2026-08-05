@@ -27,10 +27,19 @@
      Mở thẳng file này bằng double-click cũng chạy (bridge thành no-op).
      ══════════════════════════════════════════════════════════════════════ -->
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@400;500;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<!-- Font DVN Gustavo nằm NGAY TRONG REPO (D-63) — không còn <link> ra
+     fonts.googleapis.com, ngoại lệ cuối cùng của RULE #3 đã dọn xong.
+     3 dòng <link> Google Fonts cũ (Arima Madurai + Be Vietnam Pro) chép
+     nguyên văn ở docs/02-design-system.md §2.2.3 nếu cần dựng lại.
+     Preload 400 (body) + 700 (mọi tiêu đề, tên khu vực, chữ nút): hai weight
+     này phủ gần hết chữ của màn wall đầu tiên. 500 CỐ Ý không preload — trên
+     wall nó chỉ dính `.st-wt-sub`, thứ vẫn đang `opacity: 0` cho tới khi rê
+     vào ô; các chỗ còn lại (slider, bản đồ 2D) đều ở màn sau. Không đáng
+     giành băng thông với 11 ảnh banner; `font-display: swap` lo nốt. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="assets/font/dvn-gustavo-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="assets/font/dvn-gustavo-700.woff2">
 
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/wall.css">

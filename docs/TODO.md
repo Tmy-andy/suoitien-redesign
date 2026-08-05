@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-05 (v20 — YC-19: dải chip cuộn ngang được bằng chuột · D-62)
+> Cập nhật: 2026-08-05 (v21 — YC-20: font `DVN Gustavo` khách gửi, tự host, hết Google
+> Fonts · D-63. v20 — YC-19: dải chip cuộn ngang được bằng chuột · D-62)
 
 # TODO
 
@@ -61,7 +62,9 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
       (trùng đúng href mục *Bảng giá › Combo trò chơi* trong menu thật, không phải đoán)
 - [ ] Q-31 · Logo SVG hoặc PNG nhỏ hơn (bản đang dùng 131 KB, load từ suoitien.vn)
 - [ ] Q-33 · Item xám mờ ở ảnh 4 là "tạm đóng" hay "chưa có 360°"?
-- [ ] D-23 · Xác nhận hệ 2 font (Arima cho tiêu đề/nav + Be Vietnam Pro cho body)
+- [x] ~~D-23 · Xác nhận hệ 2 font (Arima cho tiêu đề/nav + Be Vietnam Pro cho body)~~
+      → câu hỏi tự hết: khách gửi font thương hiệu `DVN Gustavo`, dùng cho **cả hai**
+      vai trò · 2026-08-05 · D-63
 - [x] ~~Có muốn re-skin 2 overlay có sẵn?~~ → khách yêu cầu **clone hẳn**, đã dựng
       M2/M3 (2026-08-01 · D-43). Câu hỏi còn lại chuyển thành Q-36 ở §P0.
 - [ ] URL LinkedIn thật (site chính cũng để `#`)
@@ -378,7 +381,8 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 ### Đóng gói
 - [ ] Trang `compare.html` — before/after 2 nút + before/after header, để thuyết trình
 - [ ] Screenshot / GIF các luồng chính cho `README.md`
-- [ ] Bản `@font-face` local cho Arima Madurai (hiện lấy Google Fonts → offline mất font)
+- [x] ~~Bản `@font-face` local cho Arima Madurai (offline mất font)~~ → không còn Arima
+      nữa; tự host `DVN Gustavo` khách gửi · 2026-08-05 · D-63
 
 ### v2 — sau khi khách duyệt
 - [ ] Re-skin 2 overlay có sẵn theo token brand
@@ -635,8 +639,11 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
       (đang đánh dấu `// MOCK:`)
 - [ ] Nối `ST.track()` vào `VR360Track.event()`, hoặc để trang cha ghi từ `st:navigate`
       ([`05-flows.md`](05-flows.md) §5.5)
-- [ ] `@font-face` local thay Google Fonts (hiện mất mạng là mất `Arima Madurai`) —
-      ngoại lệ RULE #3 duy nhất còn tồn tại
+- [x] ~~`@font-face` local thay Google Fonts — ngoại lệ RULE #3 duy nhất còn tồn tại~~
+      → **xong theo hướng khác hẳn dự tính**: khách gửi bộ chữ riêng `DVN Gustavo`
+      (2026-08-05 · YC-20 · D-63), nên không phải tự host lại Arima Madurai mà **thay
+      luôn cả hai font**. `css/fonts.css` + `assets/font/*.woff2`. Hết ngoại lệ RULE #3.
+      · 2026-08-05
 - [ ] Preload ảnh thẻ kế tiếp — hiện `loading="lazy"` từ thẻ thứ 2; quẹt thật nhanh qua
       3–4 thẻ vẫn thấy một nhịp trắng trên mạng chậm
 

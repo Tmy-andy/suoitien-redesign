@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-05 (v10 — D-60: ảnh trong thẻ slider mobile cao theo màn, neo
-> `center 45%`. v9 — D-57 gỡ `must` + `D.mustOf`, gỡ 21 khoá i18n của bản 1)
+> Cập nhật: 2026-08-05 (v11 — D-63: font hết là mock/lấy từ site chính, khách gửi
+> `DVN Gustavo`. v10 — D-60: ảnh trong thẻ slider mobile cao theo màn, neo `center 45%`)
 
 # 06 — Data
 
@@ -584,7 +584,7 @@ Grep `// MOCK:` trong `js/` sẽ ra hết. Danh sách đầy đủ:
 | Trước là mock | Giờ là gì |
 |---|---|
 | ~~Màu suy đoán từ `#0e6b2e`~~ | 10 màu thật từ `style.css` site chính |
-| ~~Font đoán `Be Vietnam Pro`~~ | `Arima Madurai` thật + `Be Vietnam Pro` cho body (D-23) |
+| ~~Font đoán `Be Vietnam Pro`~~ | **`DVN Gustavo`** — bộ chữ khách gửi thẳng, tự host trong `assets/font/` (2026-08-05 · D-63). *Chặng giữa: `Arima Madurai` + `Be Vietnam Pro` lấy từ site chính, D-23 — đã đảo ngược.* |
 | ~~`href` navbar đoán theo slug~~ | 84 URL thật từ HTML site chính (§6.6) |
 | ~~URL social `#`~~ | 4/5 URL thật (LinkedIn site chính cũng để `#`) |
 | ~~Link "Mua vé"~~ | `https://suoitien.vn/chon-ve` |

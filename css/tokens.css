@@ -59,9 +59,24 @@
      Wall và slider đều đứng trên nền này (slider phủ ảnh blur lên trên). */
   --st-bg: #ffffff;
 
-  /* ── Typography — Arima Madurai (site) + Be Vietnam Pro (body) · D-23 ─ */
-  --st-font-display: 'Arima Madurai','Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',cursive;
-  --st-font-ui:      'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  /* ── Typography — MỘT font duy nhất: DVN Gustavo (D-63) ──────────────
+     ⚫ Hệ 2 font Arima Madurai + Be Vietnam Pro của D-23 đã GỠ ngày
+     2026-08-05. Chuỗi font cũ + 3 dòng <link> Google Fonts chép nguyên văn
+     ở docs/02-design-system.md §2.2.3 (kèm cách dựng lại) — muốn quay về
+     thì không phải đào git. Lý do gỡ: khách gửi font riêng, và một bộ chữ
+     phủ cả trang thì hết chỗ cho font thứ hai.
+
+     Hai token vẫn giữ NGUYÊN TÊN và vẫn tách đôi dù
+     hiện trỏ cùng một family — mọi component đã khai theo VAI TRÒ (tiêu đề
+     / thân), nên đổi font tiêu đề sau này chỉ sửa đúng một dòng ở đây. Gộp
+     lại thành một token là vứt mất chính chỗ nối đó.
+
+     Fallback: Gustavo là geometric grotesque, nên xếp sau nó những font hệ
+     thống có DẤU TIẾNG VIỆT đầy đủ. `cursive` cuối chuỗi cũ đã bỏ — nó có
+     từ thời Arima Madurai (mặt chữ viết tay); rơi vào cursive bây giờ là
+     lệch hẳn tông. */
+  --st-font-display: 'DVN Gustavo',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --st-font-ui:      'DVN Gustavo',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
 
   --st-t-display: 700 clamp(25px,3.6vw,41px)/1.14 var(--st-font-display);
   --st-t-h2:      700 20px/1.3 var(--st-font-display);

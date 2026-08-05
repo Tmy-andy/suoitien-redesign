@@ -1,0 +1,46 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   fonts.css — @font-face của DVN Gustavo, font DUY NHẤT của popup (D-63).
+
+   Phải nạp TRƯỚC tokens.css: tokens khai `--st-font-display`/`--st-font-ui`
+   trỏ vào family name đặt ở đây.
+
+   Nguồn: assets/font/DVN Gustavo/*.ttf (khách gửi 2026-08-05). File .ttf gốc
+   GIỮ LẠI trong repo làm master — .woff2 dưới đây là bản build, sinh lại được
+   bằng fonttools (xem docs/02-design-system.md §2.2.2). Trang chạy chỉ nạp
+   .woff2: 192 KB ttf → 44 KB woff2 mỗi weight.
+
+   Đây KHÔNG phải dependency ngoài — file nằm trong repo, không có CDN nào bị
+   gọi. Chính nó dọn nốt ngoại lệ Google Fonts của RULE #3.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Cả 3 file khai CÙNG một `font-family`, phân biệt bằng `font-weight`. Nếu
+   khai 3 family riêng (đúng tên nội bộ của file: "DVN - Gustavo Med"…) thì
+   `font: 700 20px/1.3 var(--st-font-display)` sẽ không tìm ra Bold mà để
+   trình duyệt BÔI ĐẬM GIẢ bản Regular — dày lệch, mất hết đường cong riêng. */
+@font-face {
+  font-family: 'DVN Gustavo';
+  src: url('../assets/font/dvn-gustavo-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DVN Gustavo';
+  src: url('../assets/font/dvn-gustavo-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DVN Gustavo';
+  src: url('../assets/font/dvn-gustavo-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Bộ chỉ có 3 weight và KHÔNG có italic. Trang không dùng weight nào khác,
+   nhưng chặn tổng hợp giả cho chắc: một `<b>`/`<em>` lọt vào từ nội dung
+   động sẽ bị trình duyệt bôi đậm / nghiêng giả, và chữ giả đứng cạnh chữ
+   thật trong cùng một thẻ thì lộ ngay. */
+body { font-synthesis: none; }

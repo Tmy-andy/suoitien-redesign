@@ -1,4 +1,5 @@
-> Cập nhật: 2026-08-04 (v9 — D-57: còn MỘT bản, `host-demo.html` đã gỡ)
+> Cập nhật: 2026-08-05 (v10 — D-63: popup hết gọi host ngoài, §7.7 thêm 3 file font vào
+> danh sách deploy. v9 — D-57: còn MỘT bản, `host-demo.html` đã gỡ)
 
 # 07 — Tích hợp: hợp đồng giữa popup và trang cha
 
@@ -226,17 +227,26 @@ Popup là tĩnh hoàn toàn, đặt ở đâu cũng chạy:
 ```
 /popup/
   index.html                  ← popup (wall → slider)
-  css/tokens.css  base.css  wall.css  slider.css  map2d.css  responsive2.css
+  css/fonts.css  tokens.css  base.css  wall.css  slider.css  map2d.css  responsive2.css
   js/data.js  i18n.js  a11y.js  bridge.js  map2d.js  wall.js  slider.js  popup2.js
   assets/img/cards/*.webp     12 ảnh điểm đến  (~930 KB)
   assets/map/park-2400.webp   bản đồ 2D       (391 KB)
+  assets/font/dvn-gustavo-400|500|700.woff2   font DVN Gustavo (~131 KB)
 ```
 
-Đúng **15 file code + 13 file ảnh**, tổng asset ~1,3 MB. Thứ tự nạp CSS và JS là **ràng
-buộc**, không phải quy ước — [`01-architecture.md`](01-architecture.md) §1.3.
+Đúng **16 file code + 13 file ảnh + 3 file font**, tổng asset ~1,45 MB. Thứ tự nạp CSS
+và JS là **ràng buộc**, không phải quy ước —
+[`01-architecture.md`](01-architecture.md) §1.3.
 
-**Đừng deploy:** `Ban Do Suoi Tien/` (39 MB ảnh gốc) · `docs/` · `tools/` · `note.md`.
+**Đừng deploy:** `Ban Do Suoi Tien/` (39 MB ảnh gốc) · `docs/` · `tools/` · `note.md` ·
+**`assets/font/DVN Gustavo/*.ttf`** (bản master `.ttf`, nặng gấp 4,3 lần `.woff2` mà bản
+chạy không hề nạp — xem [`02-design-system.md`](02-design-system.md) §2.2.2).
 Khách đã chốt một bản (D-57) nên không còn `index2.html` để loại.
+
+⚠️ **Font thiếu thì KHÔNG có lỗi nào hiện ra** — chữ lặng lẽ rơi về `system-ui`, trang
+vẫn chạy, chỉ là sai mặt chữ. Nếu deploy bằng cách chép tay từng thư mục thì đây là thứ
+dễ quên nhất. Kiểm nhanh: mở popup, DevTools → Network lọc `font` phải thấy **2 file
+`.woff2` tải ngay** (400 + 700; bản 500 chỉ tải khi rê vào ô wall hoặc vào slider).
 
 **Cùng origin với trang VR thì tốt hơn** — đường 1 hoạt động, đỡ một vòng
 postMessage, và siết `e.origin` dễ hơn. Nhưng không bắt buộc.
@@ -273,7 +283,10 @@ Không cần build, không npm install, không server-side.
 - [ ] Xác minh chữ ký `VRCore.navigateToPano` rồi xoá vòng thử (§7.6)
 - [ ] Nối `ST.track()` vào `VR360Track.event()`, hoặc để trang cha tự ghi từ
       `st:navigate` ([`05-flows.md`](05-flows.md) §5.5)
-- [ ] `@font-face` local thay Google Fonts ([`TODO.md`](TODO.md))
+- [x] ~~`@font-face` local thay Google Fonts~~ → xong 2026-08-05 (D-63). Popup **không
+      gọi host ngoài nào nữa**; bên tích hợp không phải mở CSP cho `fonts.googleapis.com`
+      / `fonts.gstatic.com`, và font trong `assets/font/` phải được **deploy kèm** —
+      thiếu nó thì chữ rơi về `system-ui` mà không có lỗi nào hiện ra.
 
 ---
 
