@@ -1,6 +1,6 @@
-> Cập nhật: 2026-08-05 (v8 — D-61: nền sáng + thẻ thành MẶC ĐỊNH cho mọi khổ, desktop
-> thành thẻ ngang, nút bản đồ 2D trở lại thanh công cụ wall. v7 — D-60: slider trên
-> điện thoại thành THẺ nền trắng, autoplay 2,5s)
+> Cập nhật: 2026-08-05 (v9 — D-62: dải chip cuộn ngang được bằng chuột. v8 — D-61: nền
+> sáng + thẻ thành MẶC ĐỊNH cho mọi khổ, desktop thành thẻ ngang, nút bản đồ 2D trở lại
+> thanh công cụ wall)
 
 # 09 — VR Wall + Infinite Slider
 
@@ -29,28 +29,27 @@ Hai bản từng chạy song song để khách so. Từ D-52 chúng **hội tụ
 
 | | Bản 1 — carousel *(đã gỡ)* | ★ Bản đang dùng |
 |---|---|---|
-| **Chọn khu vực** | 3D carousel — xem **tuần tự**, mỗi lúc 3 thẻ | Mosaic 9 ô — **thấy hết cùng lúc** |
-| **Xem điểm** | **Danh sách** — quét nhanh, so sánh được, 2 dòng/điểm | **Slider** — mỗi điểm một cảnh gần trọn màn |
-| Nền | Trắng, light/airy | **Trắng y hệt** (D-54) — chỉ slider còn tối |
+| **Chọn khu vực** | 3D carousel — xem **tuần tự**, mỗi lúc 3 thẻ | Mosaic **11 ô** — **thấy hết cùng lúc** |
+| **Xem điểm** | **Danh sách** — quét nhanh, so sánh được, 2 dòng/điểm | **Slider** — mỗi điểm một **thẻ** (⚫ tới D-60/D-61 là một cảnh gần trọn màn) |
+| Nền | Trắng, light/airy | **Trắng y hệt** (D-54) — và từ D-61 **cả slider cũng trắng** |
 | Ô tìm kiếm ở đâu | Header, luôn thấy | Trong slider |
-| Lọc nhóm | Quay lại carousel chọn thẻ khác | 9 chip ngay dưới cảnh |
-| Bản đồ 2D | ✅ | ✅ — dùng chung `js/map2d.js` (D-51) |
-| Điểm chưa có ảnh (8/20) | **Dùng được** — ô giữ chỗ có số hiệu | Không hiện (slider cần ảnh) |
+| Lọc nhóm | Quay lại carousel chọn thẻ khác | **11 chip** ngay dưới thẻ |
+| Bản đồ 2D | ✅ | ✅ — dùng chung `js/map2d.js` (D-51), mở được từ **cả wall lẫn slider** (D-61) |
+| Điểm chưa có ảnh | **Dùng được** — ô giữ chỗ có số hiệu | ✅ từ D-59 — thẻ gradient brand + nhãn "chưa có ảnh xem trước" |
 | Số click vào VR | 2 | 2 |
 | Hợp với | Người **biết mình tìm gì** | Người muốn **được dẫn dắt** |
 
 Không bản nào "tốt hơn" — chúng phục vụ hai kiểu người dùng. Bản 1 cho quét và so
 sánh; bản này cho cảm giác quy mô và kể chuyện. Khách chọn cảm giác quy mô.
 
-**Hai dòng cuối cùng là thứ đã mất đi khi gỡ bản 1**, ghi ra để sau này ai hỏi thì có
-câu trả lời sẵn:
+**Thứ đã mất đi khi gỡ bản 1**, ghi ra để sau này ai hỏi thì có câu trả lời sẵn:
 
-- **8/20 điểm chưa có ảnh** (Q-38) **không xuất hiện ở đâu cả** trong bản này — slider
-  cần ảnh phủ toàn cảnh, không có ô giữ chỗ như danh sách của bản 1. Chúng vẫn nằm
-  trong `D.DESTINATIONS` với UUID panorama thật; thêm 1 dòng vào `D.CARDS` là chúng
-  hiện ra ngay. Xem `docs/TODO.md`.
 - **Không còn màn "quét nhanh, so sánh"**. Bù lại một phần bằng ô tìm kiếm trong slider
-  + 9 chip lọc.
+  + 11 chip lọc.
+
+> ⚫ Dòng *"điểm chưa có ảnh không xuất hiện ở đâu cả"* từng đứng ở đây với lý do "slider
+> cần ảnh phủ toàn cảnh". **Hết hiệu lực từ D-59**: điểm chưa có ảnh hiện thành thẻ
+> gradient brand kèm nhãn — bấm vào vẫn vào đúng panorama thật.
 
 ### Cấu trúc file
 
@@ -229,7 +228,7 @@ Còn lại, cả 4 đều chạy thật, và thứ tự DOM cũng là thứ tự
 | `.st-sld-img` | Ảnh — 60% bề ngang thẻ ở màn ngang, 100% ở màn dọc |
 | `.st-sld-info` | Chip nhóm · tên · mô tả · nút **"Khám phá VR 360°"** |
 | `.st-sld-nav` | 2 nút ‹ › — **ngoài thẻ**, đứng trong lề `--sld-x` (D-60) |
-| `.st-sld-chips` | 11 chip lọc nhóm, cuộn ngang có fade mép |
+| `.st-sld-chips` | 11 chip lọc nhóm, cuộn ngang — lăn/kéo bằng chuột do JS lo, fade mép theo trạng thái cuộn (D-62) |
 | `.st-sld-map` ⭐ | *"Xem khu vực này trên bản đồ"* — mở `#st-map` **chỉ với pin của nhóm đang xem** (D-51) |
 | `.st-sld-counter` | `3 / 12` |
 | `.st-sld-live` | `aria-live` — đọc "Tên — 3/12" |
@@ -320,11 +319,43 @@ người dùng cần đọc trước khi quyết. Nút **"Khám phá VR 360°"**
 
 ### Lọc và tìm kiếm (note.md §97–107)
 
-- **9 chip nhóm** — bấm là đổi `D.GROUPS[].keys`
+- **11 chip nhóm** — bấm là đổi `D.GROUPS[].keys`
 - **Ô tìm kiếm bỏ dấu** — gõ `lau dai` ra cả *Lâu Đài Tuyết* và *Lâu Đài Pháp Thuật*
   (`D.deaccent`, khớp cả `name` lẫn `nameEn`)
 - Quay về wall thì **xoá ô tìm kiếm** — mở lại mà còn dính query cũ, người dùng tưởng
   nhóm đó chỉ có 1 điểm
+
+### Dải chip cuộn ngang — `overflow-x: auto` là CHƯA ĐỦ (D-62)
+
+11 chip không vừa một dòng ở bất kỳ khổ nào, nên `.st-sld-chips` là một vùng cuộn ngang.
+Nhưng `overflow-x: auto` chỉ mở đường cho **ngón tay** và **trackpad vuốt ngang**. Con
+chuột thì không có đường nào — đo trên Chromium:
+
+| Thao tác | `scrollLeft` trước D-62 | sau |
+|---|---|---|
+| Lăn **dọc** (chuột thường) | `0` — không nhúc nhích | **220** |
+| Lăn **ngang** (trackpad / shift) | `200` | `200` |
+| Bấm giữ + **kéo** | không đổi | **200** |
+| Gán bằng script | chạy | chạy |
+
+Vùng cuộn không hỏng; **hai đường vào của con chuột mới là thứ không tồn tại**. Chrome
+không tự đổi `deltaY` thành cuộn ngang cho container chỉ tràn ngang, và không trình
+duyệt nào có cử chỉ kéo-thả bằng chuột. `js/slider.js` viết tay cả hai:
+
+| Cơ chế | Chi tiết |
+|---|---|
+| `wheel` | Lấy trục lớn hơn giữa `deltaX`/`deltaY` → `scrollLeft`. **Chỉ `preventDefault()` khi dải chip thật sự nuốt được cú lăn** — kịch biên thì thả ra cho trang cuộn tiếp. Chặn ở đây là bắt buộc: popup nằm trong `<iframe>` phủ kín trang cha, không chặn thì cú lăn nổi lên và **trang cha cuộn phía sau popup** |
+| Kéo bằng chuột | Bỏ qua `pointerType === 'touch'` — cảm ứng đã có cuộn native **có quán tính**, giành lại chỉ làm tệ đi. Kéo quá **4px** thì cú `click` lúc thả tay bị nuốt, nếu không kéo dải chip một cái là **đổi luôn nhóm đang xem** |
+| `centerChip()` | Chip đang chọn tự kéo vào giữa. Vào slider từ ô wall thứ 9/11 thì chip của nhóm đó nằm ngoài màn — dải chip hiện ra **không có cái nào được chọn** |
+| `updFade()` | Fade ở mép nào **CÒN** nội dung bị cắt (2 class `st-fade-l` / `st-fade-r`) |
+
+> ⚠️ `centerChip()` đo bằng `getBoundingClientRect`, **không** `offsetLeft`:
+> `.st-sld-bot` có `position: relative` nên chính nó là `offsetParent` của chip, và số
+> đo sẽ lệch đúng bằng padding của thanh dưới.
+
+> **Fade cứng ở mép phải sai hai lần** (bản trước): cuộn tới cuối rồi mà chip cuối vẫn
+> mờ, còn chip đầu bị cắt ở mép trái thì không có dấu hiệu gì. Mờ ở phía **còn nữa** là
+> lời mời cuộn tiếp; mờ ở phía đã hết chỉ là một vệt lỗi.
 
 ---
 
@@ -562,6 +593,19 @@ nhóm (Cung Vàng vừa văn hoá vừa kiến trúc); đó là chủ ý, không
 | B5 | Esc ở slider → về wall, ô tìm kiếm được xoá |
 | C | Trong iframe: `st:ready`, `st:lang` đổi cả tiêu đề lẫn nhãn ô |
 | C3–C4 | Wall → slider → VR: `st:navigate` đúng pano + `st:close`; `st:open` quay về wall |
+
+### Dải chip cuộn ngang (D-62) — 3 khổ, **0 lỗi console**
+
+1440×900 · 844×390 · 390×844 (cảm ứng). Mỗi khổ 6 kiểm:
+
+| Kiểm | Kết quả |
+|---|---|
+| Lăn **dọc** trên dải chip | `scrollLeft` 0 → **220** |
+| Lăn **ngang** | 180 |
+| Bấm giữ + kéo | 200 |
+| **Kéo xong nhóm KHÔNG được đổi** | vẫn `all` — nếu không, kéo một cái là mất nhóm đang xem |
+| Bấm một chip vẫn đổi nhóm | ✓ (ngưỡng 4px không nuốt nhầm cú bấm thật) |
+| Chip đang chọn nằm trong khung nhìn | ✓ kể cả chip **cuối** (`scrollLeft` chạy tới 583 / 1163 / 1298) |
 
 ### Nền sáng cho mọi khổ + nút bản đồ ở wall (D-61) — 7 khổ, **0 lỗi console**
 

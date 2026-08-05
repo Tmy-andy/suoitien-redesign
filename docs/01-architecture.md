@@ -1,6 +1,5 @@
-> Cập nhật: 2026-08-05 (v15 — D-61: nền sáng + thẻ thành mặc định ở `css/slider.css`,
-> nút bản đồ 2D trở lại wall. v14 — D-60 slider trên điện thoại thành thẻ nền trắng,
-> nhịp tự chạy theo khổ màn)
+> Cập nhật: 2026-08-05 (v16 — D-62: dải chip cuộn ngang bằng chuột do JS lo. v15 — D-61:
+> nền sáng + thẻ thành mặc định ở `css/slider.css`, nút bản đồ 2D trở lại wall)
 
 # 01 — Architecture & Structure
 
@@ -252,6 +251,7 @@ khác; xem D-58(h).
 | Tốc độ tự chạy của slider | `js/slider.js` → `AUTO_MS` (desktop) / `AUTO_MS_SM` (điện thoại, D-60) — và transition 620ms ở `css/slider.css`, 460ms ở `css/responsive2.css` |
 | Bố cục THẺ của slider (mọi khổ) | `css/slider.css` = thẻ NGANG mặc định · `css/responsive2.css` `@media (orientation: portrait)` = thẻ DỌC. Nhịp 2,5s bám `SMALL_MQ` trong `js/slider.js` (D-61) |
 | Lối vào bản đồ 2D | `index.html` — bất kỳ nút nào mang `data-open-map="all" \| "area"`; không phải sửa JS (D-61) |
+| Cách cuộn dải chip lọc nhóm | `js/slider.js` → khối `── Dải chip ──` trong `bind()` (`wheel` + kéo bằng chuột) · `centerChip()` · `updFade()` — CSS chỉ mở `overflow-x`, không mở đường vào (D-62) |
 | **Layout mobile / tablet / landscape** | `css/responsive2.css` — **chỉ** file này (D-58) |
 | Cách chia 9 khu vực | `js/data.js` → `GROUPS` (`size` + `cover` + `keys`) |
 | Bố cục mosaic desktop | thứ tự trong `GROUPS` + `grid-template-rows` ở `css/wall.css` |

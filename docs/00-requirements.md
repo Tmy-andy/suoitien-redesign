@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-05 (v15 — YC-18: desktop cũng nền sáng, nút bản đồ 2D lên wall ·
-> D-61. v14 — YC-17: màn chi tiết trên mobile nền trắng + thẻ · D-60).
+> Cập nhật: 2026-08-05 (v16 — YC-19: dải danh mục cuộn ngang được bằng chuột · D-62.
+> v15 — YC-18: desktop cũng nền sáng, nút bản đồ 2D lên wall · D-61).
 > v12 — YC-15: chuyển động + 5 thẻ + ảnh nguồn + danh sách thành thẻ ảnh · D-55/D-56)
 
 # 00 — Yêu cầu
@@ -234,6 +234,34 @@ theo chủ đề"* (chính là cái wall đang hiện). Còn 3 mục, cả 3 ch�
 
 Chi tiết: [`09-variant2.md`](09-variant2.md) (spec đầy đủ) ·
 [`08-decisions.md`](08-decisions.md) D-50.
+
+---
+
+## 0.1o YC-19 — Dải danh mục không cuộn ngang được (nguyên văn, 2026-08-05)
+
+> Danh sách danh mục khu vực bên dưới khi vào trang chi tiết xem từng vị trí không scroll
+> ngang khi bấm kéo lẫn lăn chuột được. Xem lại.
+
+### Hiểu thành gì
+
+*"Danh sách danh mục khu vực bên dưới"* = dải **11 chip lọc nhóm** `.st-sld-chips` ở
+thanh dưới của slider.
+
+| Khách nói | Sự thật đo được | Làm gì |
+|---|---|---|
+| "không scroll ngang được" | Vùng cuộn **không hỏng**: tràn 588px, gán `scrollLeft` bằng script chạy, lăn ngang bằng trackpad chạy | — |
+| "khi bấm kéo" | Không trình duyệt nào có cử chỉ kéo-thả bằng chuột để cuộn | Viết tay bằng `pointerdown/move/up`, ngưỡng 4px để cú kéo không biến thành cú chọn chip |
+| "lẫn lăn chuột" | Chrome không tự đổi `deltaY` thành cuộn ngang cho container chỉ tràn ngang → `scrollLeft` đứng im ở `0` | Viết tay handler `wheel` |
+
+Chi tiết + luật rút ra: **D-62**.
+
+### Hai thứ sửa thêm, cùng một triệu chứng "không thấy danh mục"
+
+- Vào slider từ ô wall thứ 9/11 thì chip của nhóm đó **nằm ngoài màn** — dải chip hiện ra
+  không có cái nào được chọn, mà người dùng chuột lại không cuộn tới xem được. Giờ chip
+  đang chọn tự kéo vào giữa.
+- Fade chỉ ở mép phải: cuộn tới cuối rồi mà chip cuối vẫn mờ, còn chip đầu bị cắt bên
+  trái thì không có dấu hiệu gì. Giờ mờ ở đúng phía **còn nữa**.
 
 ---
 

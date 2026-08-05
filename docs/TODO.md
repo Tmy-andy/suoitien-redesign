@@ -1,4 +1,4 @@
-> Cập nhật: 2026-08-05 (v19 — YC-18: desktop cũng nền sáng, nút bản đồ 2D trở lại · D-61)
+> Cập nhật: 2026-08-05 (v20 — YC-19: dải chip cuộn ngang được bằng chuột · D-62)
 
 # TODO
 
@@ -395,6 +395,20 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 ## ⏭️ Việc tiếp theo (SAU PIVOT 2026-08-03) — phần còn sống
 
+### ✅ Vòng YC-19 (2026-08-05) — dải chip cuộn ngang được bằng chuột
+
+- [x] **Đo trước khi sửa**: vùng cuộn không hỏng (tràn 588px, gán script chạy, lăn ngang
+      chạy) — chỉ thiếu hai đường vào của chuột — 2026-08-05
+- [x] `wheel` → `scrollLeft`, lấy trục lớn hơn giữa `deltaX`/`deltaY`; `preventDefault()`
+      chỉ khi dải chip nuốt được cú lăn (kịch biên thì thả cho trang cha) — 2026-08-05
+- [x] Kéo bằng chuột (`pointerdown/move/up`), bỏ qua `pointerType === 'touch'` — 2026-08-05
+- [x] Ngưỡng 4px + nuốt cú `click` sau khi kéo, để kéo dải chip không đổi nhóm đang xem — 2026-08-05
+- [x] `centerChip()` — chip đang chọn tự kéo vào giữa (đo bằng `getBoundingClientRect`,
+      không `offsetLeft`: `.st-sld-bot` là `offsetParent`) — 2026-08-05
+- [x] Fade hai mép theo trạng thái cuộn (`st-fade-l` / `st-fade-r`) thay fade cứng mép
+      phải · `user-select: none` · `overscroll-behavior-x: contain` — 2026-08-05
+- [x] Playwright 3 khổ × 6 kiểm (gồm **kéo xong không được đổi nhóm**) → sạch — 2026-08-05
+
 ### ✅ Vòng YC-18 (2026-08-05) — desktop cũng nền sáng + nút bản đồ 2D
 
 **Nền sáng cho mọi khổ (D-61)**
@@ -649,6 +663,7 @@ Mở `index.html` là xem được. Test tự động (Playwright, desktop 1440 
 
 | Ngày | Việc |
 |---|---|
+| 2026-08-05 (v12) | **Dải chip cuộn ngang được bằng chuột (YC-19).** Đo ra: vùng cuộn không hỏng, chỉ thiếu hai đường vào của chuột — Chrome không đổi `deltaY` thành cuộn ngang cho container chỉ tràn ngang, và không trình duyệt nào có cử chỉ kéo-thả bằng chuột. Viết tay `wheel` + kéo trong `js/slider.js` (bỏ qua cảm ứng vì cuộn native có quán tính; ngưỡng 4px để cú kéo không biến thành cú chọn chip; `preventDefault` chỉ khi nuốt được, tránh trang cha cuộn phía sau iframe). Thêm `centerChip()` kéo chip đang chọn vào giữa và fade hai mép theo trạng thái cuộn. Playwright 3 khổ × 6 kiểm → sạch. D-62. |
 | 2026-08-05 (v11) | **Desktop cũng nền sáng + trả lại nút bản đồ (YC-18).** (a) Gỡ hẳn `.st-sld-bg` và `.st-sld-shade` khỏi HTML/CSS/JS — nền đen là thứ cuối cùng còn sót của bố cục cũ. (b) Bảng màu sáng + cấu trúc thẻ thành **mặc định** ở `css/slider.css`; desktop thành **thẻ ngang** (ảnh trái 60% giữ 3:2, chính nó quyết chiều cao thẻ). (c) `responsive2.css` chỉ còn lo hướng xếp, và chia theo **`orientation`** thay vì `max-width` — iPad dọc 768 rộng hơn iPhone ngang 844 nhưng cần bố cục dọc; xoá 115 dòng "bảng màu dùng chung" của D-60. (d) Thanh dưới slider tách 3 cụm có vạch ngăn; **thêm nút bản đồ 2D vào thanh công cụ wall** (icon vuông trên mobile), dùng lại khoá i18n `map.open` chết từ D-57, 0 dòng JS mới. (e) Playwright 7 khổ × 10 bất biến → sạch. D-61. |
 | 2026-08-05 (v10) | **Màn chi tiết trên điện thoại (YC-17).** Slider từ "cổng ảnh phủ màn, nền blur tối, chữ đè lên ảnh" thành **thẻ trên nền trắng**: ảnh `78vw × clamp(170px,32vh,300px)` ở trên, chữ + CTA ở dưới trên nền trắng, ‹ › ra hẳn lề nên hết cảnh nút chìm vào ảnh, cảnh rìa dùng `opacity` thay `brightness`. Cả bảng màu của slider đổi sang sáng (kể cả nút × vốn bị `wall.css` đảo sang kính mờ). Điện thoại nằm ngang thành **thẻ ngang** dùng chung bảng màu, lấy lại được dòng mô tả. Autoplay **6000 → 2500ms** trên điện thoại (`setTimeout` chuỗi để đổi được khi xoay máy) + sửa 2 bẫy `mouseenter`/`focusin` giả làm slideshow chết sau cú chạm đầu tiên. Playwright 7 khổ → sạch; ảnh chụp bắt thêm lỗi CTA vỡ 2 dòng ở khổ 320. D-60. |
 | 2026-08-04 (v9) | **Chốt MỘT bản + dựng lại mobile (YC-16).** (a) Khách chọn VR Wall + Slider → gỡ `css/carousel.css` · `css/popup.css` · `css/responsive.css` · `js/carousel.js` · `js/popup.js` · `host-demo.html`, gỡ 21 khoá i18n chết + `D.mustOf` + cờ `must` + `--st-ease-flow`. Giữ nguyên tên có hậu tố "2" và ghi rõ vì sao (decision log đang trỏ tới tên cũ ở ~40 chỗ). (b) **Dựng lại toàn bộ `responsive2.css`**: `.st-wall` thành trang cuộn thay vì cuộn lồng, ô theo `aspect-ratio`, ô lớn thành thẻ hero, thanh công cụ `sticky` 2 hàng (≤379 xếp dọc), header căn trái, landscape 3 cột, slider gọn còn 2 hàng dưới, bản đồ thành bottom sheet có `--st-card-h` đo thật. (c) Lôi ra 3 lỗi có sẵn: `--st-t-h3` không tồn tại · `g.cover` chưa bao giờ được đọc nên ô hero trùng ảnh ô kế · @media bản đồ nằm ở hai file. (d) Playwright 7 khổ × 4 màn, 9 bất biến hình học → sạch. D-57 · D-58. |

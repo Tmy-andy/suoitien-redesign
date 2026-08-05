@@ -1,6 +1,5 @@
-> Cập nhật: 2026-08-05 (v16 — D-61: nền sáng cho mọi khổ, desktop thành thẻ ngang, nút
-> bản đồ 2D trở lại wall. v15 — D-60: màn chi tiết trên mobile thành thẻ nền trắng,
-> autoplay 2,5s)
+> Cập nhật: 2026-08-05 (v17 — D-62: dải chip cuộn ngang được bằng chuột. v16 — D-61:
+> nền sáng cho mọi khổ, desktop thành thẻ ngang, nút bản đồ 2D trở lại wall)
 
 # Suối Tiên VR360 — Popup chọn điểm bắt đầu · Docs
 
@@ -31,7 +30,7 @@ Vì vậy vài tên còn hậu tố **"2"** — `#st-pop2` · `js/popup2.js` ·
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Docs | ✅ **v16** (2026-08-05) |
+| Docs | ✅ **v17** (2026-08-05) |
 | Design tokens | ✅ 3 màu brand + hệ 2 font lấy thật từ `suoitien.vn/…/style.css` |
 | **VR Wall 9 ô → Infinite Slider → VR**, có tìm/lọc | ✅ **xong** — D-50 |
 | **Bản mobile** — trang cuộn, thanh dính đáy, bottom sheet | ✅ **xong** — D-58 ⭐ |
@@ -66,6 +65,9 @@ Vì vậy vài tên còn hậu tố **"2"** — `#st-pop2` · `js/popup2.js` ·
 - **Nền sáng mọi khổ + nút bản đồ** (D-61) — 7 khổ tới 1920×1080: `.st-sld-bg` và
   `.st-sld-shade` không còn trong DOM · thẻ trắng + nút × dáng sáng ở mọi khổ · nút bản
   đồ không đè chip/bộ đếm · **nút bản đồ ở wall bấm được và mở đúng `#st-map` có pin**.
+- **Dải chip cuộn ngang** (D-62) — 3 khổ × 6 kiểm: lăn dọc `0 → 220` · lăn ngang · bấm
+  kéo · **kéo xong không đổi nhóm** · bấm chip vẫn chọn được · chip đang chọn luôn nằm
+  trong khung nhìn.
 
 ### ⭐ Phạm vi (2026-08-03 · YC-10 · D-46)
 

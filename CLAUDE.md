@@ -140,6 +140,10 @@ CSS: `halink-content/themes/halink-c5/public/theme/css/style.css`
   còn lo **hướng xếp**, và chia theo `orientation` chứ không `max-width`. Nút *"Xem trên
   bản đồ 2D"* **trở lại thanh công cụ wall** (icon vuông trên điện thoại) — đảo ngược
   chỗ D-57 đã gỡ nó (D-61).
+- **2026-08-05 (YC-19):** dải chip lọc nhóm không cuộn ngang được bằng chuột. Vùng cuộn
+  không hỏng — **`overflow-x: auto` chỉ mở đường cho ngón tay và trackpad**; với chuột
+  thường thì lăn dọc lẫn kéo-thả đều không tồn tại, phải viết tay `wheel` + kéo. Luật
+  này áp cho **mọi** vùng cuộn ngang sau này (D-62).
 - **2026-08-03 (YC-9):** bỏ hẳn bản đồ + hotspot, thay bằng **3D carousel ảnh banner**;
   click ảnh → nhảy tới panorama tương ứng.
 - Tone **light/airy**, không dark-glass. Bỏ hẳn màu `#1769ff`.

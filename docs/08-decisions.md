@@ -1,5 +1,5 @@
-> Cập nhật: 2026-08-05 (v18 — thêm D-61: nền sáng cho cả desktop, thẻ ngang, nút bản đồ
-> 2D ở wall. v17 — D-60: màn chi tiết trên điện thoại nền trắng + thẻ, autoplay 2,5s)
+> Cập nhật: 2026-08-05 (v19 — thêm D-62: `overflow-x: auto` không đủ cho chuột. v18 —
+> D-61: nền sáng cho cả desktop, thẻ ngang, nút bản đồ 2D ở wall)
 
 > ⚠️ **D-57 · D-58 · D-59 không có mục riêng ở file này** — chúng được ghi tại chỗ
 > trong `09-variant2.md` §9.1/§9.5 và `06-data.md` ngày 2026-08-04. Code và các doc
@@ -2061,10 +2061,71 @@ màn và **bấm vào mở được `#st-map` có pin** ở cả 7 khổ.
 
 ---
 
+## D-62 · `overflow-x: auto` KHÔNG đủ để một dải cuộn ngang dùng được bằng chuột · 🟢 · 2026-08-05
+
+**Yêu cầu (YC-19):** *"Danh sách danh mục khu vực bên dưới khi vào trang chi tiết xem
+từng vị trí không scroll ngang khi bấm kéo lẫn lăn chuột được."*
+
+### Đo trước khi sửa
+
+Phản xạ đầu tiên là ngờ vùng cuộn hỏng — bị `mask-image` chặn, bị phần tử khác phủ lên,
+hay `scrollbar-width: none` làm mất khả năng cuộn. **Đo thì cả ba đều sai:**
+
+| | `scrollLeft` |
+|---|---|
+| `scrollWidth` 1664 · `clientWidth` 1076 | tràn 588px — có chỗ để cuộn |
+| `elementFromPoint` giữa dải | `st-sld-chip\|BUTTON` — không có gì phủ lên |
+| Gán bằng script | chạy ✓ |
+| Lăn **ngang** (trackpad / shift) | 200 ✓ |
+| **Lăn dọc** (chuột thường) | **0** ✗ |
+| **Bấm giữ + kéo** | **không đổi** ✗ |
+
+Vùng cuộn không hỏng. **Hai đường vào của con chuột mới là thứ không tồn tại** — và đây
+là hành vi đúng của trình duyệt, không phải bug:
+
+- Chrome **không** tự đổi `deltaY` thành cuộn ngang cho một container chỉ tràn ngang.
+- **Không trình duyệt nào** có cử chỉ kéo-thả bằng chuột để cuộn.
+
+> **Luật rút ra:** `overflow-x: auto` chỉ mở đường cho **ngón tay** (quẹt) và **trackpad**
+> (vuốt ngang). Với chuột thường thì một dải cuộn ngang là **bất động** trừ khi có JS.
+> Mọi vùng cuộn ngang trong project phải tự viết `wheel` + kéo, hoặc chấp nhận rằng
+> người dùng chuột không bao giờ thấy phần bị cắt.
+
+### Sửa gì
+
+| Cơ chế | Chi tiết |
+|---|---|
+| `wheel` | Lấy trục lớn hơn giữa `deltaX`/`deltaY` → `scrollLeft`. `preventDefault()` **chỉ khi** dải chip thật sự nuốt được cú lăn; kịch biên thì thả ra. Chặn ở đây là bắt buộc vì popup nằm trong `<iframe>` phủ kín trang cha — không chặn thì cú lăn nổi lên và **trang cha cuộn phía sau popup** |
+| Kéo bằng chuột | Bỏ qua `pointerType === 'touch'`: cảm ứng đã có cuộn native **có quán tính**, giành lại chỉ làm tệ đi. Kéo quá **4px** thì nuốt cú `click` lúc thả tay — nếu không, kéo dải chip một cái là **đổi luôn nhóm đang xem** |
+| `centerChip()` | Kéo chip đang chọn vào giữa. Vào slider từ ô wall thứ 9/11 thì chip của nhóm đó nằm ngoài màn: dải chip hiện ra **không có cái nào được chọn**, và người dùng chuột thì không cuộn tới xem được — hai lỗi chồng nhau |
+| `updFade()` | Fade ở mép nào **CÒN** nội dung bị cắt, thay cho fade cứng ở mép phải |
+
+**Hai chi tiết dễ vấp:**
+
+- `centerChip()` đo bằng `getBoundingClientRect`, **không** `offsetLeft`. `.st-sld-bot`
+  có `position: relative` nên chính nó là `offsetParent` của chip → `offsetLeft` lệch
+  đúng bằng padding của thanh dưới.
+- Fade cứng ở mép phải **sai hai lần**: cuộn tới cuối rồi mà chip cuối vẫn mờ, còn chip
+  đầu bị cắt ở mép trái thì không có dấu hiệu gì. Mờ ở phía *còn nữa* là lời mời cuộn
+  tiếp; mờ ở phía *đã hết* chỉ là một vệt lỗi.
+
+Kèm `user-select: none` (kéo mà quét xanh hết chữ trong chip thì trông như hỏng) và
+`overscroll-behavior-x: contain`.
+
+### Đã đo (Playwright/Chromium, 3 khổ × 6 kiểm)
+
+1440×900 · 844×390 · 390×844 cảm ứng — **0 lỗi console**. Lăn dọc `0 → 220` · lăn ngang
+180 · kéo 200 · **kéo xong nhóm vẫn là `all`** (ngưỡng 4px không để cú kéo biến thành cú
+chọn) · bấm chip vẫn đổi nhóm · chip đang chọn luôn nằm trong khung nhìn, kể cả chip
+cuối.
+
+---
+
 ## Nhật ký sửa đổi
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-05 (v19) | **Thêm D-62 (YC-19).** Dải chip `overflow-x: auto` cuộn được bằng ngón tay và trackpad nhưng **bất động với chuột thường** — Chrome không đổi `deltaY` thành cuộn ngang, và không trình duyệt nào có cử chỉ kéo-thả bằng chuột. Viết tay `wheel` + kéo (bỏ qua `pointerType: touch`, ngưỡng 4px để cú kéo không biến thành cú chọn chip), thêm `centerChip()` kéo chip đang chọn vào giữa và fade hai mép theo trạng thái cuộn. |
 | 2026-08-05 (v18) | **Thêm D-61 (YC-18).** Nền sáng + cấu trúc thẻ thành MẶC ĐỊNH ở `css/slider.css` (desktop thành thẻ ngang: ảnh trái 60% · chữ phải), gỡ hẳn `.st-sld-bg` + `.st-sld-shade` khỏi HTML/CSS/JS, `responsive2.css` chỉ còn lo HƯỚNG XẾP và chia theo `orientation` thay vì `max-width`. Thanh dưới slider tách thành 3 cụm có vạch ngăn; thêm nút bản đồ 2D vào thanh công cụ wall (icon vuông trên điện thoại), dùng lại khoá i18n `map.open` chết từ D-57. |
 | 2026-08-05 (v17) | **Thêm D-60 (YC-17).** Màn chi tiết (slider) trên điện thoại: nền tối → **trắng**, mỗi cảnh thành **thẻ** (ảnh trên, chữ + CTA dưới trên nền trắng), ‹ › ra khỏi ảnh vào lề, cảnh rìa dùng `opacity` thay `brightness`, ảnh `clamp(170px,32vh,300px)`, autoplay **2,5s** trên điện thoại (desktop giữ 6s) với `setTimeout` chuỗi, thẻ NGANG cho điện thoại nằm ngang, và sửa 2 bẫy `mouseenter`/`focusin` giả làm autoplay chết sau cú chạm đầu tiên. |
 | 2026-08-04 (v16) | **Thêm D-55 + D-56 (YC-15).** D-55: carousel lên 5 thẻ với 4 biến bậc tách riêng (bậc ±2 nén lại, nghiêng bằng bậc ±1) · độ mờ thôi làm việc diễn tả chiều sâu (`.70 → .925`, dồn cho brightness) · autoplay `3600 → 3000ms`, transition `620 → 720ms` + token easing mới `--st-ease-flow` + delay so le theo bậc · parallax trên thẻ giữa (mượn của `wall.js`) · dựng lại animation vào màn cho **cả hai bản** (bản 2 trước đây có nhưng bị lớp fade khung nuốt mất) · **ảnh nguồn: 9/12 ảnh gốc trên site chỉ 600×600 và bản cũ đã phóng lên 760 từ khâu dựng asset** → đổi sang ảnh trang chi tiết, 9/12 lên ≥900px, không bao giờ phóng to · sửa `--st-n-800` (token không tồn tại) · mobile thẻ `78vw → 92vw`. D-56: danh sách điểm từ DÒNG sang THẺ ẢNH 4:3. |

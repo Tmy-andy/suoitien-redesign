@@ -1,5 +1,6 @@
-> Cập nhật: 2026-08-05 (v11 — §5.10 viết lại: nút bản đồ 2D trở lại thanh công cụ wall,
-> hai lối vào phân vai rõ · D-61. v10 — §5.6 thêm 2 chỗ JS đọc matchMedia · D-60)
+> Cập nhật: 2026-08-05 (v12 — §5.6 thêm trường hợp thứ sáu CSS không làm được: cuộn
+> ngang bằng chuột · D-62. v11 — §5.10 viết lại: nút bản đồ 2D trở lại thanh công cụ
+> wall, hai lối vào phân vai rõ · D-61)
 
 # 05 — Flows & Logic
 
@@ -143,12 +144,13 @@ một:
 | Thẻ slider đổi hướng xếp: NGANG (ảnh trái · chữ phải) ↔ DỌC (ảnh trên · chữ dưới) | `responsive2.css` | `@media (orientation: portrait)` → `flex-direction` của `.st-sld-panel` (D-61) |
 | **Nhịp tự chạy của slider** (2,5s điện thoại, 6s desktop) | **`js/slider.js`** | `autoMs()` — `matchMedia(SMALL_MQ)`, phải khớp @media của D-60 |
 | **Bỏ qua `mouseenter` giả trên cảm ứng** | **`js/slider.js`** | `matchMedia('(hover: hover)')` |
+| **Cuộn ngang dải chip bằng CHUỘT** (lăn + kéo) | **`js/slider.js`** | `wheel` → `scrollLeft`, `pointerdown/move/up` (D-62) |
 | Thẻ bản đồ thành bottom sheet | `responsive2.css` | `left/right/bottom: 0` + bo 2 góc trên |
 | **Số ảnh nạp mỗi ô wall** (2 trên mobile, 3 trên desktop) | **`js/wall.js`** | `imgsPerTile()` — `matchMedia('(max-width: 599px)')` |
 | **Chiều cao thực của bottom sheet** để cụm zoom né | **`js/map2d.js`** | đo `offsetHeight` → ghi `--st-card-h` |
 | **Tắt parallax trên cảm ứng** | **`js/wall.js`** | lọc `e.pointerType !== 'mouse'` |
 
-Năm dòng cuối là **năm trường hợp CSS không làm được**, không phải năm chỗ tuỳ tiện:
+Sáu dòng cuối là **sáu trường hợp CSS không làm được**, không phải sáu chỗ tuỳ tiện:
 
 - CSS không quyết định được **có tải một `<img>` hay không** — `display: none` vẫn tải.
 - CSS không đọc được **chiều cao của một phần tử khác**.
@@ -156,6 +158,10 @@ Năm dòng cuối là **năm trường hợp CSS không làm được**, không 
   về THIẾT BỊ, không nói về từng sự kiện — máy lai (laptop cảm ứng) có cả hai.
 - CSS không đặt được **nhịp của một `setTimeout`**.
 - CSS không **bỏ qua một event** đã bắn.
+- CSS **mở vùng cuộn chứ không mở đường vào nó**: `overflow-x: auto` cho ngón tay quẹt và
+  trackpad vuốt ngang, nhưng với chuột thường thì dải cuộn ngang **bất động** — Chrome
+  không đổi `deltaY` thành cuộn ngang, và không trình duyệt nào có cử chỉ kéo-thả bằng
+  chuột (D-62).
 
 > ⚠️ Hai dòng cuối (D-60) đọc `matchMedia` với **đúng chuỗi điều kiện** của @media bên
 > `responsive2.css` (`SMALL_MQ`). Sửa breakpoint của bố cục thẻ mà quên chuỗi này thì
